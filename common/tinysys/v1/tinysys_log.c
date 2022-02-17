@@ -170,13 +170,17 @@ int tinysys_log_manager_start(void)
 int tinysys_log_manager_stop(void)
 {
 #ifdef MET_SSPM
-	sspm_log_stop();
-	_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
+	if ((ondiemet_module[ONDIEMET_SSPM] == 0) || (sspm_buffer_size == -1)) {
+		sspm_log_stop();
+		_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
+	}
 #endif
 
 #ifdef MET_MCUPM
-	mcupm_log_stop();
-	_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
+	if ((ondiemet_module[ONDIEMET_MCUPM] == 0) || (mcupm_buffer_size == -1)) {
+		mcupm_log_stop();
+		_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
+	}
 #endif
 
 	return 0;

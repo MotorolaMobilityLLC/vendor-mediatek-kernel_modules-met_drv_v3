@@ -80,6 +80,17 @@ static inline void armv8_pmu_disable_intr(unsigned int idx)
 	isb();
 }
 
+static inline void armv8_pmu_write_counter(unsigned int idx,
+					   unsigned int val, int is_cyc_cnt)
+{
+	if (is_cyc_cnt) {
+		asm volatile ("msr pmccntr_el0, %x0"::"r" (val));
+	} else {
+		armv8_pmu_counter_select(idx);
+		asm volatile ("msr pmxevcntr_el0, %x0"::"r" (val));
+	}
+}
+
 static inline void armv8_pmu_disable_cyc_intr(void)
 {
 	armv8_pmu_disable_intr(31);
@@ -141,6 +152,9 @@ enum ARM_TYPE {
 	CORTEX_A76 = 0xD0B,
 	CORTEX_A77 = 0xD0D,
 	CORTEX_A78 = 0xD41,
+	KLEIN = 0xD46,
+	MATTERHORN = 0xD47,
+	MATTERHORN_B = 0xD48,
 	CHIP_UNKNOWN = 0xFFF
 };
 
@@ -160,6 +174,9 @@ static struct chip_pmu	chips[] = {
 	{CORTEX_A76, 6+1},
 	{CORTEX_A77, 6+1},
 	{CORTEX_A78, 6+1},
+	{KLEIN, 6+1},
+	{MATTERHORN, 20+1},
+	{MATTERHORN_B, 20+1},
 };
 
 static int armv8_pmu_hw_check_event(struct met_pmu *pmu, int idx, int event)
@@ -242,30 +259,39 @@ struct cpu_pmu_hw armv8_pmu = {
 	.polling = armv8_pmu_hw_polling,
 	.perf_event_get_evttype = armv8_perf_event_get_evttype,
 	.pmu_read_clear_overflow_flag = armv8_pmu_overflow,
+	.write_counter = armv8_pmu_write_counter,
 	.disable_intr = armv8_pmu_disable_intr,
 	.disable_cyc_intr = armv8_pmu_disable_cyc_intr,
 };
 
+static void set_pmu_event_count(void *info)
+{
+	int i;
+	int cpu;
+	struct cpuinfo_arm64 cpuinfo;
+
+	cpu = smp_processor_id();
+	cpuinfo.reg_midr = read_cpuid_id();
+
+	/* PR_BOOTMSG("CPU[%d]: reg_midr = %x\n", cpu, cpuinfo.reg_midr); */
+	/* PR_BOOTMSG("CPU[%d]: MIDR_PARTNUM = %x\n", cpu, MIDR_PARTNUM(cpuinfo.reg_midr)); */
+	for (i = 0; i < ARRAY_SIZE(chips); i++) {
+		if (chips[i].type == MIDR_PARTNUM(cpuinfo.reg_midr)) {
+			armv8_pmu.event_count[cpu] = chips[i].event_count;
+			break;
+		}
+	}
+}
+
 static void init_pmus(void)
 {
 	int	cpu;
-	int	i;
 
 	for_each_possible_cpu(cpu) {
-		struct cpuinfo_arm64 cpuinfo;
 		if (cpu >= MXNR_CPU)
 			continue;
 
-		cpuinfo.reg_midr = read_cpuid_id();
-
-		/* PR_BOOTMSG("CPU[%d]: reg_midr = %x\n", cpu, cpuinfo.reg_midr); */
-		/* PR_BOOTMSG("CPU[%d]: MIDR_PARTNUM = %x\n", cpu, MIDR_PARTNUM(cpuinfo.reg_midr)); */
-		for (i = 0; i < ARRAY_SIZE(chips); i++) {
-			if (chips[i].type == MIDR_PARTNUM(cpuinfo.reg_midr)) {
-				armv8_pmu.event_count[cpu] = chips[i].event_count;
-				break;
-			}
-		}
+		smp_call_function_single(cpu, set_pmu_event_count, NULL, 1);
 	}
 }
 
