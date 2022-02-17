@@ -124,7 +124,6 @@ enum {
 /*****************************************************************************
  * external variable declaration
  *****************************************************************************/
-extern struct mtk_ipi_device *mcupm_ipidev_symbol;
 
 
 #endif /* __TINYSYS_MCUPM_H__ */

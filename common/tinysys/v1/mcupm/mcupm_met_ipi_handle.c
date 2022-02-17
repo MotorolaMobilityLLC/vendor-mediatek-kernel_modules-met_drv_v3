@@ -53,6 +53,11 @@ extern char *met_get_platform(void);
  * internal function declaration
  *****************************************************************************/
 static void _log_done_cb(const void *p);
+static int _met_ipi_cb(
+	unsigned int ipi_id,
+	void *prdata,
+	void *data,
+	unsigned int len);
 static int _mcupm_recv_thread(void *data);
 
 
@@ -65,11 +70,10 @@ int mcupm_buf_available;
 /*****************************************************************************
  * internal variable declaration
  *****************************************************************************/
-struct mtk_ipi_device *mcupm_ipidev_symbol;
-static unsigned int recv_buf[4];
-static unsigned int rdata;
+static struct mtk_ipi_device *mcupm_ipidev_symbol;
+static unsigned int recv_buf[4], recv_buf_copy[4];
 static unsigned int ackdata;
-static unsigned int ridx, widx, wlen;
+static unsigned int reply_data;
 static unsigned int log_size;
 static struct task_struct *_mcupm_recv_task;
 static int mcupm_ipi_thread_started;
@@ -95,7 +99,7 @@ void start_mcupm_ipi_recv_thread()
 	}
 
 	// Tinysys send ipi to APSYS
-	ret = mtk_ipi_register(mcupm_ipidev_symbol, IPIR_C_MET, NULL,
+	ret = mtk_ipi_register(mcupm_ipidev_symbol, IPIR_C_MET, _met_ipi_cb,
 				NULL, (void *) &recv_buf);
 	if (ret) {
 		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", IPIR_C_MET, ret);
@@ -306,8 +310,6 @@ static void _log_done_cb(const void *p)
 	unsigned int opt = (p != NULL);
 
 	if (opt == 0) {
-		mcupm_buffer_dumping = 0;
-
 		ipi_buf[0] = MET_MAIN_ID | MET_RESP_AP2MD;
 		ipi_buf[1] = MET_DUMP_BUFFER;
 		ipi_buf[2] = 0;
@@ -317,16 +319,38 @@ static void _log_done_cb(const void *p)
 }
 
 
+static int _met_ipi_cb(unsigned int ipi_id,
+	void *prdata,
+	void *data,
+	unsigned int len)
+{
+	/* prepare a copy of recv_buffer for deferred heavyweight cmd handling */
+	memcpy(recv_buf_copy, recv_buf, sizeof(recv_buf_copy));
+
+	/* lightweight cmd handling (support reply_data) */
+	reply_data = 0;
+	switch (recv_buf[0] & MET_SUB_ID_MASK) {
+	case MET_RESP_MD2AP:
+		mcupm_buffer_dumping = 0;
+		break;
+	}
+
+	return 0;
+}
+
 static int _mcupm_recv_thread(void *data)
 {
 	int ret = 0;
-	unsigned int cmd = 0;
+	unsigned int ridx, widx, wlen;
 
 	do {
-		ret = mtk_ipi_recv_reply(mcupm_ipidev_symbol, IPIR_C_MET, (void *)&rdata, 1);
+		ret = mtk_ipi_recv_reply(mcupm_ipidev_symbol, IPIR_C_MET,
+				(void *)&reply_data, 1);
 		if (ret) {
-			PR_BOOTMSG("ipi_register:%d failed:%d\n", IPIR_C_MET, ret);
+			// skip cmd handling if receive fail
+			continue;
 		}
+
 		if (mcupm_recv_thread_comp == 1) {
 			while (!kthread_should_stop()) {
 				;
@@ -334,13 +358,13 @@ static int _mcupm_recv_thread(void *data)
 			return 0;
 		}
 
-		cmd = recv_buf[0] & MET_SUB_ID_MASK;
-		switch (cmd) {
+		/* heavyweight cmd handling (not support reply_data) */
+		switch (recv_buf_copy[0] & MET_SUB_ID_MASK) {
 		case MET_DUMP_BUFFER:	/* mbox 1: start index; 2: size */
 			mcupm_buffer_dumping = 1;
-			ridx = recv_buf[1];
-			widx = recv_buf[2];
-			log_size = recv_buf[3];
+			ridx = recv_buf_copy[1];
+			widx = recv_buf_copy[2];
+			log_size = recv_buf_copy[3];
 			if (widx < ridx) {	/* wrapping occurs */
 				wlen = log_size - ridx;
 				mcupm_log_req_enq((char *)(mcupm_log_virt_addr) + (ridx << 2),
@@ -355,8 +379,8 @@ static int _mcupm_recv_thread(void *data)
 			break;
 
 		case MET_CLOSE_FILE:	/* no argument */
-			ridx = recv_buf[1];
-			widx = recv_buf[2];
+			ridx = recv_buf_copy[1];
+			widx = recv_buf_copy[2];
 			if (widx < ridx) {	/* wrapping occurs */
 				wlen = log_size - ridx;
 				mcupm_log_req_enq((char *)(mcupm_log_virt_addr) + (ridx << 2),
@@ -369,6 +393,8 @@ static int _mcupm_recv_thread(void *data)
 						wlen * 4, _log_done_cb, (void *)1);
 			}
 			ret = mcupm_log_stop();
+
+			/* continuous mode handling */
 			if (mcupm_run_mode == MCUPM_RUN_CONTINUOUS) {
 				/* clear the memory */
 				memset_io((void *)mcupm_log_virt_addr, 0,
