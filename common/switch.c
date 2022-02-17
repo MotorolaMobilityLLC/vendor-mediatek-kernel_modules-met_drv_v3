@@ -74,7 +74,7 @@ MET_DEFINE_PROBE(sched_switch,
 }
 #endif
 
-void met_sched_switch(void *data, int preempt, struct task_struct *prev, struct task_struct *next)
+void met_sched_switch(void *data, bool preempt, struct task_struct *prev, struct task_struct *next)
 {
 	/* speedup sched_switch callback handle */
 	if (met_switch.mode == 0)
@@ -130,7 +130,7 @@ static int met_switch_create_subfs(struct kobject *parent)
 	int ret = 0;
 
 	/* register tracepoints */
-	//ret = met_tracepoint_probe_reg("sched_switch", met_sched_switch);
+	ret = met_tracepoint_probe_reg("sched_switch", met_sched_switch);
 
 #ifdef CPU_IDLE_TRIGGER
 	if (MET_REGISTER_TRACE(cpu_idle)) {
