@@ -17,14 +17,19 @@
 #endif
 #endif
 
+#include "mtk_emi_hw.h"
+
+// #ifdef MET_REG_ARRD
+// #include "met_reg_addr.h"
+// #endif
+
+/*default not support , usage is low*/
+// #define EMI_LOWEFF_SUPPORT
 
 
-#define EMI_VER_MAJOR  3
-#define EMI_VER_MINOR  5
 
-#define MET_MAX_DRAM_CH_NUM     4
 
-#define FILE_NODE_DATA_LEN 512
+#define FILE_NODE_DATA_LEN 512 
 #define WSCT_AMOUNT 6
 #define TSCT_AMOUNT 3
 
@@ -32,14 +37,23 @@
 #define DRAM_EMI_BASECLOCK_RATE_LP4     4
 #define DRAM_EMI_BASECLOCK_RATE_LP3     2
 
+#define DRAM_IO_BUS_WIDTH_LP5           16
 #define DRAM_IO_BUS_WIDTH_LP4           16
 #define DRAM_IO_BUS_WIDTH_LP3           32
 
 #define DRAM_DATARATE   2
 
-#define DRAM_FREQ_DEFAULT  3733
-#define DDR_RATIO_DEFAULT  8
-#define DRAM_TYPE_DEFAULT  3
+// #ifndef DRAM_FREQ_DEFAULT
+// #define DRAM_FREQ_DEFAULT  4266
+// #endif
+
+// #ifndef DDR_RATIO_DEFAULT
+// #define DDR_RATIO_DEFAULT  8
+// #endif
+
+// #ifndef DRAM_TYPE_DEFAULT
+// #define DRAM_TYPE_DEFAULT  3
+// #endif
 
 #define ADDR_EMI        ((unsigned long)BaseAddrEMI)
 
@@ -126,8 +140,7 @@ enum {
 #define BM_TTYPE1_16_DISABLE			(-1)
 #define BM_TTYPE17_21_ENABLE			(0)
 #define BM_TTYPE17_21_DISABLE			(-1)
-#define BM_BW_LIMITER_ENABLE			(0)
-#define BM_BW_LIMITER_DISABLE			(-1)
+
 
 #define M0_DOUBLE_HALF_BW_1CH	(0x0)
 #define M0_DOUBLE_HALF_BW_2CH	(0x1)
@@ -279,7 +292,7 @@ enum BM_EMI_IPI_Type {
 
 
 /* met_drv define  & global var */
-#define CNT_COUNTDOWN   (0)
+#define CNT_COUNTDOWN   (0)    
 
 /* extern struct metdevice met_sspm_emi; */
 
@@ -292,16 +305,15 @@ extern int metemi_func_opt;
 
 extern int met_emi_regdump;
 
-extern int msel_enable;
-extern unsigned int msel_group1;
-extern unsigned int msel_group2;
-extern unsigned int msel_group3;
+extern unsigned int msel_enable;
+// extern unsigned int msel_group1;
+// extern unsigned int msel_group2;
+// extern unsigned int msel_group3;
+extern unsigned int parameter_apply;
 
 extern struct kobject *kobj_emi;
-extern int rwtype;
+extern unsigned int rwtype;
 
-                 /* 1ms */
-extern int bw_limiter_enable;
 
 extern int ttype1_16_en;
 extern int ttype17_21_en;
@@ -309,7 +321,7 @@ extern int ttype17_21_en;
 extern int dramc_pdir_enable;
 extern int dram_chann_num;
 
-extern int high_priority_filter;
+extern unsigned int high_priority_filter;
 
 extern int ttype_master_val[21];
 extern int ttype_busid_val[21];
@@ -373,7 +385,7 @@ extern char ageexp_msel_rw[FILE_NODE_DATA_LEN];
 
 extern char default_val[FILE_NODE_DATA_LEN];
 
-extern int reserve_wsct_setting;
+
 
 extern struct kobj_attribute clear_setting_attr;
 extern struct kobj_attribute msel_group_ext_attr;
@@ -389,7 +401,7 @@ extern struct kobj_attribute ttype_chn_rank_sel_attr;
 extern struct kobj_attribute ttype_burst_range_attr;
 
 /* for header print*/
-#define MAX_HEADER_LEN (1024 * 6)
+#define MAX_HEADER_LEN (1024 * 10)
 extern char header_str[MAX_HEADER_LEN];
 extern unsigned int output_header_len;
 extern unsigned int output_str_len;
@@ -397,7 +409,7 @@ extern unsigned int output_str_len;
 #define emi_help_msg "  --emi                                 monitor EMI banwidth\n"
 
 extern int emi_use_ondiemet;
-extern int emi_inited;
+extern int emi_inited; 
 
 enum SSPM_Mode {
 	CUSTOMER_MODE = 0x0,
@@ -412,10 +424,11 @@ enum SSPM_Mode {
 DECLARE_KOBJ_ATTR_INT(emi_TP_busfiltr_enable, emi_TP_busfiltr_enable);
 DECLARE_KOBJ_ATTR_INT(emi_regdump, met_emi_regdump);
 DECLARE_KOBJ_ATTR_INT(msel_enable, msel_enable);
-DECLARE_KOBJ_ATTR_HEX_CHECK(msel_group1, msel_group1, msel_group1 > 0 && msel_group1 <= BM_MASTER_ALL);
-DECLARE_KOBJ_ATTR_HEX_CHECK(msel_group2, msel_group2, msel_group2 > 0 && msel_group2 <= BM_MASTER_ALL);
-DECLARE_KOBJ_ATTR_HEX_CHECK(msel_group3, msel_group3, msel_group3 > 0 && msel_group3 <= BM_MASTER_ALL);
+// DECLARE_KOBJ_ATTR_HEX_CHECK(msel_group1, msel_group1, msel_group1 > 0 && msel_group1 <= BM_MASTER_ALL);
+// DECLARE_KOBJ_ATTR_HEX_CHECK(msel_group2, msel_group2, msel_group2 > 0 && msel_group2 <= BM_MASTER_ALL);
+// DECLARE_KOBJ_ATTR_HEX_CHECK(msel_group3, msel_group3, msel_group3 > 0 && msel_group3 <= BM_MASTER_ALL);
 
+// DECLARE_KOBJ_ATTR_HEX_CHECK(emi_select, emi_select, emi_select > 0);
 
 /* KOBJ: rwtype */
 DECLARE_KOBJ_ATTR_INT_CHECK(rwtype, rwtype, rwtype >= 0 && rwtype <= BM_WRITE_ONLY);
@@ -441,16 +454,6 @@ DECLARE_KOBJ_ATTR_STR_LIST_ITEM(
 	);
 DECLARE_KOBJ_ATTR_STR_LIST(ttype17_21_en, ttype17_21_en, ttype17_21_en);
 
-/* KOBJ: bw_limiter_enable */
-DECLARE_KOBJ_ATTR_STR_LIST_ITEM(
-	bw_limiter_enable,
-	KOBJ_ITEM_LIST(
-		{ BM_BW_LIMITER_ENABLE,  "ENABLE" },
-		{ BM_BW_LIMITER_DISABLE, "DISABLE" }
-		)
-	);
-
-DECLARE_KOBJ_ATTR_STR_LIST(bw_limiter_enable, bw_limiter_enable, bw_limiter_enable);
 
 /* KOBJ: ttype_master */
 DECLARE_KOBJ_ATTR_STR_LIST_ITEM(
@@ -705,9 +708,6 @@ DECLARE_KOBJ_TTYPE_BUSID_VAL(21);
 		KOBJ_ATTR_ITEM(high_priority_filter); \
 		KOBJ_ATTR_ITEM(emi_TP_busfiltr_enable); \
 		KOBJ_ATTR_ITEM(msel_enable); \
-		KOBJ_ATTR_ITEM(msel_group1); \
-		KOBJ_ATTR_ITEM(msel_group2); \
-		KOBJ_ATTR_ITEM(msel_group3); \
 		KOBJ_ATTR_ITEM(rwtype); \
 		KOBJ_ATTR_ITEM(ttype17_21_en); \
 		KOBJ_ATTR_ITEM(ttype1_16_en); \
@@ -732,7 +732,6 @@ DECLARE_KOBJ_TTYPE_BUSID_VAL(21);
 		KOBJ_ATTR_ITEM_SERIAL_FNODE(19); \
 		KOBJ_ATTR_ITEM_SERIAL_FNODE(20); \
 		KOBJ_ATTR_ITEM_SERIAL_FNODE(21); \
-		KOBJ_ATTR_ITEM(bw_limiter_enable); \
 		KOBJ_ATTR_ITEM(dramc_pdir_enable); \
 		KOBJ_ATTR_ITEM(clear_setting);\
 		KOBJ_ATTR_ITEM(msel_group_ext);\
@@ -746,16 +745,17 @@ DECLARE_KOBJ_TTYPE_BUSID_VAL(21);
 		KOBJ_ATTR_ITEM(ttype_busid_ext);\
 		KOBJ_ATTR_ITEM(ttype_chn_rank_sel);\
 		KOBJ_ATTR_ITEM(ttype_burst_range);\
-		KOBJ_ATTR_ITEM(reserve_wsct_setting);\
 		KOBJ_ATTR_ITEM(emi_regdump); \
 		KOBJ_ATTR_ITEM(wmask_msel); \
 		KOBJ_ATTR_ITEM(ageexp_msel_rw); \
 		KOBJ_ATTR_ITEM(default_val); \
 		KOBJ_ATTR_ITEM(sspm_support_feature); \
+		KOBJ_ATTR_ITEM(parameter_apply); \
+		KOBJ_ATTR_ITEM(diff_config_per_emi); \
 	} while (0)
 
 
-DECLARE_KOBJ_ATTR_INT(reserve_wsct_setting, reserve_wsct_setting);
+// DECLARE_KOBJ_ATTR_INT(reserve_wsct_setting, reserve_wsct_setting);
 
 extern int MET_BM_Init(void);
 extern void MET_BM_DeInit(void);
@@ -765,36 +765,39 @@ extern void MET_BM_RestoreCfg(void);
 
 
 extern int MET_BM_SetMonitorCounter(const unsigned int counter_num,
-				    const unsigned int master, const unsigned int trans_type);
-extern int MET_BM_SetTtypeCounterRW(unsigned int bmrw0_val, unsigned int bmrw1_val);
-extern int MET_BM_Set_WsctTsct_id_sel(unsigned int counter_num, unsigned int enable);
-extern int MET_BM_SetMaster(const unsigned int counter_num, const unsigned int master);
+				    const unsigned int master, const unsigned int trans_type, unsigned int emi_no);
+extern int MET_BM_SetTtypeCounterRW(unsigned int bmrw0_val, unsigned int bmrw1_val, unsigned int emi_no);
+extern int MET_BM_Set_WsctTsct_id_sel(unsigned int counter_num, unsigned int enable, unsigned int emi_no);
+// extern int MET_BM_SetMaster(const unsigned int counter_num, const unsigned int master);
 extern int MET_BM_SetbusID_En(const unsigned int counter_num,
 			      const unsigned int enable);
 extern int MET_BM_SetbusID(const unsigned int counter_num,
 			   const unsigned int id);
 extern int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int enable);
-extern int MET_BM_SetLatencyCounter(unsigned int enable);
-extern void MET_BM_SetReadWriteType(const unsigned int ReadWriteType);
+extern int MET_BM_SetLatencyCounter(unsigned int enable, unsigned int emi_no);
+extern void MET_BM_SetReadWriteType(const unsigned int ReadWriteType, unsigned int emi_no);
 
-extern unsigned int MET_EMI_GetDramRankNum(void);
-extern unsigned int MET_EMI_GetDramRankNum_CHN1(void);
+extern unsigned int MET_EMI_GetDramRankNum(unsigned int emi_no);
+// extern unsigned int MET_EMI_GetDramRankNum_CHN1(void);
 
 
-extern unsigned int MET_EMI_GetDramChannNum(void);
-extern unsigned int MET_EMI_Get_CONH_2ND(void);
+extern unsigned int MET_EMI_GetDramChannNum(unsigned int emi_no);
+extern unsigned int MET_EMI_Get_CONH_2ND(unsigned int emi_no);
 
 /* SEDA 3.5 NEW */
-extern int MET_BM_SetWSCT_master_rw(unsigned int *master , unsigned int *rw);
-extern int MET_BM_SetWSCT_high_priority(unsigned int *disable, unsigned int *select);
-extern int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask);
-extern int MET_BM_SetWSCT_chn_rank_sel(unsigned int *chn_rank_sel);
-extern int MET_BM_SetWSCT_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, unsigned int *up_bnd);
-extern int MET_BM_SetTSCT_busid_enable(unsigned int *enable);
-extern int MET_BM_SetTtype_high_priority_sel(unsigned int _high_priority_filter, unsigned int *select);
-extern int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int _ttype1_16_en, int _ttype17_21_en);
-extern int MET_BM_SetTtype_chn_rank_sel(unsigned int *chn_rank_sel);
-extern int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, unsigned int *up_bnd);
+extern int MET_BM_SetWSCT_master_rw(unsigned int *master , unsigned int *rw, unsigned int emi_no);
+extern int MET_BM_SetWSCT_high_priority(unsigned int *disable, unsigned int *select, unsigned int emi_no);
+extern int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask, unsigned int emi_no);
+extern int MET_BM_SetWSCT_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int emi_no);
+extern int MET_BM_SetWSCT_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, 
+									unsigned int *up_bnd, unsigned int emi_no);
+extern int MET_BM_SetTSCT_busid_enable(unsigned int *enable, unsigned int emi_no);
+extern int MET_BM_SetTtype_high_priority_sel(unsigned int _high_priority_filter, unsigned int *select, unsigned int emi_no);
+extern int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, 
+										int _ttype1_16_en, int _ttype17_21_en, unsigned int emi_no);
+extern int MET_BM_SetTtype_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int emi_no);
+extern int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, 
+									unsigned int *up_bnd, unsigned int emi_no);
 extern unsigned int MET_EMI_Get_BaseClock_Rate(void);
 
 

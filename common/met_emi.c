@@ -19,7 +19,6 @@
 #include "core_plf_init.h"
 #include "mtk_emi_bm.h"
 #include "interface.h"
-#include "met_dramc.h"
 
 
 /*======================================================================*/
@@ -44,6 +43,7 @@ static void met_emi_resume(void)
 	met_emi_resume_basic();
 }
 
+
 static int emi_print_header(char *buf, int len)
 {
 	len = emi_print_header_basic(buf,len);
@@ -52,6 +52,7 @@ static int emi_print_header(char *buf, int len)
 
 #if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
 #if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+
 static int emi_print_help(char *buf, int len)
 {
 	return snprintf(buf, PAGE_SIZE, emi_help_msg);
@@ -71,6 +72,7 @@ static void ondiemet_emi_stop(void)
 {
 	ondiemet_emi_stop_basic();
 }
+
 #endif
 #endif
 

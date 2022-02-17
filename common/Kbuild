@@ -165,28 +165,20 @@ endif
 
 ifeq ($(BUILD_SSPM_EMI),y)
     MET_EMI := $(if $(filter n,$(FEATURE_SSPM_EMI)),n,y)
-    ifeq ("$(EMI_SEDA_VERSION)", "SEDA3_5")
-        met-$(MET_EMI) += $(MET_CORE)/emi/SEDA3_5/met_emi.o \
-                $(MET_CORE)/emi/SEDA3_5/mtk_emi_bm.o
-    else ifeq ("$(EMI_SEDA_VERSION)", "SEDA3_6")
-        met-$(MET_EMI) += $(MET_CORE)/emi/SEDA3_6/met_emi.o \
-                $(MET_CORE)/emi/SEDA3_6/mtk_emi_bm.o
-    else
-        met-$(MET_EMI) += $(MET_CORE)/emi/SEDA3/met_emi.o \
-                $(MET_CORE)/emi/SEDA3/mtk_emi_bm.o
-    endif
+    met-$(MET_EMI) += $(MET_CORE)/met_emi.o \
+                $(MET_CORE)/mtk_emi_bm.o
 endif
 
-EMI_LOWEFF_SUPPORT := $(if $(EMI_LOWEFF_SUPPORT),$(EMI_LOWEFF_SUPPORT),n)
-ifeq ($(EMI_LOWEFF_SUPPORT), y)
-    subdir-ccflags-y += -DEMI_LOWEFF_SUPPORT
-endif
+#EMI_LOWEFF_SUPPORT := $(if $(EMI_LOWEFF_SUPPORT),$(EMI_LOWEFF_SUPPORT),n)
+#ifeq ($(EMI_LOWEFF_SUPPORT), y)
+#    subdir-ccflags-y += -DEMI_LOWEFF_SUPPORT
+#endif
 
-ifneq ($(wildcard $(MET_PLF_DIR)/met_reg_addr.h),)
-    ccflags-y += -DMET_REG_ARRD
-else
-    $(info ======= there is no $(MET_PLF_DIR)/met_reg_addr.h, will use API to get addr info ========)
-endif
+#ifneq ($(wildcard $(MET_PLF_DIR)/met_reg_addr.h),)
+#    ccflags-y += -DMET_REG_ARRD
+#else
+#    $(info ======= there is no $(MET_PLF_DIR)/met_reg_addr.h, will use API to get addr info ========)
+#endif
 
 ################################################################################
 # MET_GPU
