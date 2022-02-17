@@ -14,6 +14,7 @@
 #define MET_USER_EVENT_SUPPORT
 #include "met_drv.h"
 #include "trace.h"
+#include "mtk_typedefs.h"
 
 #include "core_plf_init.h"
 #include "core_plf_trace.h"
@@ -173,7 +174,7 @@ void vcoredvfs_irq(int opp)
 /*======================================================================*/
 static ssize_t vcorefs_polling_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%d\n", polling_mode);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", polling_mode);
 }
 
 static ssize_t vcorefs_polling_store(struct kobject *kobj,
@@ -251,7 +252,7 @@ static const char help[] =
 	"  --vcoredvfs				monitor VCORE DVFS\n";
 static int vcoredvfs_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help);
+	return SNPRINTF(buf, PAGE_SIZE, help);
 }
 
 static const char header_dvfs[] = "met-info [000] 0.0: met_vcorefs_header:";
@@ -265,24 +266,24 @@ static int vcoredvfs_print_header(char *buf, int len)
 	int num = 0;
 	char **header;
 
-	ret = snprintf(buf, PAGE_SIZE, "met-info [000] 0.0: met_vcorefs_cfg: NUM_OPP:%d\n", met_vcorefs_get_num_opp());
+	ret = SNPRINTF(buf, PAGE_SIZE, "met-info [000] 0.0: met_vcorefs_cfg: NUM_OPP:%d\n", met_vcorefs_get_num_opp());
 
 	/* opp information */
 	num = met_vcorefs_get_opp_info_num();
 	header = met_vcorefs_get_opp_info_name();
 
-	ret += snprintf(buf + ret, PAGE_SIZE, header_dvfs);
+	ret += SNPRINTF(buf + ret, PAGE_SIZE, header_dvfs);
 	for (idx = 0; idx < num; idx++)
-		ret += snprintf(buf + ret, PAGE_SIZE - ret, "%s,", header[idx]);
+		ret += SNPRINTF(buf + ret, PAGE_SIZE - ret, "%s,", header[idx]);
 	buf[strlen(buf)-1] = '\n';
 
 	/* source requests */
 	num = met_vcorefs_get_src_req_num();
 	header = met_vcorefs_get_src_req_name();
 
-	ret += snprintf(buf + ret, PAGE_SIZE - ret, header_ms_dvfs);
+	ret += SNPRINTF(buf + ret, PAGE_SIZE - ret, header_ms_dvfs);
 	for (idx = 0; idx < num; idx++)
-		ret += snprintf(buf + ret, PAGE_SIZE - ret, "%s,", header[idx]);
+		ret += SNPRINTF(buf + ret, PAGE_SIZE - ret, "%s,", header[idx]);
 	buf[strlen(buf)-1] = '\n';
 
 	met_vcoredvfs.mode = 0;
