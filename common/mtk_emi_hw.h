@@ -18,6 +18,9 @@
 /*read from dts*/
 extern int EMI_NUM;
 extern int DRAM_CH_NUM_PER_EMI;
+extern int MET_EMI_support_list;
+extern int ddrphy_ao_misc_cg_ctrl0;
+extern int ddrphy_ao_misc_cg_ctrl2;
 // extern int DRAM_FREQ_DEFAULT;
 // extern int DDR_RATIO_DEFAULT;
 // extern int DRAM_TYPE_DEFAULT;

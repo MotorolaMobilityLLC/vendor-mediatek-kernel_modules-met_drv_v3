@@ -29,6 +29,7 @@
 #define WSCT_AMOUNT 6
 #define TSCT_AMOUNT 3
 
+#define SLC_PMU_CNT_AMOUNT 32
 
 #define DRAM_EMI_BASECLOCK_RATE_LP4     4
 #define DRAM_EMI_BASECLOCK_RATE_LP3     2
@@ -162,6 +163,13 @@ enum BM_EMI_IPI_Type {
 };
 #endif
 
+enum  {
+	DRAMC_EBG_SUPPORT = 0,
+	EMI_FREQ_SUPPORT = 1, //replace the freerun_26M field
+	DRAMC_DCM_CTRL_SUPPORT = 2, // for on/off the dramc dcm control
+	CHN_EMI_LOWEFF_SUPPORT = 3, // not support now
+	SLC_PMU_SUPPORT_IDX = 4,
+};
 
 #define	EMI_OFF			0x0000
 #define EMI_CONA		(0x000-EMI_OFF)
@@ -284,6 +292,107 @@ enum BM_EMI_IPI_Type {
 // #define WMASK_PID_OFFSET
 // #define AGEXP_PID_OFFSET
 
+/* slc pmu cnt filter */
+#define	SLC_OFF			0x0000
+#define SLC_PMU_CNT0_FILTER0    (0x100 - SLC_OFF)
+#define SLC_PMU_CNT0_FILTER1    (0x104 - SLC_OFF)
+#define SLC_PMU_CNT0_BW_LAT_SEL (0x108 - SLC_OFF)
+#define SLC_PMU_CNT1_FILTER0    (0x110 - SLC_OFF)
+#define SLC_PMU_CNT1_FILTER1    (0x114 - SLC_OFF)
+#define SLC_PMU_CNT1_BW_LAT_SEL (0x118 - SLC_OFF)
+#define SLC_PMU_CNT2_FILTER0    (0x120 - SLC_OFF)
+#define SLC_PMU_CNT2_FILTER1    (0x124 - SLC_OFF)
+#define SLC_PMU_CNT2_BW_LAT_SEL (0x128 - SLC_OFF)
+#define SLC_PMU_CNT3_FILTER0    (0x130 - SLC_OFF)
+#define SLC_PMU_CNT3_FILTER1    (0x134 - SLC_OFF)
+#define SLC_PMU_CNT3_BW_LAT_SEL (0x138 - SLC_OFF)
+#define SLC_PMU_CNT4_FILTER0    (0x140 - SLC_OFF)
+#define SLC_PMU_CNT4_FILTER1    (0x144 - SLC_OFF)
+#define SLC_PMU_CNT4_BW_LAT_SEL (0x148 - SLC_OFF)
+#define SLC_PMU_CNT5_FILTER0    (0x150 - SLC_OFF)
+#define SLC_PMU_CNT5_FILTER1    (0x154 - SLC_OFF)
+#define SLC_PMU_CNT5_BW_LAT_SEL (0x158 - SLC_OFF)
+#define SLC_PMU_CNT6_FILTER0    (0x160 - SLC_OFF)
+#define SLC_PMU_CNT6_FILTER1    (0x164 - SLC_OFF)
+#define SLC_PMU_CNT6_BW_LAT_SEL (0x168 - SLC_OFF)
+#define SLC_PMU_CNT7_FILTER0    (0x170 - SLC_OFF)
+#define SLC_PMU_CNT7_FILTER1    (0x174 - SLC_OFF)
+#define SLC_PMU_CNT7_BW_LAT_SEL (0x178 - SLC_OFF)
+#define SLC_PMU_CNT8_FILTER0    (0x180 - SLC_OFF)
+#define SLC_PMU_CNT8_FILTER1    (0x184 - SLC_OFF)
+#define SLC_PMU_CNT8_BW_LAT_SEL (0x188 - SLC_OFF)
+#define SLC_PMU_CNT9_FILTER0    (0x190 - SLC_OFF)
+#define SLC_PMU_CNT9_FILTER1    (0x194 - SLC_OFF)
+#define SLC_PMU_CNT9_BW_LAT_SEL (0x198 - SLC_OFF)
+#define SLC_PMU_CNT10_FILTER0    (0x1A0 - SLC_OFF)
+#define SLC_PMU_CNT10_FILTER1    (0x1A4 - SLC_OFF)
+#define SLC_PMU_CNT10_BW_LAT_SEL (0x1A8 - SLC_OFF)
+#define SLC_PMU_CNT11_FILTER0    (0x1B0 - SLC_OFF)
+#define SLC_PMU_CNT11_FILTER1    (0x1B4 - SLC_OFF)
+#define SLC_PMU_CNT11_BW_LAT_SEL (0x1B8 - SLC_OFF)
+#define SLC_PMU_CNT12_FILTER0    (0x1C0 - SLC_OFF)
+#define SLC_PMU_CNT12_FILTER1    (0x1C4 - SLC_OFF)
+#define SLC_PMU_CNT12_BW_LAT_SEL (0x1C8 - SLC_OFF)
+#define SLC_PMU_CNT13_FILTER0    (0x1D0 - SLC_OFF)
+#define SLC_PMU_CNT13_FILTER1    (0x1D4 - SLC_OFF)
+#define SLC_PMU_CNT13_BW_LAT_SEL (0x1D8 - SLC_OFF)
+#define SLC_PMU_CNT14_FILTER0    (0x1E0 - SLC_OFF)
+#define SLC_PMU_CNT14_FILTER1    (0x1E4 - SLC_OFF)
+#define SLC_PMU_CNT14_BW_LAT_SEL (0x1E8 - SLC_OFF)
+#define SLC_PMU_CNT15_FILTER0    (0x1F0 - SLC_OFF)
+#define SLC_PMU_CNT15_FILTER1    (0x1F4 - SLC_OFF)
+#define SLC_PMU_CNT15_BW_LAT_SEL (0x1F8 - SLC_OFF)
+#define SLC_PMU_CNT16_FILTER0    (0x200 - SLC_OFF)
+#define SLC_PMU_CNT16_FILTER1    (0x204 - SLC_OFF)
+#define SLC_PMU_CNT16_BW_LAT_SEL (0x208 - SLC_OFF)
+#define SLC_PMU_CNT17_FILTER0    (0x210 - SLC_OFF)
+#define SLC_PMU_CNT17_FILTER1    (0x214 - SLC_OFF)
+#define SLC_PMU_CNT17_BW_LAT_SEL (0x218 - SLC_OFF)
+#define SLC_PMU_CNT18_FILTER0    (0x220 - SLC_OFF)
+#define SLC_PMU_CNT18_FILTER1    (0x224 - SLC_OFF)
+#define SLC_PMU_CNT18_BW_LAT_SEL (0x228 - SLC_OFF)
+#define SLC_PMU_CNT19_FILTER0    (0x230 - SLC_OFF)
+#define SLC_PMU_CNT19_FILTER1    (0x234 - SLC_OFF)
+#define SLC_PMU_CNT19_BW_LAT_SEL (0x238 - SLC_OFF)
+#define SLC_PMU_CNT20_FILTER0    (0x240 - SLC_OFF)
+#define SLC_PMU_CNT20_FILTER1    (0x244 - SLC_OFF)
+#define SLC_PMU_CNT20_BW_LAT_SEL (0x248 - SLC_OFF)
+#define SLC_PMU_CNT21_FILTER0    (0x250 - SLC_OFF)
+#define SLC_PMU_CNT21_FILTER1    (0x254 - SLC_OFF)
+#define SLC_PMU_CNT21_BW_LAT_SEL (0x258 - SLC_OFF)
+#define SLC_PMU_CNT22_FILTER0    (0x260 - SLC_OFF)
+#define SLC_PMU_CNT22_FILTER1    (0x264 - SLC_OFF)
+#define SLC_PMU_CNT22_BW_LAT_SEL (0x268 - SLC_OFF)
+#define SLC_PMU_CNT23_FILTER0    (0x270 - SLC_OFF)
+#define SLC_PMU_CNT23_FILTER1    (0x274 - SLC_OFF)
+#define SLC_PMU_CNT23_BW_LAT_SEL (0x278 - SLC_OFF)
+#define SLC_PMU_CNT24_FILTER0    (0x280 - SLC_OFF)
+#define SLC_PMU_CNT24_FILTER1    (0x284 - SLC_OFF)
+#define SLC_PMU_CNT24_BW_LAT_SEL (0x288 - SLC_OFF)
+#define SLC_PMU_CNT25_FILTER0    (0x290 - SLC_OFF)
+#define SLC_PMU_CNT25_FILTER1    (0x294 - SLC_OFF)
+#define SLC_PMU_CNT25_BW_LAT_SEL (0x298 - SLC_OFF)
+#define SLC_PMU_CNT26_FILTER0    (0x2A0 - SLC_OFF)
+#define SLC_PMU_CNT26_FILTER1    (0x2A4 - SLC_OFF)
+#define SLC_PMU_CNT26_BW_LAT_SEL (0x2A8 - SLC_OFF)
+#define SLC_PMU_CNT27_FILTER0    (0x2B0 - SLC_OFF)
+#define SLC_PMU_CNT27_FILTER1    (0x2B4 - SLC_OFF)
+#define SLC_PMU_CNT27_BW_LAT_SEL (0x2B8 - SLC_OFF)
+#define SLC_PMU_CNT28_FILTER0    (0x2C0 - SLC_OFF)
+#define SLC_PMU_CNT28_FILTER1    (0x2C4 - SLC_OFF)
+#define SLC_PMU_CNT28_BW_LAT_SEL (0x2C8 - SLC_OFF)
+#define SLC_PMU_CNT29_FILTER0    (0x2D0 - SLC_OFF)
+#define SLC_PMU_CNT29_FILTER1    (0x2D4 - SLC_OFF)
+#define SLC_PMU_CNT29_BW_LAT_SEL (0x2D8 - SLC_OFF)
+#define SLC_PMU_CNT30_FILTER0    (0x2E0 - SLC_OFF)
+#define SLC_PMU_CNT30_FILTER1    (0x2E4 - SLC_OFF)
+#define SLC_PMU_CNT30_BW_LAT_SEL (0x2E8 - SLC_OFF)
+#define SLC_PMU_CNT31_FILTER0    (0x2F0 - SLC_OFF)
+#define SLC_PMU_CNT31_FILTER1    (0x2F4 - SLC_OFF)
+#define SLC_PMU_CNT31_BW_LAT_SEL (0x2F8 - SLC_OFF)
+
+/*for get emi_freq, APMIXEDSYS 0x1000C000  */
+#define EMIPLL_CON1 0x3B4
 
 /* met_drv define  & global var */
 #define CNT_COUNTDOWN   (0)    
@@ -314,6 +423,7 @@ extern int ttype17_21_en;
 
 extern int dramc_pdir_enable;
 extern int dram_chann_num;
+extern int DRAM_TYPE;
 
 extern unsigned int high_priority_filter;
 
@@ -379,7 +489,17 @@ extern char ageexp_msel_rw[FILE_NODE_DATA_LEN];
 
 extern char default_val[FILE_NODE_DATA_LEN];
 
+/* slc_pmu_cnt_setting_enable */
+extern unsigned int slc_pmu_cnt_setting_enable_val[SLC_PMU_CNT_AMOUNT];
+extern char slc_pmu_cnt_setting_enable[FILE_NODE_DATA_LEN];
 
+/* slc_pmu_cnt_cnt filters*/
+extern unsigned int slc_pmu_cnt_filter0_val[SLC_PMU_CNT_AMOUNT];
+extern char slc_pmu_cnt_filter0[FILE_NODE_DATA_LEN];
+extern unsigned int slc_pmu_cnt_filter1_val[SLC_PMU_CNT_AMOUNT];
+extern char slc_pmu_cnt_filter1[FILE_NODE_DATA_LEN];
+extern unsigned int slc_pmu_cnt_bw_lat_sel_val[SLC_PMU_CNT_AMOUNT];
+extern char slc_pmu_cnt_bw_lat_sel[FILE_NODE_DATA_LEN];
 
 extern struct kobj_attribute clear_setting_attr;
 extern struct kobj_attribute msel_group_ext_attr;
@@ -393,6 +513,12 @@ extern struct kobj_attribute ttype_high_priority_ext_attr;
 extern struct kobj_attribute ttype_busid_ext_attr;
 extern struct kobj_attribute ttype_chn_rank_sel_attr;
 extern struct kobj_attribute ttype_burst_range_attr;
+
+extern struct kobj_attribute slc_pmu_cnt_setting_enable_attr;
+extern struct kobj_attribute slc_pmu_cnt_filter0_attr;
+extern struct kobj_attribute slc_pmu_cnt_filter1_attr;
+extern struct kobj_attribute slc_pmu_cnt_bw_lat_sel_attr;
+
 
 /* for header print*/
 #define MAX_HEADER_LEN (1024 * 10)
@@ -746,6 +872,10 @@ DECLARE_KOBJ_TTYPE_BUSID_VAL(21);
 		KOBJ_ATTR_ITEM(sspm_support_feature); \
 		KOBJ_ATTR_ITEM(parameter_apply); \
 		KOBJ_ATTR_ITEM(diff_config_per_emi); \
+		KOBJ_ATTR_ITEM(slc_pmu_cnt_setting_enable); \
+		KOBJ_ATTR_ITEM(slc_pmu_cnt_filter0); \
+		KOBJ_ATTR_ITEM(slc_pmu_cnt_filter1); \
+		KOBJ_ATTR_ITEM(slc_pmu_cnt_bw_lat_sel); \
 	} while (0)
 
 
@@ -793,6 +923,11 @@ extern int MET_BM_SetTtype_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int
 extern int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, 
 									unsigned int *up_bnd, unsigned int emi_no);
 extern unsigned int MET_EMI_Get_BaseClock_Rate(void);
+
+//extern int MET_BM_SetSLC_pmu_cnt_setting_enable(unsigned int *enable, unsigned int emi_no);
+extern int MET_BM_SetSLC_pmu_cnt_filter0(unsigned int *setting, unsigned int emi_no);
+extern int MET_BM_SetSLC_pmu_cnt_filter1(unsigned int *setting, unsigned int emi_no);
+extern int MET_BM_SetSLC_pmu_cnt_bw_lat_sel(unsigned int *setting, unsigned int emi_no);
 
 
 /* file node controll */
@@ -874,6 +1009,34 @@ extern ssize_t ageexp_msel_rw_store(struct kobject *kobj,
 		const char *buf,
 		size_t n);
 extern ssize_t ageexp_msel_rw_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
+
+extern void _clear_slc_pmu_cnt_setting_enable(void);
+extern ssize_t slc_pmu_cnt_setting_enable_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n);
+extern ssize_t slc_pmu_cnt_setting_enable_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
+
+extern void _clear_slc_pmu_cnt_filter0(void);
+extern ssize_t slc_pmu_cnt_filter0_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n);
+extern ssize_t slc_pmu_cnt_filter0_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
+
+extern void _clear_slc_pmu_cnt_filter1(void);
+extern ssize_t slc_pmu_cnt_filter1_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n);
+extern ssize_t slc_pmu_cnt_filter1_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
+
+extern void _clear_slc_pmu_cnt_bw_lat_sel(void);
+extern ssize_t slc_pmu_cnt_bw_lat_sel_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n);
+extern ssize_t slc_pmu_cnt_bw_lat_sel_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
 
 extern void _clear_setting(void);
 extern ssize_t clear_setting_store(struct kobject *kobj,

@@ -87,6 +87,8 @@ void __iomem *BaseAddrCHN_EMI[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrDRAMC[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrDDRPHY_AO[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 // void __iomem *BaseAddrDRAMC0_AO[EMI_NUM][MET_MAX_DRAM_CH_NUM]; //phase out,not use anymore
+void __iomem *BaseAddrAPMIXEDSYS;
+void __iomem *BaseAddrSLC_PMU[MET_MAX_EMI_NUM];
 
 /*read from dts*/
 int EMI_NUM;
@@ -94,8 +96,9 @@ int DRAM_CH_NUM_PER_EMI;
 int DRAM_FREQ_DEFAULT;
 int DDR_RATIO_DEFAULT;
 int DRAM_TYPE_DEFAULT;
-
-
+int MET_EMI_support_list = 0x0; /*read from dts*/
+int ddrphy_ao_misc_cg_ctrl0;
+int ddrphy_ao_misc_cg_ctrl2;
 
 
 
@@ -195,6 +198,108 @@ const unsigned int emi_chn_config[] = {
 #define EMI_CHN_CONFIG_MX_NR (sizeof(emi_chn_config)/sizeof(unsigned int))
 static unsigned int emi_chn_config_val[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM][EMI_CHN_CONFIG_MX_NR];
 
+const unsigned int slc_config[] = {
+	SLC_PMU_CNT0_FILTER0, 
+	SLC_PMU_CNT0_FILTER1, 
+	SLC_PMU_CNT0_BW_LAT_SEL,
+	SLC_PMU_CNT1_FILTER0,
+	SLC_PMU_CNT1_FILTER1,
+	SLC_PMU_CNT1_BW_LAT_SEL,
+	SLC_PMU_CNT2_FILTER0,
+	SLC_PMU_CNT2_FILTER1,
+	SLC_PMU_CNT2_BW_LAT_SEL,
+	SLC_PMU_CNT3_FILTER0, 
+	SLC_PMU_CNT3_FILTER1, 
+	SLC_PMU_CNT3_BW_LAT_SEL,
+	SLC_PMU_CNT4_FILTER0, 
+	SLC_PMU_CNT4_FILTER1, 
+	SLC_PMU_CNT4_BW_LAT_SEL,
+	SLC_PMU_CNT5_FILTER0, 
+	SLC_PMU_CNT5_FILTER1, 
+	SLC_PMU_CNT5_BW_LAT_SEL,
+	SLC_PMU_CNT6_FILTER0, 
+	SLC_PMU_CNT6_FILTER1, 
+	SLC_PMU_CNT6_BW_LAT_SEL,
+	SLC_PMU_CNT7_FILTER0, 
+	SLC_PMU_CNT7_FILTER1, 
+	SLC_PMU_CNT7_BW_LAT_SEL,
+	SLC_PMU_CNT8_FILTER0, 
+	SLC_PMU_CNT8_FILTER1, 
+	SLC_PMU_CNT8_BW_LAT_SEL,
+	SLC_PMU_CNT9_FILTER0, 
+	SLC_PMU_CNT9_FILTER1, 
+	SLC_PMU_CNT9_BW_LAT_SEL,
+	SLC_PMU_CNT10_FILTER0,
+	SLC_PMU_CNT10_FILTER1,
+	SLC_PMU_CNT10_BW_LAT_SEL,
+	SLC_PMU_CNT11_FILTER0,
+	SLC_PMU_CNT11_FILTER1,
+	SLC_PMU_CNT11_BW_LAT_SEL,
+	SLC_PMU_CNT12_FILTER0,
+	SLC_PMU_CNT12_FILTER1,
+	SLC_PMU_CNT12_BW_LAT_SEL,
+	SLC_PMU_CNT13_FILTER0,
+	SLC_PMU_CNT13_FILTER1,
+	SLC_PMU_CNT13_BW_LAT_SEL,
+	SLC_PMU_CNT14_FILTER0,
+	SLC_PMU_CNT14_FILTER1,
+	SLC_PMU_CNT14_BW_LAT_SEL,
+	SLC_PMU_CNT15_FILTER0,
+	SLC_PMU_CNT15_FILTER1,
+	SLC_PMU_CNT15_BW_LAT_SEL,
+	SLC_PMU_CNT16_FILTER0,
+	SLC_PMU_CNT16_FILTER1,
+	SLC_PMU_CNT16_BW_LAT_SEL,
+	SLC_PMU_CNT17_FILTER0,
+	SLC_PMU_CNT17_FILTER1,
+	SLC_PMU_CNT17_BW_LAT_SEL,
+	SLC_PMU_CNT18_FILTER0,
+	SLC_PMU_CNT18_FILTER1,
+	SLC_PMU_CNT18_BW_LAT_SEL,
+	SLC_PMU_CNT19_FILTER0,
+	SLC_PMU_CNT19_FILTER1,
+	SLC_PMU_CNT19_BW_LAT_SEL,
+	SLC_PMU_CNT20_FILTER0,
+	SLC_PMU_CNT20_FILTER1,
+	SLC_PMU_CNT20_BW_LAT_SEL,
+	SLC_PMU_CNT21_FILTER0,
+	SLC_PMU_CNT21_FILTER1,
+	SLC_PMU_CNT21_BW_LAT_SEL,
+	SLC_PMU_CNT22_FILTER0,
+	SLC_PMU_CNT22_FILTER1,
+	SLC_PMU_CNT22_BW_LAT_SEL,
+	SLC_PMU_CNT23_FILTER0,
+	SLC_PMU_CNT23_FILTER1,
+	SLC_PMU_CNT23_BW_LAT_SEL,
+	SLC_PMU_CNT24_FILTER0,
+	SLC_PMU_CNT24_FILTER1,
+	SLC_PMU_CNT24_BW_LAT_SEL,
+	SLC_PMU_CNT25_FILTER0,
+	SLC_PMU_CNT25_FILTER1,
+	SLC_PMU_CNT25_BW_LAT_SEL,
+	SLC_PMU_CNT26_FILTER0,
+	SLC_PMU_CNT26_FILTER1,
+	SLC_PMU_CNT26_BW_LAT_SEL,
+	SLC_PMU_CNT27_FILTER0,
+	SLC_PMU_CNT27_FILTER1,
+	SLC_PMU_CNT27_BW_LAT_SEL,
+	SLC_PMU_CNT28_FILTER0,
+	SLC_PMU_CNT28_FILTER1,
+	SLC_PMU_CNT28_BW_LAT_SEL,
+	SLC_PMU_CNT29_FILTER0,
+	SLC_PMU_CNT29_FILTER1,
+	SLC_PMU_CNT29_BW_LAT_SEL,
+	SLC_PMU_CNT30_FILTER0,
+	SLC_PMU_CNT30_FILTER1,
+	SLC_PMU_CNT30_BW_LAT_SEL,
+	SLC_PMU_CNT31_FILTER0,
+	SLC_PMU_CNT31_FILTER1,
+	SLC_PMU_CNT31_BW_LAT_SEL
+};
+#define SLC_CONFIG_MX_NR (sizeof(slc_config)/sizeof(unsigned int))
+static unsigned int slc_config_val[MET_MAX_EMI_NUM][SLC_CONFIG_MX_NR];
+
+
 enum MET_EMI_DEFAULT_VAL_LIST{
 	e_MET_DRAM_FREQ = 0,
 	e_MET_DRAM_TYPE,
@@ -220,12 +325,15 @@ int MET_BM_Init(void)
 	u32 DDRPHY_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 	u32 CHN_EMI_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 	u32 CEN_EMI_PHY_ADDR[MET_MAX_EMI_NUM];
+	u32 SLC_PMU_PHY_ADDR[MET_MAX_EMI_NUM];
+	u32 APMIXEDSYS_ADDR = 0;
 
 	unsigned int cen_emi_reg_size = 0x1000;
 	unsigned int chn_emi_reg_size = 0xA90;
 	unsigned int dramc_nao_reg_size = 0x76C;
 	unsigned int ddrphy_ao_reg_size = 0x1650;
-
+	unsigned int slc_pmu_reg_size = 0x1000;
+	unsigned int apmixedsys_reg_size = 0x410;
 
 	// node = of_find_node_by_name(NULL, "met");
 	// if (!node) {
@@ -245,6 +353,16 @@ int MET_BM_Init(void)
 		PR_BOOTMSG("Cannot get emi_num index from dts(%d)\n");
 		return -1;
 	}
+	ret = of_property_read_u32_index(node, // device node
+									"dram_num",  //device name 
+									0, //offset
+									&dram_chann_num);
+	if (ret) {
+		PR_BOOTMSG("Cannot get emi_num index from dts(%d)\n");
+		return -1;
+	}
+	DRAM_CH_NUM_PER_EMI = dram_chann_num;
+
 	ret = of_property_read_u32_index(node, // device node
 									"dram_freq_default",  //device name 
 									0, //offset
@@ -269,6 +387,15 @@ int MET_BM_Init(void)
 									&DRAM_TYPE_DEFAULT);
 	if (ret) {
 		PR_BOOTMSG("Cannot get dram_type_default index from dts\n");
+		return -1;
+	}
+
+	ret = of_property_read_u32_index(node, // device node
+									"met_emi_support_list",  //device name 
+									0, //offset
+									&MET_EMI_support_list);
+	if (ret) {
+		PR_BOOTMSG("Cannot get MET_EMI_support_list index from dts\n");
 		return -1;
 	}
 
@@ -305,8 +432,59 @@ int MET_BM_Init(void)
 		return -1;
 	}
 
+	ret = of_property_read_u32_index(node, // device node
+									"ddrphy_ao_misc_cg_ctrl0",  //device name 
+									0, //offset
+									&ddrphy_ao_misc_cg_ctrl0);
+	if (ret) {
+		PR_BOOTMSG("Cannot get ddrphy_ao_misc_cg_ctrl0 index from dts\n");
+		return -1;
+	}
+
+	ret = of_property_read_u32_index(node, // device node
+									"ddrphy_ao_misc_cg_ctrl2",  //device name 
+									0, //offset
+									&ddrphy_ao_misc_cg_ctrl2);
+	if (ret) {
+		PR_BOOTMSG("Cannot get ddrphy_ao_misc_cg_ctrl2 index from dts\n");
+		return -1;
+	}
+
+	if (MET_EMI_support_list & (1<<EMI_FREQ_SUPPORT))
+	{
+		ret = of_property_read_u32_index(node, // device node
+										"apmixedsys_reg_size",  //device name 
+										0, //offset
+										&apmixedsys_reg_size);
+		if (ret) {
+			PR_BOOTMSG("Cannot get apmixedsts_reg_size index from dts\n");
+			return -1;
+		}
+
+		/*get the emi freq*/
+		ret = of_property_read_u32_index(node, // device node
+										"apmixedsys_reg_base",  //device name 
+										0, //offset
+										&APMIXEDSYS_ADDR);
+		if (ret) {
+			PR_BOOTMSG("Cannot get apmixedsts_reg_base index from dts\n");
+			return -1;
+		}
+	}
+
+	if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+		ret = of_property_read_u32_index(node, // device node
+										"slc_pmu_reg_size",  //device name 
+										0, //offset
+										&slc_pmu_reg_size);
+		if (ret) {
+			PR_BOOTMSG("Cannot get slc_pmu_reg_size index from dts\n");
+			return -1;
+		}
+	}
+
 	/* emi channel number*/
-	DRAM_CH_NUM_PER_EMI = dram_chann_num = MET_EMI_GetDramChannNum(0);
+	// DRAM_CH_NUM_PER_EMI = dram_chann_num = MET_EMI_GetDramChannNum(0);
 
 	for (emi_no = 0; emi_no < EMI_NUM; emi_no++)
 	{
@@ -316,6 +494,14 @@ int MET_BM_Init(void)
 										CEN_EMI_PHY_ADDR + emi_no);
 		if (ret)
 			PR_BOOTMSG("Cannot get cen_emi_reg_base index from dts\n");
+
+		ret = of_property_read_u32_index(node, // device node
+										"slc_pmu_reg_base",  //device name 
+										emi_no,
+										SLC_PMU_PHY_ADDR + emi_no);
+		if (ret)
+			PR_BOOTMSG("Cannot get slc_pmu_reg_base index from dts\n");
+
 
 		for (i=0; i<dram_chann_num; i++)
 		{
@@ -347,7 +533,6 @@ int MET_BM_Init(void)
 			}
 		}
 	}
-
 
 	for (emi_no = 0; emi_no < EMI_NUM; emi_no++)
 	{
@@ -382,8 +567,28 @@ int MET_BM_Init(void)
 				return -1;
 			}
 		}
+
+		/*SLC PMU*/
+		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+			BaseAddrSLC_PMU[emi_no] = ioremap(SLC_PMU_PHY_ADDR[emi_no], slc_pmu_reg_size);
+			if (BaseAddrSLC_PMU[emi_no]==NULL)
+			{
+				PR_BOOTMSG("slc_pmu_%d ioremap fail\n",emi_no);
+				return -1;
+			}
+			PR_BOOTMSG("MET EMI: map slc pmu to %p\n", BaseAddrSLC_PMU[emi_no]);
+		}
 	}
 
+	if (MET_EMI_support_list & (1<<EMI_FREQ_SUPPORT))
+	{
+		BaseAddrAPMIXEDSYS = ioremap(APMIXEDSYS_ADDR, apmixedsys_reg_size);
+		if (BaseAddrAPMIXEDSYS == NULL)
+		{
+			PR_BOOTMSG("APMIXEDSYS_ADDR[%X] ioremap size[%X] fail\n",APMIXEDSYS_ADDR, apmixedsys_reg_size);
+			return -1;
+		}
+	}
 
 	/* set the init value */
 	met_emi_default_val[e_MET_DRAM_FREQ] = DRAM_FREQ_DEFAULT;
@@ -398,7 +603,12 @@ int MET_BM_Init(void)
 void MET_BM_DeInit(void)
 {
 	/* TBC */
-	/* do unioremap */
+	/* do iounmap */
+	PR_BOOTMSG("met_drv do MET_BM_DeInit\n");
+	if (BaseAddrAPMIXEDSYS)
+		iounmap(BaseAddrAPMIXEDSYS);
+
+	BaseAddrAPMIXEDSYS = NULL;
 }
 
 /* support multi-emi */
@@ -415,6 +625,11 @@ void MET_BM_SaveCfg(void)
 		for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++) {
 			emi_chn_config_val[emi_no][0][i] = emi_readl(IOMEM(BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]));
 		}
+
+		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+			for (i = 0; i < SLC_CONFIG_MX_NR; i++)
+				slc_config_val[emi_no][i] = emi_readl(IOMEM((unsigned long)BaseAddrSLC_PMU[emi_no] + slc_config[i]));
+		}
 	}
 }
 
@@ -429,6 +644,11 @@ void MET_BM_RestoreCfg(void)
 			emi_reg_sync_writel(emi_config_val[emi_no][i], (unsigned long)BaseAddrEMI[emi_no] + emi_config[i]);
 		for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++) 
 			emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
+
+		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+			for (i = 0; i < EMI_CONFIG_MX_NR; i++)
+				emi_reg_sync_writel(slc_config_val[emi_no][i], (unsigned long)BaseAddrSLC_PMU[emi_no] + slc_config[i]);
+		}
 	}
 }
 
@@ -515,6 +735,7 @@ int MET_BM_Set_WsctTsct_id_sel(unsigned int counter_num, unsigned int enable, un
 	return BM_REQ_OK;
 }
 
+#if 0 /* not use anymore */
 int MET_BM_SetMaster(const unsigned int counter_num, const unsigned int master)
 {
 	unsigned int value, addr;
@@ -542,7 +763,7 @@ int MET_BM_SetMaster(const unsigned int counter_num, const unsigned int master)
 
 	return BM_REQ_OK;
 }
-
+#endif
 
 int MET_BM_SetbusID_En(const unsigned int counter_num,
 		       const unsigned int enable)
@@ -1043,6 +1264,34 @@ int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, un
 	return BM_REQ_OK;
 }
 
+int MET_BM_SetSLC_pmu_reg(unsigned int counter_num, unsigned int offset, unsigned int filter_setting, unsigned int emi_no)
+{
+	//volatile unsigned int value;
+	//value = 0;
+	//value =
+	//    ((emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2)) & (~(1 << (28 + counter_num)))) |
+	//     (enable << (28 + counter_num)));
+	//PR_BOOTMSG("emi init!\n")
+	emi_reg_sync_writel(filter_setting, (unsigned long)BaseAddrSLC_PMU[emi_no] + offset + (counter_num << 4));
+
+	return BM_REQ_OK;
+}
+
+int MET_BM_SetSLC_pmu_cnt_filter(unsigned int *enable, unsigned int *filter0, unsigned int *filter1, unsigned int *bw_lat_sel, unsigned int emi_no)
+{
+	int i;
+	
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		if(*(enable+i)){
+			MET_BM_SetSLC_pmu_reg(i, SLC_PMU_CNT0_FILTER0, *(filter0+i), emi_no);
+			MET_BM_SetSLC_pmu_reg(i, SLC_PMU_CNT0_FILTER1, *(filter1+i), emi_no);
+			MET_BM_SetSLC_pmu_reg(i, SLC_PMU_CNT0_BW_LAT_SEL, *(bw_lat_sel+i), emi_no);
+		}
+	}
+
+	return BM_REQ_OK;
+}
+
 unsigned int MET_EMI_Get_CONH_2ND(unsigned int emi_no)
 {
 	return readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_CONH_2ND));
@@ -1093,6 +1342,7 @@ DECLARE_MULTI_EMI_VAR_INT(ttype17_21_en);
 
 int dramc_pdir_enable;
 int dram_chann_num = 1;
+int DRAM_TYPE;
 
 // int ttype_master_val[21];
 // int ttype_busid_val[21];
@@ -1184,6 +1434,20 @@ char wmask_msel[FILE_NODE_DATA_LEN] = {'\0'};
 DECLARE_MULTI_EMI_VAR_UINT_ARRAY(ageexp_msel_val,MET_MAX_DRAM_CH_NUM);
 DECLARE_MULTI_EMI_VAR_UINT_ARRAY(ageexp_rw_val,MET_MAX_DRAM_CH_NUM);
 char ageexp_msel_rw[FILE_NODE_DATA_LEN] = {'\0'};
+
+// unsigned int slc_pmu_cnt_setting_enable_val[SLC_PMU_CNT_AMOUNT];
+DECLARE_MULTI_EMI_VAR_UINT_ARRAY(slc_pmu_cnt_setting_enable_val,SLC_PMU_CNT_AMOUNT);
+char slc_pmu_cnt_setting_enable[FILE_NODE_DATA_LEN] = {'\0'};
+
+// unsigned int slc_pmu_cnt_filter0_val[SLC_PMU_CNT_AMOUNT];
+// unsigned int slc_pmu_cnt_filter1_val[SLC_PMU_CNT_AMOUNT];
+// unsigned int slc_pmu_cnt_bw_lat_sel_val[SLC_PMU_CNT_AMOUNT];
+DECLARE_MULTI_EMI_VAR_UINT_ARRAY(slc_pmu_cnt_filter0_val,SLC_PMU_CNT_AMOUNT);
+char slc_pmu_cnt_filter0[FILE_NODE_DATA_LEN] = {'\0'};
+DECLARE_MULTI_EMI_VAR_UINT_ARRAY(slc_pmu_cnt_filter1_val,SLC_PMU_CNT_AMOUNT);
+char slc_pmu_cnt_filter1[FILE_NODE_DATA_LEN] = {'\0'};
+DECLARE_MULTI_EMI_VAR_UINT_ARRAY(slc_pmu_cnt_bw_lat_sel_val,SLC_PMU_CNT_AMOUNT);
+char slc_pmu_cnt_bw_lat_sel[FILE_NODE_DATA_LEN] = {'\0'};
 
 
 // int reserve_wsct_setting;
@@ -1411,7 +1675,7 @@ ssize_t wsct_rw_store(struct kobject *kobj,
 			return -EINVAL;
 		}
 
-		PR_BOOTMSG("_id[%s] _rw_type[%s]\n",_id, _rw_type);
+		// PR_BOOTMSG("_id[%s] _rw_type[%s]\n",_id, _rw_type);
 		if (kstrtouint(_id, 0, &id_int) != 0) {
 			PR_BOOTMSG("_id[%s] trans to hex err\n",_id);
 			_clear_wsct_rw();
@@ -2516,6 +2780,362 @@ ssize_t ageexp_msel_rw_show(struct kobject *kobj, struct kobj_attribute *attr, c
 }
 
 
+void _clear_slc_pmu_cnt_setting_enable(void) {
+	int i;
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		slc_pmu_cnt_setting_enable_val[i] = 0;
+	}
+	slc_pmu_cnt_setting_enable[0] = '\0';
+}
+
+ssize_t slc_pmu_cnt_setting_enable_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n)
+{
+	int ret;
+	char *token, *cur= slc_pmu_cnt_setting_enable;
+	char *_id = NULL, *_enable = NULL;
+	int  id_int = 0;
+
+	_clear_slc_pmu_cnt_setting_enable();
+
+	ret = snprintf(slc_pmu_cnt_setting_enable, FILE_NODE_DATA_LEN, "%s", buf);
+	if (ret < 0) return -EINVAL;
+
+	slc_pmu_cnt_setting_enable[n-1]='\0';
+
+
+	while (cur != NULL) {
+		token = strsep(&cur, delim_comma);
+		/*PR_BOOTMSG("token: %s\n",token);*/
+		/*token EX: 4:R , 5:W (ID,RW)*/
+
+		_id = strsep(&token, delim_coclon); // ID
+		_enable = strsep(&token, delim_coclon);
+
+
+		PR_BOOTMSG("_id[%s] _enable[%s]\n",_id, _enable);
+
+		if (_id == NULL || _enable == NULL) {
+			PR_BOOTMSG("err : _id[%s] _enable[%s], para can't be NULL\n",_id, _enable);
+			_clear_slc_pmu_cnt_setting_enable();
+			return -EINVAL;
+		}
+
+		if (kstrtouint(_id, 0, &id_int) != 0) {
+			PR_BOOTMSG("_id[%s] trans to hex err\n",_id);
+			_clear_slc_pmu_cnt_setting_enable();
+			return -EINVAL;
+		}
+
+
+		if ( id_int >= 0 && id_int < SLC_PMU_CNT_AMOUNT) {
+			if ( 0 == strncmp("disable", _enable, 7)) {
+				slc_pmu_cnt_setting_enable_val[id_int] = 0;
+			} else if ( 0 == strncmp("enable", _enable, 6)) {
+				slc_pmu_cnt_setting_enable_val[id_int] = 1;
+			} else {
+				PR_BOOTMSG("_id[%s] has err enable[%s] (enable/disable)\n", _id, _enable);
+				_clear_slc_pmu_cnt_setting_enable();
+				return -EINVAL;
+			}
+
+		} else {
+			PR_BOOTMSG("id[%d] exceed the range, it must be 0~%d\n",id_int, SLC_PMU_CNT_AMOUNT-1);
+			_clear_slc_pmu_cnt_setting_enable();
+			return -EINVAL;
+		}
+	}
+#ifdef FILE_NODE_DBG
+	PR_BOOTMSG("slc_pmu_cnt_setting_enable input data [%s]\n",slc_pmu_cnt_setting_enable);
+	int i;
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		PR_BOOTMSG("id[%d]=(%d)\n", i, slc_pmu_cnt_setting_enable_val[i]);
+	}
+#endif
+	return n;
+}
+
+ssize_t slc_pmu_cnt_setting_enable_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	int i;
+
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		ret += snprintf(buf + ret, PAGE_SIZE - ret,"%d:%X\n", i, slc_pmu_cnt_setting_enable_val[i]);
+	}
+	return strlen(buf);
+}
+
+void _clear_slc_pmu_cnt_filter0(void) {
+	int i;
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		slc_pmu_cnt_filter0_val[i] = 0;
+	}
+	slc_pmu_cnt_filter0[0] = '\0';
+}
+
+ssize_t slc_pmu_cnt_filter0_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n)
+{
+	/*parse cnt_id:setting,
+	1. split data  by ","
+	2. split subdata by ":"
+	3. check the value is OK
+
+	don't clear the setting, do this by echo 1 > clear_setting
+	*/
+
+	int ret;
+	char *token, *cur= slc_pmu_cnt_filter0;
+	char *_id = NULL, *_setting = NULL;
+	int id_int = 0;
+
+	_clear_slc_pmu_cnt_filter0();
+
+	ret = snprintf(slc_pmu_cnt_filter0, FILE_NODE_DATA_LEN, "%s", buf);
+	if (ret < 0) return -EINVAL;
+
+	slc_pmu_cnt_filter0[n-1]='\0';
+
+	while (cur != NULL) {
+		token = strsep(&cur, delim_comma);
+		/*PR_BOOTMSG("token: %s\n",token);*/
+		/*token EX: 4:0xff , (ID,master_group)*/
+
+		_id = strsep(&token, delim_coclon); // ID
+		_setting = strsep(&token, delim_coclon);
+
+		// PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting);
+
+		if (_id == NULL || _setting == NULL) {
+			PR_BOOTMSG("err: _id[%s] _setting[%s], para can't be NULL\n",_id,_setting);
+			_clear_slc_pmu_cnt_filter0();
+			return -EINVAL;
+		}
+
+		if (kstrtouint(_id, 0, &id_int) != 0) {
+			PR_BOOTMSG("_id[%s] trans to hex err\n",_id);
+			_clear_slc_pmu_cnt_filter0();
+			return -EINVAL;
+		}
+
+
+		if ( id_int >= 0 && id_int < SLC_PMU_CNT_AMOUNT) {
+			if (kstrtouint(_setting, 0, &slc_pmu_cnt_filter0_val[id_int]) != 0) {
+				PR_BOOTMSG("_setting[%s] trans to hex err\n",_setting);
+				_clear_slc_pmu_cnt_filter0();
+				return -EINVAL;
+			}
+		} else {
+			PR_BOOTMSG("id[%d] exceed the range, it must be 0~%d\n",id_int, SLC_PMU_CNT_AMOUNT-1);
+			_clear_slc_pmu_cnt_filter0();
+			return -EINVAL;
+		}
+	}
+#ifdef FILE_NODE_DBG
+	PR_BOOTMSG("input data [%s]\n",slc_pmu_cnt_filter0);
+	int i;
+	PR_BOOTMSG("save data\n");
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		PR_BOOTMSG("id[%d]=%X\n",i,slc_pmu_cnt_filter0_val[i]);
+	}
+#endif
+	return n;
+}
+
+ssize_t slc_pmu_cnt_filter0_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	int i;
+
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		ret += snprintf(buf + ret, PAGE_SIZE - ret,"%d:%X\n", i, slc_pmu_cnt_filter0_val[i]);
+	}
+	return strlen(buf);
+}
+
+void _clear_slc_pmu_cnt_filter1(void) {
+	int i;
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		slc_pmu_cnt_filter1_val[i] = 0;
+	}
+	slc_pmu_cnt_filter1[0] = '\0';
+}
+ssize_t slc_pmu_cnt_filter1_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n)
+{
+	/*parse cnt_id:setting,
+	1. split data  by ","
+	2. split subdata by ":"
+	3. check the value is OK
+
+	don't clear the setting, do this by echo 1 > clear_setting
+	*/
+
+	int ret;
+	char *token, *cur= slc_pmu_cnt_filter1;
+	char *_id = NULL, *_setting = NULL;
+	int id_int = 0;
+
+	_clear_slc_pmu_cnt_filter1();
+
+	ret = snprintf(slc_pmu_cnt_filter1, FILE_NODE_DATA_LEN, "%s", buf);
+	if (ret < 0) return -EINVAL;
+
+	slc_pmu_cnt_filter1[n-1]='\0';
+
+	while (cur != NULL) {
+		token = strsep(&cur, delim_comma);
+		/*PR_BOOTMSG("token: %s\n",token);*/
+		/*token EX: 4:0xff , (ID,master_group)*/
+
+		_id = strsep(&token, delim_coclon); // ID
+		_setting = strsep(&token, delim_coclon);
+
+		// PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting);
+
+		if (_id == NULL || _setting == NULL) {
+			PR_BOOTMSG("err: _id[%s] _setting[%s], para can't be NULL\n",_id,_setting);
+			_clear_slc_pmu_cnt_filter1();
+			return -EINVAL;
+		}
+
+		if (kstrtouint(_id, 0, &id_int) != 0) {
+			PR_BOOTMSG("_id[%s] trans to hex err\n",_id);
+			_clear_slc_pmu_cnt_filter1();
+			return -EINVAL;
+		}
+
+
+		if ( id_int >= 0 && id_int < SLC_PMU_CNT_AMOUNT) {
+			if (kstrtouint(_setting, 0, &slc_pmu_cnt_filter1_val[id_int]) != 0) {
+				PR_BOOTMSG("_setting[%s] trans to hex err\n",_setting);
+				_clear_slc_pmu_cnt_filter1();
+				return -EINVAL;
+			}
+		} else {
+			PR_BOOTMSG("id[%d] exceed the range, it must be 0~%d\n",id_int, SLC_PMU_CNT_AMOUNT-1);
+			_clear_slc_pmu_cnt_filter1();
+			return -EINVAL;
+		}
+	}
+#ifdef FILE_NODE_DBG
+	PR_BOOTMSG("input data [%s]\n",slc_pmu_cnt_filter1);
+	int i;
+	PR_BOOTMSG("save data\n");
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		PR_BOOTMSG("id[%d]=%X\n",i,slc_pmu_cnt_filter1_val[i]);
+	}
+#endif
+	return n;
+}
+
+ssize_t slc_pmu_cnt_filter1_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	int i;
+
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		ret += snprintf(buf + ret, PAGE_SIZE - ret,"%d:%X\n", i, slc_pmu_cnt_filter1_val[i]);
+	}
+	return strlen(buf);
+}
+
+void _clear_slc_pmu_cnt_bw_lat_sel(void) {
+	int i;
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		slc_pmu_cnt_bw_lat_sel_val[i] = 0;
+	}
+	slc_pmu_cnt_bw_lat_sel[0] = '\0';
+}
+ssize_t slc_pmu_cnt_bw_lat_sel_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n)
+{
+	/*parse cnt_id:setting,
+	1. split data  by ","
+	2. split subdata by ":"
+	3. check the value is OK
+
+	don't clear the setting, do this by echo 1 > clear_setting
+	*/
+
+	int ret;
+	char *token, *cur= slc_pmu_cnt_bw_lat_sel;
+	char *_id = NULL, *_setting = NULL;
+	int id_int = 0;
+
+	_clear_slc_pmu_cnt_bw_lat_sel();
+
+	ret = snprintf(slc_pmu_cnt_bw_lat_sel, FILE_NODE_DATA_LEN, "%s", buf);
+	if (ret < 0) return -EINVAL;
+
+	slc_pmu_cnt_bw_lat_sel[n-1]='\0';
+
+	while (cur != NULL) {
+		token = strsep(&cur, delim_comma);
+		/*PR_BOOTMSG("token: %s\n",token);*/
+		/*token EX: 4:0xff , (ID,master_group)*/
+
+		_id = strsep(&token, delim_coclon); // ID
+		_setting = strsep(&token, delim_coclon);
+
+		// PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting);
+
+		if (_id == NULL || _setting == NULL) {
+			PR_BOOTMSG("err: _id[%s] _setting[%s], para can't be NULL\n",_id,_setting);
+			_clear_slc_pmu_cnt_bw_lat_sel();
+			return -EINVAL;
+		}
+
+		if (kstrtouint(_id, 0, &id_int) != 0) {
+			PR_BOOTMSG("_id[%s] trans to hex err\n",_id);
+			_clear_slc_pmu_cnt_bw_lat_sel();
+			return -EINVAL;
+		}
+
+
+		if ( id_int >= 0 && id_int < SLC_PMU_CNT_AMOUNT) {
+			if (kstrtouint(_setting, 0, &slc_pmu_cnt_bw_lat_sel_val[id_int]) != 0) {
+				PR_BOOTMSG("_setting[%s] trans to hex err\n",_setting);
+				_clear_slc_pmu_cnt_bw_lat_sel();
+				return -EINVAL;
+			}
+		} else {
+			PR_BOOTMSG("id[%d] exceed the range, it must be 0~%d\n",id_int, SLC_PMU_CNT_AMOUNT-1);
+			_clear_slc_pmu_cnt_bw_lat_sel();
+			return -EINVAL;
+		}
+	}
+#ifdef FILE_NODE_DBG
+	PR_BOOTMSG("input data [%s]\n",slc_pmu_cnt_bw_lat_sel);
+	int i;
+	PR_BOOTMSG("save data\n");
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		PR_BOOTMSG("id[%d]=%X\n",i,slc_pmu_cnt_bw_lat_sel_val[i]);
+	}
+#endif
+	return n;
+}
+
+ssize_t slc_pmu_cnt_bw_lat_sel_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	int i;
+
+	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+		ret += snprintf(buf + ret, PAGE_SIZE - ret,"%d:%X\n", i, slc_pmu_cnt_bw_lat_sel_val[i]);
+	}
+	return strlen(buf);
+}
+
 /* KOBJ: emi_clock_rate */
 ssize_t sspm_support_feature_show(struct kobject *kobj,
 				struct kobj_attribute *attr,
@@ -2548,9 +3168,12 @@ void _clear_setting(void) {
 	_clear_ageexp_msel_rw();
 #endif
 	// reserve_wsct_setting = 0;
-
-
-
+	if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+		_clear_slc_pmu_cnt_setting_enable();
+		_clear_slc_pmu_cnt_filter0();
+		_clear_slc_pmu_cnt_filter1();
+		_clear_slc_pmu_cnt_bw_lat_sel();
+	}
 
 	emi_TP_busfiltr_enable = 0;
 
@@ -2642,6 +3265,12 @@ void store_emi_para(unsigned int emi_no)
 	STORE_EMI_PARA_ARRAY(ageexp_msel_val, emi_no ,unsigned int, DRAM_CH_NUM_PER_EMI);
 	STORE_EMI_PARA_ARRAY(ageexp_rw_val, emi_no ,unsigned int, DRAM_CH_NUM_PER_EMI);
 
+	if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+		STORE_EMI_PARA_ARRAY(slc_pmu_cnt_setting_enable_val, emi_no ,unsigned int, SLC_PMU_CNT_AMOUNT);
+		STORE_EMI_PARA_ARRAY(slc_pmu_cnt_filter0_val, emi_no ,unsigned int, SLC_PMU_CNT_AMOUNT);
+		STORE_EMI_PARA_ARRAY(slc_pmu_cnt_filter1_val, emi_no ,unsigned int, SLC_PMU_CNT_AMOUNT);
+		STORE_EMI_PARA_ARRAY(slc_pmu_cnt_bw_lat_sel_val, emi_no ,unsigned int, SLC_PMU_CNT_AMOUNT);
+	}
 	// STORE_EMI_PARA(reserve_wsct_setting,emi_no);
 }
 
@@ -2707,6 +3336,11 @@ DECLARE_KOBJ_ATTR_RO(sspm_support_feature);
 struct kobj_attribute parameter_apply_attr = __ATTR(parameter_apply, 0664, parameter_apply_show, parameter_apply_store); //OK
 DECLARE_KOBJ_ATTR_INT(diff_config_per_emi, diff_config_per_emi);
 
+struct kobj_attribute slc_pmu_cnt_setting_enable_attr = __ATTR(slc_pmu_cnt_setting_enable, 0664, slc_pmu_cnt_setting_enable_show, slc_pmu_cnt_setting_enable_store);
+struct kobj_attribute slc_pmu_cnt_filter0_attr = __ATTR(slc_pmu_cnt_filter0, 0664, slc_pmu_cnt_filter0_show, slc_pmu_cnt_filter0_store);
+struct kobj_attribute slc_pmu_cnt_filter1_attr = __ATTR(slc_pmu_cnt_filter1, 0664, slc_pmu_cnt_filter1_show, slc_pmu_cnt_filter1_store);
+struct kobj_attribute slc_pmu_cnt_bw_lat_sel_attr = __ATTR(slc_pmu_cnt_bw_lat_sel, 0664, slc_pmu_cnt_bw_lat_sel_show, slc_pmu_cnt_bw_lat_sel_store);
+
 
 void emi_init(void)
 {
@@ -2734,6 +3368,11 @@ void emi_init(void)
 		/*latency or */
 		if (ttype1_16_en_[emi_no] != BM_TTYPE1_16_ENABLE) {
 			MET_BM_SetLatencyCounter(1, emi_no);    /*enable latency count*/
+
+			MET_BM_SetMonitorCounter(1,
+							 0xff,   /*set master_sel all for BSCT/BACT... */
+							 0x0,
+							 emi_no);
 		}
 		else {
 			MET_BM_SetLatencyCounter(0, emi_no);    /*disable latency count*/
@@ -2814,7 +3453,11 @@ void emi_init(void)
 		MET_BM_SetTtype_chn_rank_sel(ttype_chn_rank_sel_val_[emi_no], emi_no);
 		MET_BM_SetTtype_burst_range(ttype_byte_bnd_dis_[emi_no], ttype_byte_low_bnd_val_[emi_no], 
 									ttype_byte_up_bnd_val_[emi_no], emi_no);
-
+		
+		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+			MET_BM_SetSLC_pmu_cnt_filter(slc_pmu_cnt_setting_enable_val_[emi_no], slc_pmu_cnt_filter0_val_[emi_no],
+											slc_pmu_cnt_filter1_val_[emi_no], slc_pmu_cnt_bw_lat_sel_val_[emi_no], emi_no);
+		}
 #ifdef EMI_LOWEFF_SUPPORT
 		MET_BM_SetLOWEFF_master_rw(0, wmask_msel_val_[emi_no], ageexp_msel_val_[emi_no], 
 										ageexp_rw_val_[emi_no],emi_no);
@@ -2971,7 +3614,7 @@ int emi_create_header(char *buf, int buf_len)
 	int emi_no;
 
 	unsigned int dram_data_rate_MHz;
-	unsigned int DRAM_TYPE;
+	// unsigned int DRAM_TYPE;  //change to global var
 	unsigned int base_clock_rate;
 
 
@@ -2979,6 +3622,70 @@ int emi_create_header(char *buf, int buf_len)
 	ret += snprintf(buf + ret, buf_len - ret,
 			"met-info [000] 0.0: EMI_NUM: %d\n", EMI_NUM);
 // #endif
+
+	dram_chann_num = MET_EMI_GetDramChannNum(0);
+	/*	met_dram_chann_num_header
+	 *	channel number
+	 *	LP4: 2, LP3: 1
+	 */
+
+	/*
+	 *	the ddr type define :
+	 *	enum DDRTYPE {
+	 *	TYPE_DDR1 = 1,
+	 *	TYPE_LPDDR2,
+	 *	TYPE_LPDDR3,
+	 *	TYPE_PCDDR3,
+	 *	TYPE_LPDDR4,
+	 *	TYPE_LPDDR4X,
+	 *	TYPE_LPDDR4P
+	 *	};
+	 */
+
+	//for kernel 5.X, can't use symbol_get
+	// if (!get_cur_ddr_ratio_symbol){
+	// 	PR_BOOTMSG("[%s][%d]get_cur_ddr_ratio_symbol = NULL , use the TYPE_LPDDR4 setting\n", __func__, __LINE__);
+	// 	ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: ##_EMI_warning: get_cur_ddr_ratio_symbol = NULL , use the TYPE_LPDDR4 setting\n");
+	// }
+
+	DRAM_TYPE = MET_GET_DRAM_TYPE();
+	base_clock_rate = MET_EMI_Get_BaseClock_Rate();
+
+	ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_dram_type: %d\n", DRAM_TYPE);
+
+	if ((DRAM_TYPE == 5) || (DRAM_TYPE == 6) || (DRAM_TYPE == 7))
+		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_dram_chann_num_header: %d,%d,%d,%d\n",
+				dram_chann_num, base_clock_rate,
+				DRAM_IO_BUS_WIDTH_LP4, DRAM_DATARATE);
+	else
+		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_dram_chann_num_header: %d,%d,%d,%d\n",
+				dram_chann_num, base_clock_rate,
+				DRAM_IO_BUS_WIDTH_LP3, DRAM_DATARATE);
+
+
+	ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: metemi_func_opt_header: %d\n",
+		metemi_func_opt);
+
+
+	/* met_emi_clockrate */
+	dram_data_rate_MHz = met_get_dram_data_rate();
+
+	ret += snprintf(buf + ret, buf_len - ret,
+			"met-info [000] 0.0: met_dram_clockrate: %d\n",dram_data_rate_MHz);
+
+	/* 1 : by ondiemet, 0: by pure linux */
+	ret += snprintf(buf + ret, buf_len - ret, 
+					"met-info [000] 0.0: ##_emi_use_ondiemet: %u,%X\n",
+					emi_use_ondiemet, get_sspm_support_feature());
+
+	/*dram bank num*/
+	ret += snprintf(buf + ret, buf_len - ret,
+			"met-info [000] 0.0: met_dram_rank_num_header: %u,%u\n", MET_EMI_GetDramRankNum(0),
+				MET_EMI_GetDramRankNum(0));
+
+	/* read from dts, pass to MW to calculate data */
+	ret += snprintf(buf + ret, buf_len - ret,
+				"met-info [000] 0.0: MET_EMI_support_list: %x\n",MET_EMI_support_list);
 
 	ret += snprintf(buf + ret, buf_len - ret,
 			"met-info [000] 0.0: met_diff_config_per_emi: %d\n", diff_config_per_emi);
@@ -3052,7 +3759,7 @@ int emi_create_header(char *buf, int buf_len)
 			if (err < 0) return err;
 
 			/* ttype nbeat list */
-			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_emi_ttype_nbeat_list: %d",emi_no);
+			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_emi_ttype_nbeat_list: %d,",emi_no);
 			for (i = 0; i < 21; i++) {
 				for (j = 0; j < ARRAY_SIZE(ttype_nbeat_list_item); j++) {
 					if (ttype_nbeat_val_[emi_no][i] == ttype_nbeat_list_item[j].key) {
@@ -3234,66 +3941,7 @@ int emi_create_header(char *buf, int buf_len)
 
 
 #if 1 /* SEDA3.5 header print move to AP side */
-	dram_chann_num = MET_EMI_GetDramChannNum(0);
-	/*	met_dram_chann_num_header
-	 *	channel number
-	 *	LP4: 2, LP3: 1
-	 */
 
-	/*
-	 *	the ddr type define :
-	 *	enum DDRTYPE {
-	 *	TYPE_DDR1 = 1,
-	 *	TYPE_LPDDR2,
-	 *	TYPE_LPDDR3,
-	 *	TYPE_PCDDR3,
-	 *	TYPE_LPDDR4,
-	 *	TYPE_LPDDR4X,
-	 *	TYPE_LPDDR4P
-	 *	};
-	 */
-
-	//for kernel 5.X, can't use symbol_get
-	// if (!get_cur_ddr_ratio_symbol){
-	// 	PR_BOOTMSG("[%s][%d]get_cur_ddr_ratio_symbol = NULL , use the TYPE_LPDDR4 setting\n", __func__, __LINE__);
-	// 	ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: ##_EMI_warning: get_cur_ddr_ratio_symbol = NULL , use the TYPE_LPDDR4 setting\n");
-	// }
-
-	DRAM_TYPE = MET_GET_DRAM_TYPE();
-	base_clock_rate = MET_EMI_Get_BaseClock_Rate();
-
-	ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_dram_type: %d\n", DRAM_TYPE);
-
-	if ((DRAM_TYPE == 5) || (DRAM_TYPE == 6) || (DRAM_TYPE == 7))
-		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_dram_chann_num_header: %d,%d,%d,%d\n",
-				dram_chann_num, base_clock_rate,
-				DRAM_IO_BUS_WIDTH_LP4, DRAM_DATARATE);
-	else
-		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_dram_chann_num_header: %d,%d,%d,%d\n",
-				dram_chann_num, base_clock_rate,
-				DRAM_IO_BUS_WIDTH_LP3, DRAM_DATARATE);
-
-
-	ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: metemi_func_opt_header: %d\n",
-		metemi_func_opt);
-
-
-	/* met_emi_clockrate */
-	dram_data_rate_MHz = met_get_dram_data_rate();
-
-	ret += snprintf(buf + ret, buf_len - ret,
-			"met-info [000] 0.0: met_dram_clockrate: %d\n",
-			dram_data_rate_MHz);
-
-	/* 1 : by ondiemet, 0: by pure linux */
-	ret += snprintf(buf + ret, buf_len - ret,
-			"met-info [000] 0.0: ##_emi_use_ondiemet: %u,%X\n",
-			emi_use_ondiemet, get_sspm_support_feature());
-
-	/*dram bank num*/
-	ret += snprintf(buf + ret, buf_len - ret,
-			"met-info [000] 0.0: met_dram_rank_num_header: %u,%u\n", MET_EMI_GetDramRankNum(0),
-				MET_EMI_GetDramRankNum(0));
 
 	ret += snprintf(buf + ret, buf_len - ret,
 			"met-info [000] 0.0: met_emi_header: TS0,TS1,GP0_WSCT,GP1_WSCT,GP2_WSCT,GP3_WSCT,GP4_WSCT,GP5_WSCT,");
@@ -3531,6 +4179,7 @@ EXPORT_SYMBOL(BaseAddrEMI);
 EXPORT_SYMBOL(BaseAddrCHN_EMI);
 EXPORT_SYMBOL(BaseAddrDRAMC);
 EXPORT_SYMBOL(BaseAddrDDRPHY_AO);
+EXPORT_SYMBOL(BaseAddrAPMIXEDSYS);
 EXPORT_SYMBOL(header_str);
 EXPORT_SYMBOL(ttype1_16_en);
 EXPORT_SYMBOL(ttype17_21_en);
@@ -3539,14 +4188,17 @@ EXPORT_SYMBOL(emi_use_ondiemet);
 EXPORT_SYMBOL(dram_chann_num);
 EXPORT_SYMBOL(metemi_func_opt);
 EXPORT_SYMBOL(mdmcu_sel_enable);
-
+EXPORT_SYMBOL(BaseAddrSLC_PMU);
 /*read from dts*/
 EXPORT_SYMBOL(EMI_NUM);
 EXPORT_SYMBOL(DRAM_CH_NUM_PER_EMI);
 // EXPORT_SYMBOL(DRAM_FREQ_DEFAULT);
 // EXPORT_SYMBOL(DDR_RATIO_DEFAULT);
 // EXPORT_SYMBOL(DRAM_TYPE_DEFAULT);
-
+EXPORT_SYMBOL(DRAM_TYPE);
+EXPORT_SYMBOL(MET_EMI_support_list);
+EXPORT_SYMBOL(ddrphy_ao_misc_cg_ctrl0);
+EXPORT_SYMBOL(ddrphy_ao_misc_cg_ctrl2);
 
 
 /*func*/
@@ -3565,3 +4217,4 @@ EXPORT_SYMBOL(MET_EMI_GetDramChannNum);
 EXPORT_SYMBOL(MET_BM_Init);
 EXPORT_SYMBOL(check_sspm_support);
 EXPORT_SYMBOL(met_get_dram_data_rate);
+EXPORT_SYMBOL(MET_GET_DRAM_TYPE);
