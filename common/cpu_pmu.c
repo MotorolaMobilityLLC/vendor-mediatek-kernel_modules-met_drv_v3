@@ -33,15 +33,116 @@
 struct cpu_pmu_hw *cpu_pmu;
 static int counter_cnt[MXNR_CPU];
 static int nr_arg[MXNR_CPU];
+static int nr_ignored_arg[MXNR_CPU];
 
 int met_perf_cpupmu_status;
 
 static int mtk_pmu_event_enable = 0;
+
+/*
+ * XXX: in perf_events framework,
+ *      PMU hardware slots and `hw_perf_event::idx' was not directly mapped.
+ *      Following table was the mapping used in kernel 4.14:
+ *
+ *      | idx | hardware slot |
+ *      |-----+---------------|
+ *      |   0 | pmccntr_el0   |
+ *      |   1 | 0             |
+ *      |   2 | 1             |
+ *      |   3 | 2             |
+ *      |   4 | 3             |
+ *      |   5 | 4             |
+ *      |   6 | 5             |
+ *
+ *      We used following variables to describe this mapping relation,
+ *      with init values determined by the relation table listed above.
+ *      They're exported as file nodes to serve urgent needs.
+ */
+static int met_perf_event_cyc_cnt_evt_idx = 0;
+static int met_perf_event_evt_idx_offset = -1;
+
+/*
+ * Option ondiemet_fallback_uncont_evts:
+ * when pmu registers allocated by perf_events were not continuous (which is
+ * costly in code size to implement a poller on ondiemet),
+ * this option force enable internal option `ondiemet_sample_all_cnt'
+ * (please see below) as a fall-back mode.
+ *
+ * Note that this option was set to FALSE for backward compatibility.
+ */
+static int ondiemet_fallback_uncont_evts = 0;
+
+/*
+ * Option `ondiemet_force_sample_all':
+ * this option serves for testing need, which forces enable option
+ * `ondiemet_sample_all_cnt'.
+ *
+ * this option should always defaulted to disabled.
+ */
+static int ondiemet_force_sample_all = 0;
+
+/*
+ * INTERNAL option controlled by `ondiemet_fallback_uncont_evts':
+ * force ondiemet side to sample all counters, including those we did not
+ * allocated, which will be ignored later in post-processing.
+ * This option helps to eliminate the cases when the PMU hardware slots
+ * were not allocated sequentially.
+ *
+ * We didn't export this option as a file node, as it served only as a fall-back
+ * mode at this moment.
+ *
+ * This option was inited to 0 for backward compatibility and reseted to 0
+ * after every session.
+ */
+static int ondiemet_sample_all_cnt = 0;
+
+/*
+ * Option `handle_irq_selective':
+ * controls whether we selectively mask perf_events framework's
+ * conter overflow interference.
+ *
+ * this option was defaulted to false for backward compatibility.
+ */
+static int handle_irq_selective = 0;
+
+/*
+ * Option `override_handle_irq':
+ * controls whether we suppress perf_events' overflow handling,
+ * which repositions overflowed counters (usually =+ 0x7fffffff),
+ * by overriding it's irq handler.
+ *
+ * this option was defaulted to true for backward compatibility.
+ */
+static int override_handle_irq = 1;
+
+#define __met_perf_event_is_cyc_cnt_idx(idx) \
+	((idx) == met_perf_event_cyc_cnt_evt_idx)
+#define __met_perf_event_idx_to_pmu_idx(idx) \
+	((idx) + met_perf_event_evt_idx_offset)
+#define __met_pmu_idx_to_perf_event_idx(idx) \
+	((idx) - met_perf_event_evt_idx_offset)
+
 static struct kobject *kobj_cpu;
 DECLARE_KOBJ_ATTR_INT(mtk_pmu_event_enable, mtk_pmu_event_enable);
+
+DECLARE_KOBJ_ATTR_INT(perf_event_cyc_cnt_evt_idx, met_perf_event_cyc_cnt_evt_idx);
+DECLARE_KOBJ_ATTR_INT(perf_event_evt_idx_offset, met_perf_event_evt_idx_offset);
+
+DECLARE_KOBJ_ATTR_INT(ondiemet_fallback_uncont_evts, ondiemet_fallback_uncont_evts);
+DECLARE_KOBJ_ATTR_INT(ondiemet_force_sample_all, ondiemet_force_sample_all);
+
+DECLARE_KOBJ_ATTR_INT(handle_irq_selective, handle_irq_selective);
+DECLARE_KOBJ_ATTR_INT(override_handle_irq, override_handle_irq);
+
 #define KOBJ_ATTR_LIST \
 	do { \
 		KOBJ_ATTR_ITEM(mtk_pmu_event_enable); \
+		KOBJ_ATTR_ITEM(perf_event_cyc_cnt_evt_idx); \
+		KOBJ_ATTR_ITEM(perf_event_evt_idx_offset); \
+		KOBJ_ATTR_ITEM(ondiemet_fallback_uncont_evts); \
+		KOBJ_ATTR_ITEM(ondiemet_force_sample_all); \
+		KOBJ_ATTR_ITEM(handle_irq_selective); \
+		KOBJ_ATTR_ITEM(override_handle_irq); \
 	} while (0)
 
 DEFINE_MUTEX(handle_irq_lock);
@@ -66,7 +167,8 @@ static int cpu_pm_pmu_notify(struct notifier_block *b,
 
 	switch (cmd) {
 	case CPU_PM_ENTER:
-		count = cpu_pmu->polling(cpu_pmu->pmu[cpu], cpu_pmu->event_count[cpu], pmu_value);
+		count = cpu_pmu->polling(cpu_pmu->pmu[cpu],
+					 cpu_pmu->event_count[cpu], pmu_value);
 		for (ii = 0; ii < count; ii ++)
 			cpu_pmu->cpu_pm_unpolled_loss[cpu][ii] += pmu_value[ii];
 
@@ -273,7 +375,7 @@ static void perf_cpupmu_polling(unsigned long long stamp, int cpu)
 
 	count = 0;
 	for (i = 0; i < event_count; i++) {
-		if (pmu[i].mode == 0)
+		if (pmu[i].mode == MODE_DISABLED)
 			continue;
 
 		ev = per_cpu(pevent, cpu)[i];
@@ -354,7 +456,35 @@ static inline int pmu_has_overflowed(u32 pmovsr)
 	return pmovsr & PMU_OVERFLOWED_MASK;
 }
 
-static irqreturn_t perf_event_handle_irq_ignore_overflow(struct arm_pmu *pmu)
+static irqreturn_t handle_irq_selective_ignore_overflow(struct arm_pmu *pmu)
+{
+	int cpu, ii, idx, is_cyc_cnt, event_count;
+	struct met_pmu *metpmu;
+	struct perf_event *ev;
+
+	cpu = raw_smp_processor_id();
+
+	metpmu = cpu_pmu->pmu[cpu];
+	event_count = cpu_pmu->event_count[cpu];
+
+	for (ii = 0; ii < event_count; ii++) {
+		ev = per_cpu(pevent, cpu)[ii];
+
+		if (metpmu[ii].mode != MODE_DISABLED) {
+			idx = __met_perf_event_idx_to_pmu_idx(ev->hw.idx);
+			is_cyc_cnt = __met_perf_event_is_cyc_cnt_idx(ev->hw.idx);
+			if (is_cyc_cnt) {
+				cpu_pmu->disable_cyc_intr();
+			} else {
+				cpu_pmu->disable_intr(idx);
+			}
+		}
+	}
+
+	return handle_irq_orig(pmu);
+}
+
+static irqreturn_t handle_irq_ignore_overflow(struct arm_pmu *pmu)
 {
 	u32 pmovsr;
 
@@ -370,52 +500,86 @@ static irqreturn_t perf_event_handle_irq_ignore_overflow(struct arm_pmu *pmu)
 }
 #endif
 
-static int perf_thread_set_perf_events(int cpu)
+static int __met_perf_events_set_all_events(int cpu)
 {
 	int			i, size;
 	struct perf_event	*ev;
+#ifdef MET_SSPM
+	struct arm_pmu *armpmu;
+	irqreturn_t (*handle_irq_fptr)(struct arm_pmu *pmu);
+#endif
 
 	size = sizeof(struct perf_event_attr);
 	if (per_cpu(perfSet, cpu) == 0) {
 		int event_count = cpu_pmu->event_count[cpu];
 		struct met_pmu *pmu = cpu_pmu->pmu[cpu];
 		for (i = 0; i < event_count; i++) {
-			if (!pmu[i].mode)
+			if (pmu[i].mode == MODE_DISABLED)
 				continue;	/* Skip disabled counters */
 			ev = perf_event_create(cpu, pmu[i].event, i);
-			if (ev == NULL) {
-				met_cpupmu.mode = 0;
-				met_perf_cpupmu_status = 0;
 
-				MET_TRACE("[MET_PMU] cpu %d failed to register pmu event %4x\n", cpu, pmu[i].event);
-				pr_notice("[MET_PMU] cpu %d failed to register pmu event %4x\n", cpu, pmu[i].event);
+			/*
+			 * XXX: in legacy codebase, we always place cycle count
+			 *      event in cpu_pmu->pmu[max-1] as a convention to
+			 *      hint ondiemet/arm-asm impelentation to read pmccntsr
+			 *      instead of regular pmu registers.
+			 *
+			 *      This get us into a trouble when perf_events framwork
+			 *      find pmccntsr is already occupied and place cycle count
+			 *      event into a regular register, because kernel side will
+			 *      then mislead ondiemet side to poll pmccntsr.
+			 *
+			 *      At this moment we just forbid cycle count to be placed
+			 *      in regular registers and treat it as
+			 *      `PMU_INIT_FAIL_OCCUPIED'.
+			 */
+			if (ev != NULL &&
+			    /* is cycle count slot */
+			    i == event_count-1 &&
+			    /* but allocated as regular register */
+			    !__met_perf_event_is_cyc_cnt_idx(ev->hw.idx)) {
+				perf_event_release_kernel(ev);
+				ev = NULL;
+				counter_cnt[cpu] --;
+			}
+
+			if (ev == NULL) {
+				/*
+				 * turn-off failed pmu events, but don't stop met capturing.
+				 * failed events will be ignored and reported to user in frontend.
+				 */
+				pmu[i].mode = MODE_DISABLED;
+				per_cpu(pevent, cpu)[i] = NULL;
+
+				if (cpu_online(cpu)) {
+					pmu[i].init_failed = PMU_INIT_FAIL_OCCUPIED;
+				} else {
+					pmu[i].init_failed = PMU_INIT_FAIL_CPU_OFFLINE;
+				}
+
+				MET_TRACE("[MET_PMU] cpu %d failed to register event %#04x\n",
+					  cpu, pmu[i].event);
+				pr_notice("[MET_PMU] cpu %d failed to register event %#04x\n",
+					  cpu, pmu[i].event);
+
+				MET_TRACE("[MET_PMU] cpu %d online state: %d\n", cpu, cpu_online(cpu));
+				pr_notice("[MET_PMU] cpu %d online state: %d\n", cpu, cpu_online(cpu));
+
 				continue;
 			}
 
-			/*
-			 * in perf-event implementation, hardware pmu slot and cycle counter
-			 * was mapped to perf_event::hw::idx as follows:
-			 *
-			 * | idx | hardware slot |
-			 * |-----+---------------|
-			 * |   0 | pmccntr_el0   |
-			 * |   1 | 0             |
-			 * |   2 | 1             |
-			 * |   3 | 2             |
-			 * |   4 | 3             |
-			 * |   5 | 4             |
-			 * |   6 | 5             |
-			 */
-			if (ev->hw.idx != 0) {
+			if (__met_perf_event_is_cyc_cnt_idx(ev->hw.idx)) {
+				MET_TRACE("[MET_PMU] cpu %d registered cycle count evt=%#04x, "
+					  "perf_events id: %d\n",
+					  cpu, pmu[i].event, ev->hw.idx);
+				pr_debug("[MET_PMU] cpu %d registered cycle count evt=%#04x, "
+					 "perf_events id: %d\n",
+					 cpu, pmu[i].event, ev->hw.idx);
+			} else {
 				MET_TRACE("[MET_PMU] cpu %d registered in pmu slot: [%d] evt=%#04x\n",
-					  cpu, ev->hw.idx-1, pmu[i].event);
+					  cpu, __met_perf_event_idx_to_pmu_idx(ev->hw.idx), pmu[i].event);
 				pr_debug("[MET_PMU] cpu %d registered in pmu slot: [%d] evt=%#04x\n",
-					 cpu, ev->hw.idx-1, pmu[i].event);
-			} else if (ev->hw.idx == 0) {
-				MET_TRACE("[MET_PMU] cpu %d registered cycle count evt=%#04x\n",
-					  cpu, pmu[i].event);
-				pr_debug("[MET_PMU] cpu %d registered cycle count evt=%#04x\n",
-					 cpu, pmu[i].event);
+					 cpu, __met_perf_event_idx_to_pmu_idx(ev->hw.idx), pmu[i].event);
 			}
 
 			per_cpu(pevent, cpu)[i] = ev;
@@ -425,15 +589,17 @@ static int perf_thread_set_perf_events(int cpu)
 			per_cpu(perfCntFirst, cpu)[i] = 1;
 
 #ifdef MET_SSPM
-			if (met_cpupmu.ondiemet_mode) {
-				struct arm_pmu *armpmu;
+			if (met_cpupmu.ondiemet_mode && override_handle_irq) {
+				handle_irq_fptr = handle_irq_selective ?
+					handle_irq_selective_ignore_overflow :
+					handle_irq_ignore_overflow;
 				armpmu = container_of(ev->pmu, struct arm_pmu, pmu);
 				mutex_lock(&handle_irq_lock);
-				if (armpmu && armpmu->handle_irq != perf_event_handle_irq_ignore_overflow) {
+				if (armpmu && armpmu->handle_irq != handle_irq_fptr) {
 					pr_debug("[MET_PMU] replaced original handle_irq=%p with dummy function\n",
 						 armpmu->handle_irq);
 					handle_irq_orig = armpmu->handle_irq;
-					armpmu->handle_irq = perf_event_handle_irq_ignore_overflow;
+					armpmu->handle_irq = handle_irq_fptr;
 				}
 				mutex_unlock(&handle_irq_lock);
 			}
@@ -450,7 +616,7 @@ static void met_perf_cpupmu_start(int cpu)
 	if (met_cpupmu.mode == 0)
 		return;
 
-	perf_thread_set_perf_events(cpu);
+	__met_perf_events_set_all_events(cpu);
 }
 
 static void perf_thread_down(int cpu)
@@ -459,6 +625,10 @@ static void perf_thread_down(int cpu)
 	struct perf_event	*ev;
 	int			event_count;
 	struct met_pmu		*pmu;
+#ifdef MET_SSPM
+	struct arm_pmu *armpmu;
+	irqreturn_t (*handle_irq_fptr)(struct arm_pmu *pmu);
+#endif
 
 	if (per_cpu(perfSet, cpu) == 0)
 		return;
@@ -471,12 +641,15 @@ static void perf_thread_down(int cpu)
 		if (ev != NULL) {
 
 #ifdef MET_SSPM
-			if (met_cpupmu.ondiemet_mode) {
-				struct arm_pmu *armpmu;
+			if (met_cpupmu.ondiemet_mode && override_handle_irq) {
+				handle_irq_fptr = handle_irq_selective ?
+					handle_irq_selective_ignore_overflow :
+					handle_irq_ignore_overflow;
 				armpmu = container_of(ev->pmu, struct arm_pmu, pmu);
 				mutex_lock(&handle_irq_lock);
-				if (armpmu && armpmu->handle_irq == perf_event_handle_irq_ignore_overflow) {
-					pr_debug("[MET_PMU] restore original handle_irq=%p\n", handle_irq_orig);
+				if (armpmu && armpmu->handle_irq == handle_irq_fptr) {
+					pr_debug("[MET_PMU] restore original handle_irq=%p\n",
+						 handle_irq_orig);
 					armpmu->handle_irq = handle_irq_orig;
 					handle_irq_orig = NULL;
 				}
@@ -569,6 +742,7 @@ static void cpupmu_start(void)
 
 	if (!met_cpu_pmu_method) {
 		nr_arg[cpu] = 0;
+		nr_ignored_arg[cpu] = 0;
 		cpu_pmu->start(cpu_pmu->pmu[cpu], cpu_pmu->event_count[cpu]);
 
 		met_perf_cpupmu_status = 1;
@@ -637,14 +811,6 @@ static void cpupmu_stop(void)
 
 static void cpupmu_unique_stop(void)
 {
-	int cpu;
-
-	if (met_cpu_pmu_method) {
-		for_each_possible_cpu(cpu) {
-			met_perf_cpupmu_stop(cpu);
-		}
-	}
-
 #ifdef CPUPMU_V8_2
 	if (mtk_pmu_event_enable == 1)
 		cpu_pmu_debug_uninit();
@@ -687,15 +853,114 @@ static int reset_driver_stat(void)
 		pmu = cpu_pmu->pmu[cpu];
 		counter_cnt[cpu] = 0;
 		nr_arg[cpu] = 0;
+		nr_ignored_arg[cpu] = 0;
 		for (i = 0; i < event_count; i++) {
 			pmu[i].mode = MODE_DISABLED;
 			pmu[i].event = 0;
 			pmu[i].freq = 0;
+			pmu[i].init_failed = 0;
+		}
+	}
+
+	ondiemet_sample_all_cnt = 0;
+
+	return 0;
+}
+
+#ifdef MET_SSPM
+static int cycle_count_mode_enabled(int cpu) {
+
+	int event_cnt;
+	struct met_pmu	*pmu;
+
+	pmu = cpu_pmu->pmu[cpu];
+
+	if (met_cpu_pmu_method) {
+		event_cnt = perf_num_counters();
+	} else {
+		event_cnt = cpu_pmu->event_count[cpu];
+	}
+
+	return pmu[event_cnt-1].mode == MODE_POLLING;
+}
+
+static int __is_pmu_regular_reg_allocated(int cpu, int hw_idx)
+{
+	int ii;
+	int event_count;
+	struct met_pmu	*pmu;
+	struct hw_perf_event *hwc;
+
+	event_count = cpu_pmu->event_count[cpu];
+
+	/* bound checking */
+	if (hw_idx >= (event_count - 1) || hw_idx < 0) {
+		return 0;
+	}
+
+	pmu = cpu_pmu->pmu[cpu];
+
+	if (met_cpu_pmu_method) {
+		/* no need to check cycle count, thus use event_count-1 */
+		for (ii = 0; ii < event_count - 1; ii ++) {
+
+			if (pmu[ii].mode == MODE_DISABLED ||
+			    per_cpu(pevent, cpu)[ii] == NULL)
+				continue;
+
+			hwc = &(per_cpu(pevent, cpu)[ii]->hw);
+			if (hw_idx == __met_perf_event_idx_to_pmu_idx(hwc->idx)) {
+				return 1;
+			}
+		}
+	} else {
+		if (pmu[hw_idx].mode != MODE_DISABLED) {
+			return 1;
 		}
 	}
 
 	return 0;
 }
+
+static int __pmu_event_on_hw_idx(int cpu, int hw_idx)
+{
+	int ii;
+	int event_count;
+	struct met_pmu	*pmu;
+	struct hw_perf_event *hwc;
+
+	event_count = cpu_pmu->event_count[cpu];
+
+	/* bound checking */
+	if (hw_idx >= (event_count - 1) || hw_idx < 0) {
+		return 0;
+	}
+
+	pmu = cpu_pmu->pmu[cpu];
+
+	if (met_cpu_pmu_method) {
+		/* no need to check cycle count, thus use event_count-1 */
+		for (ii = 0; ii < event_count - 1; ii ++) {
+
+			if (pmu[ii].mode == MODE_DISABLED ||
+			    per_cpu(pevent, cpu)[ii] == NULL)
+				continue;
+
+			hwc = &(per_cpu(pevent, cpu)[ii]->hw);
+			if (hw_idx == __met_perf_event_idx_to_pmu_idx(hwc->idx)) {
+				return pmu[ii].event;
+			}
+		}
+	} else {
+		if (pmu[hw_idx].mode != MODE_DISABLED) {
+			return pmu[hw_idx].event;
+		}
+	}
+
+	/* just return a dummy value when not found */
+	return 0;
+}
+#endif
 
 static int cpupmu_print_header(char *buf, int len)
 {
@@ -717,22 +982,165 @@ static int cpupmu_print_header(char *buf, int len)
 	ret += snprintf(buf + ret, len - ret, cache_line_header, cache_line_size());
 	ret += snprintf(buf + ret, len - ret, "# mp_cpu: pmu_value1, ...\n");
 
+	/*
+	 * print error message when user requested more pmu events than
+	 * platform's capability.
+	 * we currently only prompt how many events were ignored.
+	 */
+	for_each_possible_cpu(cpu) {
+		if (nr_ignored_arg[cpu]) {
+			ret += snprintf(buf + ret,
+					len - ret,
+					"met-info [000] 0.0: !!_PMU_INIT_FAIL: "
+					"too many events requested on CPU %d (max = %d+1), %d events ignored\n",
+					cpu, cpu_pmu->event_count[cpu]-1, nr_ignored_arg[cpu]);
+		}
+	}
+
+	/*
+	 * print error message of init failed events due to lack of
+	 * hardware register slots, it usually happened when they were occupied
+	 * by other perf_events users
+	 */
+	for_each_possible_cpu(cpu) {
+
+		event_count = cpu_pmu->event_count[cpu];
+		pmu = cpu_pmu->pmu[cpu];
+		first = 1;
+
+		for (i = 0; i < event_count; i++) {
+
+			if (pmu[i].init_failed != PMU_INIT_FAIL_CPU_OFFLINE)
+				continue;
+
+			if (first) {
+				ret += snprintf(buf + ret,
+						len - ret,
+						"met-info [000] 0.0: !!_PMU_INIT_FAIL: "
+						"CPU %d offline, unable to allocate following PMU event(s): 0x%x",
+						cpu, pmu[i].event);
+				first = 0;
+				continue;
+			}
+
+			ret += snprintf(buf + ret, len - ret, ",0x%x", pmu[i].event);
+		}
+		if (!first)
+			ret += snprintf(buf + ret, len - ret, "\n");
+	}
+
+	/*
+	 * print error message of init failed events due cpu offline
+	 */
+	for_each_possible_cpu(cpu) {
+
+		event_count = cpu_pmu->event_count[cpu];
+		pmu = cpu_pmu->pmu[cpu];
+		first = 1;
+
+		for (i = 0; i < event_count; i++) {
+
+			if (pmu[i].init_failed != PMU_INIT_FAIL_OCCUPIED)
+				continue;
+
+			if (first) {
+				ret += snprintf(buf + ret,
+						len - ret,
+						"met-info [000] 0.0: !!_PMU_INIT_FAIL: "
+						"on CPU %d, no enough PMU register slots to allocate events: 0x%x",
+						cpu, pmu[i].event);
+				first = 0;
+				continue;
+			}
+
+			ret += snprintf(buf + ret, len - ret, ",0x%x", pmu[i].event);
+		}
+		if (!first)
+			ret += snprintf(buf + ret, len - ret, "\n");
+	}
+
+#ifdef MET_SSPM
+	/*
+	 * when option `ondiemet_sample_all_cnt' is turned on, print a list of
+	 * bitmap indicating which pmu hardware registers were successfully allocated.
+	 *
+	 * XXX: note that the ordering of bit map MUST be exactly consistent to
+	 *      met_cpu_header_v2's
+	 */
+	if (ondiemet_sample_all_cnt && met_cpupmu.ondiemet_mode == 1) {
+		for_each_possible_cpu(cpu) {
+
+			event_count = cpu_pmu->event_count[cpu];
+			pmu = cpu_pmu->pmu[cpu];
+
+			ret += snprintf(buf + ret, len - ret,
+					"met-info [000] 0.0: ondiemet_cpu_pmu_valid_counters: %d", cpu);
+
+			/* XXX: `i' here resembles general hardware register id */
+			for (i = 0; i < event_count - 1; i++) {
+				ret += snprintf(buf + ret, len - ret, ",%d",
+						__is_pmu_regular_reg_allocated(cpu, i));
+			}
+			ret += snprintf(buf + ret, len - ret, ",%d\n",
+					cycle_count_mode_enabled(cpu));
+		}
+	}
+#endif
+
 	for_each_possible_cpu(cpu) {
 		event_count = cpu_pmu->event_count[cpu];
 		pmu = cpu_pmu->pmu[cpu];
 		first = 1;
 		for (i = 0; i < event_count; i++) {
-			if (pmu[i].mode == 0)
-				continue;
-			if (first) {
-				ret += snprintf(buf + ret, len - ret, header, cpu);
-				first = 0;
+#ifdef MET_SSPM
+			if (ondiemet_sample_all_cnt &&
+			    met_cpupmu.ondiemet_mode == 1) {
+				/*
+				 * when option `ondiemet_sample_all_cnt' is turned on,
+				 * we just print non-allocated slots also (which are
+				 * ignored in post-processing).
+				 */
+				if (first) {
+					ret += snprintf(buf + ret, len - ret, header, cpu);
+					first = 0;
+				}
+
+                                /* it's a cycle count event */
+                                if (i == event_count - 1) {
+                                        ret += snprintf(buf + ret, len - ret, ",0x%x",
+                                                        pmu[i].mode == MODE_DISABLED ?
+                                                        0 : pmu[i].event);
+                                } else {
+                                        /*
+                                         * note that `i' here is treated as hw register idx,
+                                         * not idx of pmu[i].event
+                                         */
+                                        ret += snprintf(buf + ret, len - ret, ",0x%x",
+                                                        __pmu_event_on_hw_idx(cpu, i));
+                                }
 			}
-			ret += snprintf(buf + ret, len - ret, ",0x%x", pmu[i].event);
-			pmu[i].mode = 0;
+#else
+			if (0) { }
+#endif
+			else {
+				if (pmu[i].mode == MODE_DISABLED)
+					continue;
+
+				if (first) {
+					ret += snprintf(buf + ret, len - ret, header, cpu);
+					first = 0;
+				}
+				ret += snprintf(buf + ret, len - ret, ",0x%x", pmu[i].event);
+			}
 		}
 		if (!first)
 			ret += snprintf(buf + ret, len - ret, "\n");
+	}
+
+	if (met_cpu_pmu_method) {
+		for_each_possible_cpu(cpu) {
+			met_perf_cpupmu_stop(cpu);
+		}
 	}
 
 	reset_driver_stat();
@@ -771,44 +1179,20 @@ static int met_parse_num_list(char *arg, int len, int *list, int list_cnt)
 	return nr_num;
 }
 
-static const struct perf_pmu_events_attr *
-perf_event_get_evt_attr_by_name(const struct perf_event *ev,
-			       const char *name) {
-	struct arm_pmu *arm_pmu;
-	struct attribute **attrp;
-	struct device_attribute *dev_attr_p;
-	struct perf_pmu_events_attr *ev_attr_p;
-
-	arm_pmu = container_of(ev->pmu, struct arm_pmu, pmu);
-
-	for (attrp = arm_pmu->attr_groups[ARMPMU_ATTR_GROUP_EVENTS]->attrs;
-	     *attrp != NULL;
-	     attrp ++) {
-
-		dev_attr_p = container_of(*attrp, struct device_attribute, attr);
-		ev_attr_p = container_of(dev_attr_p, struct perf_pmu_events_attr, attr);
-
-		if (0 == strcmp((*attrp)->name, name)) {
-			return ev_attr_p;
-		}
-	}
-
-	return NULL;
-}
-
 static int cpupmu_process_argument(const char *arg, int len)
 {
 	char		*arg1 = (char*)arg;
 	int		len1 = len;
 	int		cpu, cpu_list[MXNR_CPU];
-	int		nr_events, event_list[MXNR_PMU_EVENTS];
+	int		nr_events;
+	/* overprovision for users input */
+	int		event_list[MXNR_PMU_EVENTS + 16];
 	int		i;
 	int		nr_counters;
 	struct met_pmu	*pmu;
 	int		arg_nr;
 	int		event_no;
 	int		is_cpu_cycle_evt;
-	const struct perf_pmu_events_attr *ev_attr_p;
 
 	/*
 	 * split cpu_list and event_list by ':'
@@ -831,6 +1215,11 @@ static int cpupmu_process_argument(const char *arg, int len)
 	 *   0: unselected
 	 */
 	if (arg1 != arg) {	/* is cpu_id list specified? */
+		/*
+		 * when argument list CONTAINS core id,
+		 * e.g.,
+		 *     --pmu-cpu-evt=0,1,6:0x2b,0x08,0x16,0x2a,0xff
+		 */
 		int list[MXNR_CPU], cnt;
 		int cpu_id;
 		if ((cnt = met_parse_num_list((char*)arg, len, list, ARRAY_SIZE(list))) <= 0)
@@ -843,8 +1232,14 @@ static int cpupmu_process_argument(const char *arg, int len)
 			cpu_list[cpu_id] = 1;
 		}
 	}
-	else
+	else {
+		/*
+		 * when argument list contains no core id,
+		 * e.g.,
+		 *     --pmu-cpu-evt=0x2b,0x08,0x16,0x2a,0xff
+		 */
 		memset(cpu_list, 1, sizeof(cpu_list));
+	}
 
 	/* get event_list */
 	if ((nr_events = met_parse_num_list(arg1, len1, event_list, ARRAY_SIZE(event_list))) <= 0)
@@ -853,6 +1248,14 @@ static int cpupmu_process_argument(const char *arg, int len)
 	/* for each cpu in cpu_list, add all the events in event_list */
 	for_each_possible_cpu(cpu) {
 		pmu = cpu_pmu->pmu[cpu];
+		/*
+		 * restore `nr_arg' from previous iteration,
+		 * for cases when certain core's arguments consists more than one clauses
+		 * e.g.,
+		 *     --pmu-cpu-evt=0:0x2b
+		 *     --pmu-cpu-evt=0:0x08
+		 *     --pmu-cpu-evt=0:0x16
+		 */
 		arg_nr = nr_arg[cpu];
 
 		if (cpu_list[cpu] == 0)
@@ -871,70 +1274,37 @@ static int cpupmu_process_argument(const char *arg, int len)
 
 		for (i = 0; i < nr_events; i++) {
 			event_no = event_list[i];
-			is_cpu_cycle_evt = 0;
 			/*
 			 * check if event is duplicate, but does not include 0xff
 			 */
 			if (cpu_pmu->check_event(pmu, arg_nr, event_no) < 0)
-				goto arg_out;
+				continue;
 
-			/*
-			 * test if this event is available when in perf_APIs mode
-			 */
-			if (met_cpu_pmu_method) {
-				struct perf_event *ev;
+			/* XXX: 0xff and 0x11 were well-known event ids for cycle count */
+			is_cpu_cycle_evt = ((event_no == 0xff) || (event_no == 0x11));
 
-				if (!cpu_pmu->perf_event_get_evttype) {
-					MET_TRACE("[MET_PMU] cpu_pmu->perf_event_get_evttype=NULL, "
-						  "met pmu on perf-event was not supported on this platform\n");
-					pr_debug("[MET_PMU] cpu_pmu->perf_event_get_evttype=NULL, "
-						 "met pmu on perf-event was not supported on this platform\n");
-					goto arg_out;
-				}
-
-				ev = perf_event_create(cpu, event_no, arg_nr);
-				if (ev == NULL) {
-					pr_debug("!!!!!!!! [MET_PMU] failed pmu alloction test (event_no=%#04x)\n", event_no);
-					goto arg_out;
-				} else {
-					perf_event_release(cpu, ev);
-				}
-
-				ev_attr_p = perf_event_get_evt_attr_by_name(ev, "cpu_cycles");
-				if (ev_attr_p && cpu_pmu->perf_event_get_evttype(ev) == ev_attr_p->id)
-					is_cpu_cycle_evt = 1;
-			}
-
-			if (met_cpu_pmu_method) {
-				if (is_cpu_cycle_evt) {
-					if (pmu[nr_counters-1].mode == MODE_POLLING)
-						goto arg_out;
-					pmu[nr_counters-1].mode = MODE_POLLING;
-					pmu[nr_counters-1].event = event_no;
-					pmu[nr_counters-1].freq = 0;
-				} else {
-					if (arg_nr >= (nr_counters - 1))
-						goto arg_out;
-					pmu[arg_nr].mode = MODE_POLLING;
-					pmu[arg_nr].event = event_no;
-					pmu[arg_nr].freq = 0;
-					arg_nr++;
-				}
+			if (is_cpu_cycle_evt) {
+				if (pmu[nr_counters-1].mode == MODE_POLLING)
+					continue;
+				pmu[nr_counters-1].mode = MODE_POLLING;
+				pmu[nr_counters-1].event = event_no;
+				pmu[nr_counters-1].init_failed = 0;
+				pmu[nr_counters-1].freq = 0;
 			} else {
-				if (event_no == 0xff) {
-					if (pmu[nr_counters-1].mode == MODE_POLLING)
-						goto arg_out;
-					pmu[nr_counters-1].mode = MODE_POLLING;
-					pmu[nr_counters-1].event = 0xff;
-					pmu[nr_counters-1].freq = 0;
-				} else {
-					if (arg_nr >= (nr_counters - 1))
-						goto arg_out;
-					pmu[arg_nr].mode = MODE_POLLING;
-					pmu[arg_nr].event = event_no;
-					pmu[arg_nr].freq = 0;
-					arg_nr++;
+				if (arg_nr >= (nr_counters - 1)) {
+					/*
+					 * when more events requested than platform's
+					 * capability, we just ignore it and display
+					 * warning message
+					 */
+					nr_ignored_arg[cpu] ++;
+					continue;
 				}
+				pmu[arg_nr].mode = MODE_POLLING;
+				pmu[arg_nr].event = event_no;
+				pmu[arg_nr].init_failed = 0;
+				pmu[arg_nr].freq = 0;
+				arg_nr++;
 			}
 			counter_cnt[cpu]++;
 		}
@@ -989,22 +1359,6 @@ static void sspm_pmu_start(void)
 		cpupmu_start();
 }
 
-static int cycle_count_mode_enabled(int cpu) {
-
-	int event_cnt;
-	struct met_pmu	*pmu;
-
-	pmu = cpu_pmu->pmu[cpu];
-
-	if (met_cpu_pmu_method) {
-		event_cnt = perf_num_counters();
-	} else {
-		event_cnt = cpu_pmu->event_count[cpu];
-	}
-
-	return pmu[event_cnt-1].mode == MODE_POLLING;
-}
-
 static void ipi_config_pmu_counter_cnt(void) {
 
 	int ret, cpu, ii, cnt_num;
@@ -1023,26 +1377,33 @@ static void ipi_config_pmu_counter_cnt(void) {
 		 *       total event number `counter_cnt', but controlled by
 		 *       an addtional argument `SET_PMU_CYCCNT_ENABLE' instead
 		 */
-		cnt_num = (cycle_count_mode_enabled(cpu) ?
-			   (counter_cnt[cpu]-1) : counter_cnt[cpu]);
+		if (ondiemet_sample_all_cnt) {
+			cnt_num = cpu_pmu->event_count[cpu]-1;
+		} else {
+			cnt_num = cycle_count_mode_enabled(cpu) ?
+				counter_cnt[cpu]-1 : counter_cnt[cpu];
+		}
 		ipi_buf[1] = (cpu << 16) | (cnt_num & 0xffff);
 
 		MET_TRACE("[MET_PMU][IPI_CONFIG] core=%d, pmu_counter_cnt=%d\n", cpu, cnt_num);
 		pr_debug("[MET_PMU][IPI_CONFIG] core=%d, pmu_counter_cnt=%d\n", cpu, cnt_num);
 
-		MET_TRACE("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d, in_interrupt()=%lu\n", sspm_buf_available, in_interrupt());
-		pr_debug("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d, in_interrupt()=%lu\n", sspm_buf_available, in_interrupt());
-
 		if (sspm_buf_available == 1) {
 			ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+		} else {
+			MET_TRACE("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d\n",
+				  sspm_buf_available);
+			pr_debug("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d\n",
+				 sspm_buf_available);
+
 		}
 
 		for (ii = 0; ii < 4; ii++)
 			ipi_buf[ii] = 0;
 
-		if (per_cpu(pevent, cpu)[0]) {
+		if (!ondiemet_sample_all_cnt && per_cpu(pevent, cpu)[0]) {
 			hwc = &(per_cpu(pevent, cpu)[0]->hw);
-			base_offset = hwc->idx-1;
+			base_offset = __met_perf_event_idx_to_pmu_idx(hwc->idx);
 		} else {
 			base_offset = 0;
 		}
@@ -1057,7 +1418,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 			ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
 		}
 
-		if (cycle_count_mode_enabled(cpu)) {
+		if (ondiemet_sample_all_cnt || cycle_count_mode_enabled(cpu)) {
 
 			for (ii = 0; ii < 4; ii++)
 				ipi_buf[ii] = 0;
@@ -1094,6 +1455,7 @@ static int __is_perf_event_hw_slot_seq_order(int cpu) {
 	 */
 	for (ii = 1; ii < event_count - 1; ii++) {
 
+		/* this condition check also works when met_cpu_pmu_method == 0 */
 		if (per_cpu(pevent, cpu)[ii] == NULL)
 			return 1;
 
@@ -1131,11 +1493,35 @@ static void sspm_pmu_unique_start(void) {
 		cpupmu_unique_start();
 
 	if (met_cpupmu.ondiemet_mode == 1) {
-		if (__validate_sspm_compatibility() == -1) {
-			MET_TRACE("[MET_PMU] turned off sspm side polling\n");
-			pr_debug("[MET_PMU] turned off sspm side polling\n");
-			/* return without sending init IPIs, leaving sspm side to poll nothing */
-			return;
+
+		MET_TRACE("[MET_PMU] ondiemet_fallback_uncont_evts=%d,"
+			  "starting to check ordering of pmu registers ...\n",
+			  ondiemet_fallback_uncont_evts);
+		pr_debug("[MET_PMU] ondiemet_fallback_uncont_evts=%d,"
+			 "starting to check ordering of pmu registers ...\n",
+			 ondiemet_fallback_uncont_evts);
+
+                if (ondiemet_force_sample_all) {
+                        ondiemet_sample_all_cnt = 1;
+
+                        MET_TRACE("[MET_PMU] option ondiemet_force_sample_all enabled, ",
+                                  "forced enabled option ondiemet_sample_all_cnt");
+                        pr_debug("[MET_PMU] option ondiemet_force_sample_all enabled, ",
+                                 "forced enabled option ondiemet_sample_all_cnt");
+                } else if (__validate_sspm_compatibility() == -1) {
+			if (ondiemet_fallback_uncont_evts) {
+				ondiemet_sample_all_cnt = 1;
+
+				MET_TRACE("[MET_PMU] nonsequential events detected, "
+					  "turn on option ondiemet_sample_all_cnt\n");
+				pr_debug("[MET_PMU] nonsequential events detected, "
+					 "turn on option ondiemet_sample_all_cnt\n");
+			} else {
+				MET_TRACE("[MET_PMU] turned off sspm side polling\n");
+				pr_debug("[MET_PMU] turned off sspm side polling\n");
+				/* return without sending init IPIs, leaving sspm side to poll nothing */
+				return;
+			}
 		}
 	}
 
@@ -1172,17 +1558,28 @@ static int sspm_pmu_print_header(char *buf, int len)
 static int sspm_pmu_process_argument(const char *arg, int len)
 {
 	if (met_cpupmu.ondiemet_mode == 1) {
+                if (override_handle_irq) {
+                        if (handle_irq_selective) {
+                                if (!(cpu_pmu->disable_intr && cpu_pmu->disable_cyc_intr)) {
+                                        MET_TRACE("[MET_PMU] missing function disable_intr and disable_cyc_intr, "
+                                                  "pmu on sspm was not supported on this platform\n");
+                                        pr_debug("[MET_PMU] missing function disable_intr and disable_cyc_intr, "
+                                                 "pmu on sspm was not supported on this platform\n");
+                                        return -EINVAL;
+                                }
+                        } else {
+                                if (!cpu_pmu->pmu_read_clear_overflow_flag) {
+                                        MET_TRACE("[MET_PMU] missing function pmu_read_clear_overflow_flag, "
+                                                  "pmu on sspm was not supported on this platform\n");
+                                        pr_debug("[MET_PMU] missing function pmu_read_clear_overflow_flag, "
+                                                 "pmu on sspm was not supported on this platform\n");
+                                        return -EINVAL;
+                                }
+                        }
+                }
 
-		if (!cpu_pmu->pmu_read_clear_overflow_flag) {
-			MET_TRACE("[MET_PMU] cpu_pmu->pmu_read_clear_overflow_flag=NULL, "
-				  "pmu on sspm was not supported on this platform\n");
-			pr_debug("[MET_PMU] cpu_pmu->pmu_read_clear_overflow_flag=NULL, "
-				 "pmu on sspm was not supported on this platform\n");
-			return -EINVAL;
-		}
-
-		return cpupmu_process_argument(arg, len);
-	}
+                return cpupmu_process_argument(arg, len);
+        }
 	return 0;
 }
 #endif /* end of #ifdef MET_SSPM */

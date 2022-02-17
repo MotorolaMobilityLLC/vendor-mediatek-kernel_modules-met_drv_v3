@@ -111,6 +111,8 @@ static int _mcupm_process_argument(const char *arg, int len)
 
 	if (strncmp(arg, "cpu_pmu", strlen("cpu_pmu")) == 0) {
 		ondiemet_module[ONDIEMET_MCUPM] |= (0x1 << MID_MCUPM_CPU_PMU);
+	} else if (strncmp(arg, "cpu_dvfs", strlen("cpu_dvfs")) == 0) {
+		ondiemet_module[ONDIEMET_MCUPM] |= (0x1 << MID_MCUPM_CPU_DVFS);
 	}
 
 	mcupm_process_argument_real_sym = symbol_get(mcupm_process_argument_real);

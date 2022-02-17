@@ -19,6 +19,11 @@
 #define ARMV7_PMCR_N_MASK	0x1f
 #define ARMV7_PMCR_MASK		0x3f		/* mask for writable bits */
 
+/*
+ * PMOVSR: counters overflow flag status reg
+ */
+#define	ARMV7_OVSR_MASK		0xffffffff     /* Mask for writable bits */
+
 static unsigned int armv7_get_ic(void)
 {
 	unsigned int value;
@@ -81,15 +86,27 @@ static inline void armv7_pmu_enable_intr(unsigned int idx)
 
 static inline void armv7_pmu_disable_intr(unsigned int idx)
 {
+	/* pmintenclr */
 	asm volatile ("mcr p15, 0, %0, c9, c14, 2"::"r" (1 << idx));
+	isb();
+	/* pmovsr */
+	asm volatile ("mcr p15, 0, %0, c9, c12, 3"::"r" (1 << idx));
+	isb();
+}
+
+static inline void armv7_pmu_disable_cyc_intr()
+{
+	armv7_pmu_disable_intr(31);
 }
 
 static inline unsigned int armv7_pmu_overflow(void)
 {
 	unsigned int val;
 
-	asm volatile ("mrc p15, 0, %0, c9, c12, 3":"=r" (val));	/* read */
-	asm volatile ("mcr p15, 0, %0, c9, c12, 3"::"r" (val));
+	/* pmovsr */
+	asm volatile ("mrc p15, 0, %0, c9, c12, 3":"=r" (val));    /* read */
+	val &= ARMV7_OVSR_MASK;
+	asm volatile ("mcr p15, 0, %0, c9, c12, 3"::"r" (val));    /* write to clear */
 	return val;
 }
 
@@ -232,21 +249,6 @@ static unsigned long armv7_perf_event_get_evttype(struct perf_event *ev) {
 	return hwc->config_base & ARMV7_PMU_EVTYPE_EVENT;
 }
 
-#define	PMU_OVSR_MASK		0xffffffff     /* Mask for writable bits */
-
-static u32 armv7_pmu_read_clear_overflow_flag(void)
-{
-	u32 value;
-
-	asm volatile ("mrc p3, 3, %0, c9, c12, 3":"=r" (value));
-
-	/* Write to clear flags */
-	value &= PMU_OVSR_MASK;
-	asm volatile ("mcr p3, 3, %0, c9, c12, 3"::"r" (value));
-
-	return value;
-}
-
 static struct met_pmu	pmus[MXNR_CPU][MXNR_PMU_EVENTS];
 
 struct cpu_pmu_hw armv7_pmu = {
@@ -256,7 +258,9 @@ struct cpu_pmu_hw armv7_pmu = {
 	.stop = armv7_pmu_hw_stop,
 	.polling = armv7_pmu_hw_polling,
 	.perf_event_get_evttype = armv7_perf_event_get_evttype,
-	.pmu_read_clear_overflow_flag = armv7_pmu_read_clear_overflow_flag,
+	.pmu_read_clear_overflow_flag = armv7_pmu_overflow,
+	.disable_intr = armv7_pmu_disable_intr,
+	.disable_cyc_intr = armv7_pmu_disable_cyc_intr,
 };
 
 struct cpu_pmu_hw *cpu_pmu_hw_init(void)

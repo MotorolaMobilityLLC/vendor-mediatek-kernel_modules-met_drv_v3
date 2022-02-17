@@ -13,12 +13,18 @@
 #define MODE_INTERRUPT	1
 #define MODE_POLLING	2
 
+#define PMU_INIT_SUCC             0
+#define PMU_INIT_FAIL_OCCUPIED    1
+#define PMU_INIT_FAIL_CPU_OFFLINE 2
+
 #define MXSIZE_PMU_DESC 32
 #define MXNR_CPU	NR_CPUS
 
 #define	MXNR_PMU_EVENTS	8	/* max number of pmu counter for armv8 is 6+1 */
 struct met_pmu {
 	unsigned char mode;
+	/* if event turned off because init was failed */
+	unsigned char init_failed;
 	unsigned short event;
 	unsigned long freq;
 	struct kobject *kobj_cpu_pmu;
@@ -35,6 +41,8 @@ struct cpu_pmu_hw {
 	unsigned int (*polling)(struct met_pmu *pmu, int count, unsigned int *pmu_value);
 	unsigned long (*perf_event_get_evttype)(struct perf_event *ev);
 	u32 (*pmu_read_clear_overflow_flag)(void);
+	void (*disable_intr)(unsigned int idx);
+	void (*disable_cyc_intr)(void);
 	struct met_pmu *pmu[MXNR_CPU];
 	int event_count[MXNR_CPU];
 	/*

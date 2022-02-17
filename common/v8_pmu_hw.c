@@ -80,13 +80,19 @@ static inline void armv8_pmu_disable_intr(unsigned int idx)
 	isb();
 }
 
+static inline void armv8_pmu_disable_cyc_intr(void)
+{
+	armv8_pmu_disable_intr(31);
+}
+
 static inline unsigned int armv8_pmu_overflow(void)
 {
 	unsigned int val;
 
-	asm volatile ("mrs %x0, pmovsclr_el0":"=r" (val));	/* read */
+	asm volatile ("mrs %x0, pmovsclr_el0":"=r" (val));    /* read */
 	val &= ARMV8_OVSR_MASK;
-	asm volatile ("mrs %x0, pmovsclr_el0"::"r" (val));
+	asm volatile ("msr pmovsclr_el0, %x0"::"r" (val));    /* write to clear */
+
 	return val;
 }
 
@@ -226,21 +232,6 @@ static unsigned long armv8_perf_event_get_evttype(struct perf_event *ev) {
 	return hwc->config_base & ARMV8_PMU_EVTYPE_EVENT;
 }
 
-#define	PMU_OVSR_MASK		0xffffffff     /* Mask for writable bits */
-
-static u32 armv8_pmu_read_clear_overflow_flag(void)
-{
-	u32 value;
-
-	asm volatile ("mrs %x0, pmovsclr_el0":"=r" (value));
-
-	/* Write to clear flags */
-	value &= PMU_OVSR_MASK;
-	asm volatile ("msr pmovsclr_el0, %x0"::"r" (value));
-
-	return value;
-}
-
 static struct met_pmu	pmus[MXNR_CPU][MXNR_PMU_EVENTS];
 
 struct cpu_pmu_hw armv8_pmu = {
@@ -250,7 +241,9 @@ struct cpu_pmu_hw armv8_pmu = {
 	.stop = armv8_pmu_hw_stop,
 	.polling = armv8_pmu_hw_polling,
 	.perf_event_get_evttype = armv8_perf_event_get_evttype,
-	.pmu_read_clear_overflow_flag = armv8_pmu_read_clear_overflow_flag,
+	.pmu_read_clear_overflow_flag = armv8_pmu_overflow,
+	.disable_intr = armv8_pmu_disable_intr,
+	.disable_cyc_intr = armv8_pmu_disable_cyc_intr,
 };
 
 static void init_pmus(void)
