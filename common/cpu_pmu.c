@@ -1763,8 +1763,8 @@ static void ipi_config_pmu_counter_cnt(void) {
 			ipi_buf[0] = MET_MAIN_ID | (MID_PMU << MID_BIT_SHIFT) | MET_ARGU | SET_PMU_BASE_OFFSET;
 			ipi_buf[1] = (cpu << 16) | (base_offset & 0xffff);
 
-			MET_TRACE("[MET_PMU][IPI_CONFIG] core=%d, base offset set to %lu\n", cpu, base_offset);
-			pr_debug("[MET_PMU][IPI_CONFIG] core=%d, base offset set to %lu\n", cpu, base_offset);
+			MET_TRACE("[MET_PMU][IPI_CONFIG] core=%d, base offset set to %u\n", cpu, base_offset);
+			pr_debug("[MET_PMU][IPI_CONFIG] core=%d, base offset set to %u\n", cpu, base_offset);
 
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
