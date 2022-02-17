@@ -49,18 +49,24 @@ met-y := $(MET_CORE)/met_main.o \
 ################################################################################
 # MET feature declaration
 ################################################################################
-FEATURE_SPMTWAM := $(if $(FEATURE_SPMTWAM),$(FEATURE_SPMTWAM),y)
-FEATURE_SSPM_EMI := $(if $(FEATURE_SSPM_EMI),$(FEATURE_SSPM_EMI),y)
-FEATURE_GPU := $(if $(FEATURE_GPU),$(FEATURE_GPU),y)
-FEATURE_VCOREDVFS := $(if $(FEATURE_VCOREDVFS),$(FEATURE_VCOREDVFS),y)
-FEATURE_PTPOD := $(if $(FEATURE_PTPOD),$(FEATURE_PTPOD),y)
-FEATURE_CPUDSU := $(if $(FEATURE_CPUDSU),$(FEATURE_CPUDSU),y)
-FEATURE_WALLTIME := $(if $(FEATURE_WALLTIME),$(FEATURE_WALLTIME),y)
-FEATURE_SMI := $(if $(FEATURE_SMI),$(FEATURE_SMI),y)
-FEATURE_MET_BACKLIGHT := $(if $(FEATURE_MET_BACKLIGHT),$(FEATURE_MET_BACKLIGHT),y)
-FEATURE_EVENT_POWER := $(if $(FEATURE_EVENT_POWER),$(FEATURE_EVENT_POWER),y)
-FEATURE_ONDIEMET := $(if $(FEATURE_ONDIEMET),$(FEATURE_ONDIEMET),y)
-FEATURE_TINYSYS := $(if $(FEATURE_TINYSYS),$(FEATURE_TINYSYS),n)
+TINYSYS_VERSION := v1
+SSPM_VERSION := v2
+
+FEATURE_SPMTWAM := y
+FEATURE_SSPM_EMI := y
+FEATURE_GPU := y
+FEATURE_VCOREDVFS := y
+FEATURE_PTPOD := y
+FEATURE_CPUDSU := y
+FEATURE_WALLTIME := y
+FEATURE_SMI := y
+FEATURE_MET_BACKLIGHT := y
+FEATURE_EVENT_POWER := y
+FEATURE_ONDIEMET := n
+FEATURE_TINYSYS := y
+FEATURE_MCUPM_NUM := 1
+FEATURE_SCP_NUM := 0
+FEATURE_SSPM_NUM := 1
 
 ################################################################################
 # MET_CPU_PMU
@@ -369,27 +375,35 @@ endif
 ################################################################################
 # Tinysys MET module
 ################################################################################
+ifneq (,$(filter $(CONFIG_MTK_TINYSYS_MCUPM_SUPPORT),y m))
+    $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = y)
+else
+    $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = n)
+    FEATURE_MCUPM_NUM := 0
+endif
+ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SCP_SUPPORT),y m))
+    $(info CONFIG_MTK_TINYSYS_SCP_SUPPORT = y)
+else
+    $(info CONFIG_MTK_TINYSYS_SCP_SUPPORT = n)
+    FEATURE_SCP_NUM := 0
+endif
+ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SSPM_SUPPORT),y m))
+    $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = y)
+else
+    $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = n)
+    FEATURE_SSPM_NUM := 0
+endif
+
+ifeq ($(FEATURE_MCUPM_NUM),0)
+    ifeq ($(FEATURE_SCP_NUM),0)
+        ifeq ($(FEATURE_SSPM_NUM),0)
+            FEATURE_TINYSYS := n
+        endif
+    endif
+endif
+
 $(info FEATURE_TINYSYS = $(FEATURE_TINYSYS))
 ifeq ($(FEATURE_TINYSYS),y)
-    ifneq (,$(filter $(CONFIG_MTK_TINYSYS_MCUPM_SUPPORT),y m))
-        $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = y)
-    else
-        $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = n)
-        FEATURE_MCUPM_NUM := 0
-    endif
-    ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SCP_SUPPORT),y m))
-        $(info CONFIG_MTK_TINYSYS_SCP_SUPPORT = y)
-    else
-        $(info CONFIG_MTK_TINYSYS_SCP_SUPPORT = n)
-        FEATURE_SCP_NUM := 0
-    endif
-    ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SSPM_SUPPORT),y m))
-        $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = y)
-    else
-        $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = n)
-        FEATURE_SSPM_NUM := 0
-    endif
-
     met-y += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_log.o
     met-y += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_mgr.o
     ccflags-y += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)
