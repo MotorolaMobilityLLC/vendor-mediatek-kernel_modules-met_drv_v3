@@ -13,7 +13,6 @@
 #include <linux/miscdevice.h>
 #include <linux/kallsyms.h>
 #include <linux/syscore_ops.h>
-#include <linux/dma-mapping.h>
 #include <linux/of.h>
 #include <linux/tracepoint.h>
 #include "interface.h"
@@ -1289,9 +1288,6 @@ int fs_reg(int met_minor)
 		pr_debug("misc register failed, minor = %d \n", met_device.minor);
 		return ret;
 	}
-
-	/* dma map config */
-	arch_setup_dma_ops(met_device.this_device, 0, 0, NULL, false);
 
 	ret = device_create_file(met_device.this_device, &dev_attr_ksym);
 	if (ret != 0) {
