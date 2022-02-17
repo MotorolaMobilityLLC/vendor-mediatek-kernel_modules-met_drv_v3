@@ -7,14 +7,10 @@
 #ifndef __MT_MET_EMI_BM_BASIC_H__
 #define __MT_MET_EMI_BM_BASIC_H__
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT)
-#include "sspm/ondiemet_sspm.h"
-#elif defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #include "tinysys_sspm.h"
 #include "tinysys_mgr.h" /* for ondiemet_module */
 #include "sspm_met_ipi_handle.h"
-#endif
 #endif
 
 #include "mtk_emi_hw.h"
@@ -157,15 +153,13 @@ enum {
 #define DUAL_RANK 2
 
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 enum BM_EMI_IPI_Type {
 	SET_BASE_EMI = 0x0,
 	SET_EBM_CONFIGS1 = 0x7,
 	SET_EBM_CONFIGS2 = 0x8,
 	SET_REGISTER_CB = 0x9,
 };
-#endif
 #endif
 
 

@@ -13,19 +13,6 @@
 /*****************************************************************************
  * define declaration
  *****************************************************************************/
-#ifndef FEATURE_SSPM_NUM
-#define FEATURE_SSPM_NUM 1
-#endif
-
-#ifndef FEATURE_MCUPM_NUM
-#define FEATURE_MCUPM_NUM 1
-#endif
-
-#ifndef FEATURE_SCP_NUM
-#define FEATURE_SCP_NUM 0
-#endif
-
-#define ONDIEMET_NUM (FEATURE_SSPM_NUM + FEATURE_MCUPM_NUM + FEATURE_SCP_NUM)
 
 
 /*****************************************************************************
@@ -34,7 +21,7 @@
 enum {
     ONDIEMET_SSPM,
     ONDIEMET_MCUPM,
-    ONDIEMET_SCP,
+    ONDIEMET_TINYSYS_NUM,
 };
 
 
@@ -57,7 +44,7 @@ void ondiemet_extract(void);
 /*****************************************************************************
  * external variable declaration
  *****************************************************************************/
-extern unsigned int ondiemet_module[ONDIEMET_NUM];
+extern unsigned int ondiemet_module[ONDIEMET_TINYSYS_NUM];
 
 
 #endif /* __TINYSYS_MGR_H__ */

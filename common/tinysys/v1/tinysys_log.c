@@ -22,13 +22,13 @@
 #include "tinysys_mgr.h"
 #include "tinysys_log.h"
 
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 #include "sspm_reservedmem.h"
 #include "sspm_reservedmem_define.h"
 #include "sspm/sspm_met_log.h"
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 #include "mcupm_driver.h"
 #include "mcupm/mcupm_met_log.h"
 #endif
@@ -69,11 +69,11 @@ static void _reset(int status, int type);
 /*****************************************************************************
  * internal variable declaration
  *****************************************************************************/
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 static unsigned int _g_sspm_status;
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 static unsigned int _g_mcupm_status;
 #endif
 
@@ -103,11 +103,11 @@ int tinysys_log_manager_init(struct device *dev)
 	dev_set_drvdata(dev, procfs_met_dir);
 #endif
 
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_log_init(dev);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_log_init(dev);
 #endif
 
@@ -123,11 +123,11 @@ int tinysys_log_manager_uninit(struct device *dev)
 	struct proc_dir_entry *procfs_met_dir = NULL;
 #endif
 
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_log_uninit(dev);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_log_uninit(dev);
 #endif
 
@@ -151,12 +151,12 @@ int tinysys_log_manager_uninit(struct device *dev)
 
 int tinysys_log_manager_start(void)
 {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_log_start();
 	_reset(kTINYSYS_LOG_START, ONDIEMET_SSPM);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_log_start();
 	_reset(kTINYSYS_LOG_START, ONDIEMET_MCUPM);
 #endif
@@ -167,12 +167,12 @@ int tinysys_log_manager_start(void)
 
 int tinysys_log_manager_stop(void)
 {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_log_stop();
 	_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_log_stop();
 	_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
 #endif
@@ -187,13 +187,13 @@ int tinysys_log_manager_stop(void)
 static void _reset(int status, int type)
 {
 	switch (type) {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	case ONDIEMET_SSPM:
 		_g_sspm_status = status;
 		break;
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	case ONDIEMET_MCUPM:
 		_g_mcupm_status = status;
 		break;

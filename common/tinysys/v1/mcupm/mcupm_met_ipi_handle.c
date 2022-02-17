@@ -21,7 +21,7 @@
 #include <linux/delay.h>
 #include <asm/io.h>  /* for ioremap and iounmap */
 
-#include "mt-plat/mtk_tinysys_ipi.h"  /* for mtk_ipi_device */
+#include "mtk_tinysys_ipi.h"  /* for mtk_ipi_device */
 #include "mcupm_ipi_id.h"  /* for mcupm_ipidev */
 
 #include "mcupm_met_log.h"

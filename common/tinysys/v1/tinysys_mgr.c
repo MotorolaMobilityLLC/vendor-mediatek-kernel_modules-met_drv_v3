@@ -12,12 +12,12 @@
 #include "tinysys_mgr.h"
 #include "tinysys_log.h"
 
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 #include "sspm/sspm_met_ipi_handle.h"
 #include "sspm/sspm_met_log.h"
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 #include "mcupm/mcupm_met_ipi_handle.h"
 #include "mcupm/mcupm_met_log.h"
 #endif
@@ -41,7 +41,7 @@
 /*****************************************************************************
  * internal function declaration
  *****************************************************************************/
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 static ssize_t sspm_ipi_supported_show(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t sspm_buffer_size_show(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t sspm_available_show(struct device *dev, struct device_attribute *attr, char *buf);
@@ -60,7 +60,7 @@ static int _create_sspm_node(struct device *dev);
 static void _remove_sspm_node(struct device *dev);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 static ssize_t _mcupm_ipi_supported_show(
 	struct kobject *kobj,
 	struct kobj_attribute *attr,
@@ -125,7 +125,7 @@ static void _remove_mcupm_node(void);
 /*****************************************************************************
  * external variable declaration
  *****************************************************************************/
-unsigned int ondiemet_module[ONDIEMET_NUM];
+unsigned int ondiemet_module[ONDIEMET_TINYSYS_NUM];
 EXPORT_SYMBOL(ondiemet_module);
 
 
@@ -134,7 +134,7 @@ EXPORT_SYMBOL(ondiemet_module);
  *****************************************************************************/
 static struct kobject *_g_tinysys_kobj;
 
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 static int _sspm_log_mode;
 static int _sspm_run_mode;
 static int _sspm_log_size;
@@ -151,7 +151,7 @@ static DEVICE_ATTR(sspm_modules, 0664, sspm_modules_show, sspm_modules_store);
 static DEVICE_ATTR(sspm_op_ctrl, 0220, NULL, sspm_op_ctrl_store);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 static int _mcupm_run_mode;
 static int _mcupm_log_size;
 static int _mcupm_log_discard;
@@ -189,7 +189,7 @@ int ondiemet_attr_init(struct device *dev)
 		return -1;
 	}
 
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	ret = _create_sspm_node(dev);
 	if (ret != 0) {
 		pr_debug("can not create sspm node\n");
@@ -197,7 +197,7 @@ int ondiemet_attr_init(struct device *dev)
 	}
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	ret = _create_mcupm_node(_g_tinysys_kobj);
 	if (ret != 0) {
 		pr_debug("can not create cpu eb node\n");
@@ -211,11 +211,11 @@ int ondiemet_attr_init(struct device *dev)
 
 int ondiemet_attr_uninit(struct device *dev)
 {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	_remove_sspm_node(dev);
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	_remove_mcupm_node();
 #endif
 
@@ -255,11 +255,11 @@ void ondiemet_log_manager_stop()
 
 void ondiemet_start()
 {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_start();
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_start();
 #endif
 
@@ -268,11 +268,11 @@ void ondiemet_start()
 
 void ondiemet_stop()
 {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_stop();
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_stop();
 #endif
 
@@ -281,11 +281,11 @@ void ondiemet_stop()
 
 void ondiemet_extract()
 {
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 	sspm_extract();
 #endif
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 	mcupm_extract();
 #endif
 
@@ -295,7 +295,7 @@ void ondiemet_extract()
 /*****************************************************************************
  * internal function ipmlement
  *****************************************************************************/
-#if FEATURE_SSPM_NUM
+#ifdef MET_SSPM
 static ssize_t sspm_ipi_supported_show(
 	struct device *dev,
 	struct device_attribute *attr,
@@ -585,7 +585,7 @@ static void _remove_sspm_node(struct device *dev)
 #endif
 
 
-#if FEATURE_MCUPM_NUM
+#ifdef MET_MCUPM
 static ssize_t _mcupm_ipi_supported_show(
 	struct kobject *kobj,
 	struct kobj_attribute *attr,

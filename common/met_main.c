@@ -26,11 +26,9 @@
 #include "interface.h"
 #include <linux/of.h>
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #if defined(SSPM_VERSION_V2)
 #include "sspm_ipi_id.h"  /* for sspm_ipidev */
-#endif
 #endif
 #endif
 
@@ -55,11 +53,9 @@ static struct cpu_type_name met_known_cpu_type[] = {
 
 static char met_cpu_topology[64];
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #if defined(SSPM_VERSION_V2)
 struct mtk_ipi_device *sspm_ipidev_symbol = NULL;
-#endif
 #endif
 #endif
 
@@ -189,11 +185,9 @@ static int met_kernel_symbol_get(void)
 	int ret = 0;
 
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #if defined(SSPM_VERSION_V2)
 	ret += _MET_SYMBOL_GET(sspm_ipidev);
-#endif
 #endif
 #endif
 	return ret;
@@ -201,11 +195,9 @@ static int met_kernel_symbol_get(void)
 
 static void met_kernel_symbol_put(void)
 {
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #ifdef SSPM_VERSION_V2
 	_MET_SYMBOL_PUT(sspm_ipidev);
-#endif
 #endif
 #endif
 }

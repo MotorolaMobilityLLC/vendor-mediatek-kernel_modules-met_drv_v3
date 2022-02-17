@@ -24,14 +24,10 @@
 #include "cpu_pmu.h"
 #include "mtk_typedefs.h"
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT)
-#include "sspm/ondiemet_sspm.h"
-#elif defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #include "tinysys_sspm.h"
 #include "tinysys_mgr.h" /* for ondiemet_module */
 #include "sspm_met_ipi_handle.h"
-#endif
 #endif
 
 struct cpu_pmu_hw *cpu_pmu;
@@ -350,8 +346,7 @@ static void perf_event_release(int cpu, struct perf_event *ev)
 	perf_event_release_kernel(ev);
 }
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #define	PMU_OVERFLOWED_MASK	0xffffffff
 
 static inline int pmu_has_overflowed(u32 pmovsr)
@@ -373,7 +368,6 @@ static irqreturn_t perf_event_handle_irq_ignore_overflow(struct arm_pmu *pmu)
 		return IRQ_HANDLED;
 	}
 }
-#endif
 #endif
 
 static int perf_thread_set_perf_events(int cpu)
@@ -430,8 +424,7 @@ static int perf_thread_set_perf_events(int cpu)
 			perf_event_enable(ev);
 			per_cpu(perfCntFirst, cpu)[i] = 1;
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 			if (met_cpupmu.ondiemet_mode) {
 				struct arm_pmu *armpmu;
 				armpmu = container_of(ev->pmu, struct arm_pmu, pmu);
@@ -444,7 +437,6 @@ static int perf_thread_set_perf_events(int cpu)
 				}
 				mutex_unlock(&handle_irq_lock);
 			}
-#endif
 #endif
 		}	/* for all PMU counter */
 		per_cpu(perfSet, cpu) = 1;
@@ -478,8 +470,7 @@ static void perf_thread_down(int cpu)
 		ev = per_cpu(pevent, cpu)[i];
 		if (ev != NULL) {
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 			if (met_cpupmu.ondiemet_mode) {
 				struct arm_pmu *armpmu;
 				armpmu = container_of(ev->pmu, struct arm_pmu, pmu);
@@ -492,8 +483,6 @@ static void perf_thread_down(int cpu)
 				mutex_unlock(&handle_irq_lock);
 			}
 #endif
-#endif
-
 			perf_event_release(cpu, ev);
 			per_cpu(pevent, cpu)[i] = NULL;
 		}
@@ -991,8 +980,7 @@ static void cpupmu_cpu_state_notify(long cpu, unsigned long action)
 #endif
 }
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 static void sspm_pmu_start(void)
 {
 	ondiemet_module[ONDIEMET_SSPM] |= ID_PMU;
@@ -1197,8 +1185,7 @@ static int sspm_pmu_process_argument(const char *arg, int len)
 	}
 	return 0;
 }
-#endif /* end of #if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT) */
-#endif /* end of #if defined(CONFIG_MTK_TINYSYS_SSPM_SUPPORT) */
+#endif /* end of #ifdef MET_SSPM */
 
 struct metdevice met_cpupmu = {
 	.name = "cpu",
@@ -1216,8 +1203,7 @@ struct metdevice met_cpupmu = {
 	.print_header = cpupmu_print_header,
 	.process_argument = cpupmu_process_argument,
 	.cpu_state_notify = cpupmu_cpu_state_notify,
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 	.ondiemet_mode = 1,
 	.ondiemet_start = sspm_pmu_start,
 	.uniq_ondiemet_start = sspm_pmu_unique_start,
@@ -1225,6 +1211,5 @@ struct metdevice met_cpupmu = {
 	.ondiemet_stop = sspm_pmu_stop,
 	.ondiemet_print_header = sspm_pmu_print_header,
 	.ondiemet_process_argument = sspm_pmu_process_argument
-#endif
 #endif
 };

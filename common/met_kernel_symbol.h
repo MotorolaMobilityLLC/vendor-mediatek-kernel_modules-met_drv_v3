@@ -32,13 +32,11 @@
 		} \
 	}
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 #ifdef SSPM_VERSION_V2
-#include "sspm/ondiemet_sspm.h"
+#include "tinysys_sspm.h"
 extern struct mtk_ipi_device sspm_ipidev;
 extern struct mtk_ipi_device *sspm_ipidev_symbol;
-#endif
 #endif
 #endif
 

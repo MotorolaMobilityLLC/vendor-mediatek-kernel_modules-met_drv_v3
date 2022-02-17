@@ -115,19 +115,9 @@ extern struct metdevice met_sspm_smi;
 extern struct metdevice met_wall_time;
 #endif
 
-#ifdef MTK_TINYSYS_SSPM_SUPPORT
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 extern struct metdevice met_sspm_common;
 #endif
-#endif /* MTK_TINYSYS_SSPM_SUPPORT */
-
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
-#ifdef MET_SSPM_WALLTIME
-extern struct metdevice met_sspm_walltime;
-#endif
-#endif
-#endif /* CONFIG_MTK_TINYSYS_SSPM_SUPPORT */
 
 #ifdef MET_CPUDSU
 extern struct metdevice met_cpudsu;

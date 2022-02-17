@@ -187,16 +187,8 @@ int core_plf_init(void)
 	met_register(&met_wall_time);
 #endif
 
-#ifdef MTK_TINYSYS_SSPM_SUPPORT
+#ifdef MET_SSPM
 	met_register(&met_sspm_common);
-#endif
-
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
-#ifdef MET_SSPM_WALLTIME
-	met_register(&met_sspm_walltime);
-#endif
-#endif
 #endif
 
 #ifdef MET_CPUDSU
@@ -256,18 +248,8 @@ void core_plf_exit(void)
 	met_deregister(&met_wall_time);
 #endif
 
-#ifdef MTK_TINYSYS_SSPM_SUPPORT
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 	met_deregister(&met_sspm_common);
-#endif
-#endif
-
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
-#ifdef MET_SSPM_WALLTIME
-	met_deregister(&met_sspm_walltime);
-#endif
-#endif
 #endif
 
 #ifdef MET_CPUDSU

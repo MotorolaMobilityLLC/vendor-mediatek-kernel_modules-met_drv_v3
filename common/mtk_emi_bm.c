@@ -2840,8 +2840,7 @@ void emi_uninit(void)
 	MET_BM_RestoreCfg();
 }
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 void MET_BM_IPI_REGISTER_CB(void)
 {
 	int ret, i;
@@ -2874,14 +2873,12 @@ void MET_BM_IPI_configs(void)
 	}
 }
 #endif
-#endif
 
 unsigned int get_sspm_support_feature(void)
 {
 	unsigned int rdata=0;
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 	int ret, i;
 	unsigned int ipi_buf[4];
 
@@ -2892,7 +2889,6 @@ unsigned int get_sspm_support_feature(void)
 		ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_REQ_AP2MD ;
 		ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
 	}
-#endif
 #endif
 	return rdata;
 }
@@ -3514,8 +3510,7 @@ int emi_print_header_basic(char *buf, int len)
 	return len;
 }
 
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 void ondiemet_emi_start_basic(void)
 {
 	int ret;
@@ -3553,7 +3548,6 @@ void ondiemet_emi_stop_basic(void)
 		emi_uninit();
 }
 #endif
-#endif
 
 /*para*/
 EXPORT_SYMBOL(emi_inited);
@@ -3588,10 +3582,8 @@ EXPORT_SYMBOL(DRAM_CH_NUM_PER_EMI);
 
 /*func*/
 EXPORT_SYMBOL(emi_init);
-#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
-#if defined(ONDIEMET_SUPPORT) || defined(TINYSYS_SSPM_SUPPORT)
+#ifdef MET_SSPM
 EXPORT_SYMBOL(ondiemet_emi_start_basic);
-#endif
 #endif
 EXPORT_SYMBOL(do_emi);
 EXPORT_SYMBOL(emi_create_header);
