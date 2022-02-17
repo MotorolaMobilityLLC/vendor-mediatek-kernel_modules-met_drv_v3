@@ -75,7 +75,6 @@ static void ondiemet_emi_stop(void)
 MET_DEFINE_DEPENDENCY_BY_NAME(dependencies) = {
 	{.symbol=(void**)&met_scmi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
 	{.symbol=(void**)&met_sspm_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
-	{.symbol=(void**)&met_emi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
 };
 
 struct metdevice met_sspm_emi = {
