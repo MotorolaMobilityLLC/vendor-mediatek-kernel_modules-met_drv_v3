@@ -184,6 +184,12 @@ static int __init met_drv_init(void)
 		met_cpu_ptr->cpu = cpu;
 	}
 
+	ret = init_met_strbuf();
+	if (ret) {
+		pr_notice("[MET] met init_met_strbuf fail, ret = %d\n", ret);
+		return ret;
+	}
+
 	tracepoint_reg();
 
 	ret = fs_reg(met_minor);
@@ -249,6 +255,8 @@ static void __exit met_drv_exit(void)
 	fs_unreg();
 
 	tracepoint_unreg();
+
+	deinit_met_strbuf();
 
 	_MET_SYMBOL_PUT(mt_get_chip_id);
 }

@@ -27,10 +27,13 @@ extern void core_plf_exit(void);
 #endif
 
 #define MET_STRBUF_SIZE		1024
-DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf_nmi);
-DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf_irq);
-DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf_sirq);
-DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf);
+struct met_strbuf_t {
+	char met_strbuf_nmi[MET_STRBUF_SIZE];
+	char met_strbuf_irq[MET_STRBUF_SIZE];
+	char met_strbuf_sirq[MET_STRBUF_SIZE];
+	char met_strbuf[MET_STRBUF_SIZE];
+};
+extern struct met_strbuf_t __percpu *p_met_strbuf;
 
 #if IS_ENABLED(CONFIG_TRACING)
 #define TRACE_PUTS(p) \
@@ -46,13 +49,13 @@ DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf);
 		char *pmet_strbuf; \
 		preempt_disable(); \
 		if (in_nmi()) \
-			pmet_strbuf = per_cpu(met_strbuf_nmi, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_nmi; \
 		else if (in_irq()) \
-			pmet_strbuf = per_cpu(met_strbuf_irq, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_irq; \
 		else if (in_softirq()) \
-			pmet_strbuf = per_cpu(met_strbuf_sirq, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_sirq; \
 		else \
-			pmet_strbuf = per_cpu(met_strbuf, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf; \
 		pmet_strbuf;\
 	})
 
@@ -69,13 +72,13 @@ DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf);
 		char *pmet_strbuf; \
 		preempt_disable(); \
 		if (in_nmi()) \
-			pmet_strbuf = per_cpu(met_strbuf_nmi, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_nmi; \
 		else if (in_irq()) \
-			pmet_strbuf = per_cpu(met_strbuf_irq, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_irq; \
 		else if (in_softirq()) \
-			pmet_strbuf = per_cpu(met_strbuf_sirq, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_sirq; \
 		else \
-			pmet_strbuf = per_cpu(met_strbuf, smp_processor_id()); \
+			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf; \
 		if (met_mode & MET_MODE_TRACE_CMD) \
 			_met_trace_str = snprintf(pmet_strbuf, MET_STRBUF_SIZE, "%s: " FORMAT, __func__, ##args); \
 		else \
@@ -93,13 +96,13 @@ DECLARE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf);
 	({ \
 		preempt_disable(); \
 		if (in_nmi()) \
-			*pSOB = per_cpu(met_strbuf_nmi, smp_processor_id()); \
+			*pSOB = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_nmi; \
 		else if (in_irq()) \
-			*pSOB = per_cpu(met_strbuf_irq, smp_processor_id()); \
+			*pSOB = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_irq; \
 		else if (in_softirq()) \
-			*pSOB = per_cpu(met_strbuf_sirq, smp_processor_id()); \
+			*pSOB = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf_sirq; \
 		else \
-			*pSOB = per_cpu(met_strbuf, smp_processor_id()); \
+			*pSOB = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf; \
 		*pEOB = *pSOB; \
 		if (met_mode & MET_MODE_TRACE_CMD) \
 			*pEOB += snprintf(*pEOB, MET_STRBUF_SIZE, "%s: ", __func__); \

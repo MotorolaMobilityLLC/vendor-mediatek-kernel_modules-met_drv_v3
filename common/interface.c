@@ -55,17 +55,23 @@ unsigned int ctrl_flags;
 int met_mode;
 EXPORT_SYMBOL(met_mode);
 
-DEFINE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf_nmi);
-EXPORT_SYMBOL(met_strbuf_nmi);
+struct met_strbuf_t __percpu *p_met_strbuf;
+EXPORT_PER_CPU_SYMBOL(p_met_strbuf);
 
-DEFINE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf_irq);
-EXPORT_SYMBOL(met_strbuf_irq);
+int init_met_strbuf (void) {
+	p_met_strbuf = alloc_percpu(struct met_strbuf_t);
+	if (!p_met_strbuf) {
+		return -1;
+	}
 
-DEFINE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf_sirq);
-EXPORT_SYMBOL(met_strbuf_sirq);
+	return 0;
+}
 
-DEFINE_PER_CPU(char[MET_STRBUF_SIZE], met_strbuf);
-EXPORT_SYMBOL(met_strbuf);
+void deinit_met_strbuf (void) {
+	if (p_met_strbuf) {
+		free_percpu(p_met_strbuf);
+	}
+}
 
 static void calc_timer_value(int rate)
 {

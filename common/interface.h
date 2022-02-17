@@ -29,6 +29,8 @@ struct tracepoints_table {
 
 extern struct tracepoints_table met_reg_tracepoint[];
 extern int met_tracepoint_probe_reg(char *reg_tp, void *probe_func);
+extern int init_met_strbuf (void);
+extern void deinit_met_strbuf (void);
 extern int tracepoint_reg(void);
 extern int tracepoint_unreg(void);
 
