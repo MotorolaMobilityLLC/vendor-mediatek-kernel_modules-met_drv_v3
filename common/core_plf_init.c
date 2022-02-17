@@ -42,25 +42,7 @@ bool (*mtk_unregister_gpu_power_change_symbol)(const char *name);
 /*
  *   VCORE DVFS
  */
-#ifdef VCOREDVFS_OLD_VER
-
-#include <mtk_vcorefs_governor.h>
-#include <mtk_spm_vcore_dvfs.h>
-
-u32 (*spm_vcorefs_get_MD_status_symbol)(void);
-void (*spm_vcorefs_register_handler_symbol)(vcorefs_handler_t handler);
-void (*vcorefs_register_req_notify_symbol)(vcorefs_req_handler_t handler);
-char *(*governor_get_kicker_name_symbol)(int id);
-int (*vcorefs_enable_debug_isr_symbol)(bool);
-int (*vcorefs_get_hw_opp_symbol)(void);
-int (*vcorefs_get_curr_vcore_symbol)(void);
-int (*vcorefs_get_curr_ddr_symbol)(void);
-int *kicker_table_symbol;
-#else
-
 #include <dvfsrc-exp.h>
-
-#endif /* end else VCOREDVFS_OLD_VER*/
 int  (*vcorefs_get_opp_info_num_symbol)(void);
 char ** (*vcorefs_get_opp_info_name_symbol)(void);
 unsigned int * (*vcorefs_get_opp_info_symbol)(void);
@@ -68,40 +50,13 @@ int  (*vcorefs_get_src_req_num_symbol)(void);
 char ** (*vcorefs_get_src_req_name_symbol)(void);
 unsigned int * (*vcorefs_get_src_req_symbol)(void);
 int (*vcorefs_get_num_opp_symbol)(void);
-
 #endif /* MET_VCOREDVFS */
-
 
 #ifdef MET_EMI
 unsigned int (*mtk_dramc_get_data_rate_symbol)(void);
 unsigned int (*mtk_dramc_get_ddr_type_symbol)(void);
 int (*get_cur_ddr_ratio_symbol)(void);
 #endif /* MET_EMI */
-
-#ifdef MET_PTPOD
-unsigned int (*mt_gpufreq_get_cur_volt_symbol)(void);
-unsigned int (*mt_cpufreq_get_cur_volt_symbol)(unsigned int cluster_id);
-#endif /* MET_PTPOD */
-
-#ifdef MET_SPM_TWAM
-/* ap side used */
-#ifdef SPMTWAM_AP
-void (*spm_twam_enable_monitor_symbol)(const struct twam_sig *twamsig, bool speed_mode);
-void (*spm_twam_register_handler_symbol)(twam_handler_t handler);
-void (*spm_twam_disable_monitor_symbol)(void);
-void (*spm_twam_set_idle_select_symbol)(unsigned int sel);
-void (*spm_twam_set_window_length_symbol)(unsigned int len);
-void (*spm_twam_set_mon_type_symbol)(struct twam_sig *mon);
-#endif
-
-/* sspm side used */
-#ifdef SPMTWAM_SSPM
-void (*spm_twam_enable_monitor_symbol)(bool en_monitor, bool debug_signal, twam_handler_t cb_handler);
-bool (*spm_twam_met_enable_symbol)(void);
-void (*spm_twam_config_channel_symbol)(struct twam_cfg *cfg, bool speed_mode, unsigned int window_len_hz);
-#endif
-#endif
-
 
 static int met_symbol_get(void)
 {
@@ -134,49 +89,12 @@ static int met_symbol_get(void)
 	_MET_SYMBOL_GET(vcorefs_get_src_req_num);
 	_MET_SYMBOL_GET(vcorefs_get_src_req_name);
 	_MET_SYMBOL_GET(vcorefs_get_src_req);
-
-#ifdef VCOREDVFS_OLD_VER
-	_MET_SYMBOL_GET(spm_vcorefs_get_MD_status);
-	_MET_SYMBOL_GET(spm_vcorefs_register_handler);
-	_MET_SYMBOL_GET(vcorefs_register_req_notify);
-	_MET_SYMBOL_GET(governor_get_kicker_name);
-	_MET_SYMBOL_GET(vcorefs_enable_debug_isr);
-	_MET_SYMBOL_GET(vcorefs_get_hw_opp);
-	_MET_SYMBOL_GET(vcorefs_get_curr_vcore);
-	_MET_SYMBOL_GET(vcorefs_get_curr_ddr);
-	_MET_SYMBOL_GET(kicker_table);
-#endif
-
 #endif
 
 #ifdef MET_EMI
 	_MET_SYMBOL_GET(mtk_dramc_get_data_rate);
 	_MET_SYMBOL_GET(mtk_dramc_get_ddr_type);
 	_MET_SYMBOL_GET(get_cur_ddr_ratio);
-#endif
-
-#ifdef MET_PTPOD
-	_MET_SYMBOL_GET(mt_gpufreq_get_cur_volt);
-	_MET_SYMBOL_GET(mt_cpufreq_get_cur_volt);
-#endif
-
-#ifdef MET_SPM_TWAM
-		/* ap side used */
-#ifdef SPMTWAM_AP
-		_MET_SYMBOL_GET(spm_twam_enable_monitor);
-		_MET_SYMBOL_GET(spm_twam_register_handler);
-		_MET_SYMBOL_GET(spm_twam_disable_monitor);
-		_MET_SYMBOL_GET(spm_twam_set_idle_select);
-		_MET_SYMBOL_GET(spm_twam_set_window_length);
-		_MET_SYMBOL_GET(spm_twam_set_mon_type);
-#endif
-
-		/* sspm side used */
-#ifdef SPMTWAM_SSPM
-		_MET_SYMBOL_GET(spm_twam_enable_monitor);
-		_MET_SYMBOL_GET(spm_twam_met_enable);
-		_MET_SYMBOL_GET(spm_twam_config_channel);
-#endif
 #endif
 
 	return 0;
@@ -213,49 +131,12 @@ static int met_symbol_put(void)
 	_MET_SYMBOL_PUT(vcorefs_get_src_req_num);
 	_MET_SYMBOL_PUT(vcorefs_get_src_req_name);
 	_MET_SYMBOL_PUT(vcorefs_get_src_req);
-
-#ifdef VCOREDVFS_OLD_VER
-	_MET_SYMBOL_PUT(spm_vcorefs_get_MD_status);
-	_MET_SYMBOL_PUT(spm_vcorefs_register_handler);
-	_MET_SYMBOL_PUT(vcorefs_register_req_notify);
-	_MET_SYMBOL_PUT(governor_get_kicker_name);
-	_MET_SYMBOL_PUT(vcorefs_enable_debug_isr);
-	_MET_SYMBOL_PUT(vcorefs_get_hw_opp);
-	_MET_SYMBOL_PUT(vcorefs_get_curr_vcore);
-	_MET_SYMBOL_PUT(vcorefs_get_curr_ddr);
-	_MET_SYMBOL_PUT(kicker_table);
-#endif
-
 #endif
 
 #ifdef MET_EMI
 	_MET_SYMBOL_PUT(mtk_dramc_get_data_rate);
 	_MET_SYMBOL_PUT(mtk_dramc_get_ddr_type);
 	_MET_SYMBOL_PUT(get_cur_ddr_ratio);
-#endif
-
-#ifdef MET_PTPOD
-	_MET_SYMBOL_PUT(mt_gpufreq_get_cur_volt);
-	_MET_SYMBOL_PUT(mt_cpufreq_get_cur_volt);
-#endif
-
-#ifdef MET_SPM_TWAM
-		/* ap side used */
-#ifdef SPMTWAM_AP
-		_MET_SYMBOL_PUT(spm_twam_enable_monitor);
-		_MET_SYMBOL_PUT(spm_twam_register_handler);
-		_MET_SYMBOL_PUT(spm_twam_disable_monitor);
-		_MET_SYMBOL_PUT(spm_twam_set_idle_select);
-		_MET_SYMBOL_PUT(spm_twam_set_window_length);
-		_MET_SYMBOL_PUT(spm_twam_set_mon_type);
-#endif
-
-		/* sspm side used */
-#ifdef SPMTWAM_SSPM
-		_MET_SYMBOL_PUT(spm_twam_enable_monitor);
-		_MET_SYMBOL_PUT(spm_twam_met_enable);
-		_MET_SYMBOL_PUT(spm_twam_config_channel);
-#endif
 #endif
 
 	return 0;
@@ -302,10 +183,6 @@ int core_plf_init(void)
 	met_register(&met_sspm_smi);
 #endif
 
-#ifdef MET_PTPOD
-	met_register(&met_ptpod);
-#endif
-
 #ifdef MET_WALLTIME
 	met_register(&met_wall_time);
 #endif
@@ -324,10 +201,6 @@ int core_plf_init(void)
 
 #ifdef MET_CPUDSU
 	met_register(&met_cpudsu);
-#endif
-
-#ifdef MET_SPM_TWAM
-	met_register(&met_spmtwam);
 #endif
 
 #ifdef MET_BACKLIGHT
@@ -375,10 +248,6 @@ void core_plf_exit(void)
 	met_deregister(&met_sspm_smi);
 #endif
 
-#ifdef MET_PTPOD
-	met_deregister(&met_ptpod);
-#endif
-
 #ifdef MET_WALLTIME
 	met_deregister(&met_wall_time);
 #endif
@@ -399,10 +268,6 @@ void core_plf_exit(void)
 
 #ifdef MET_CPUDSU
 	met_deregister(&met_cpudsu);
-#endif
-
-#ifdef MET_SPM_TWAM
-	met_deregister(&met_spmtwam);
 #endif
 
 #ifdef MET_BACKLIGHT

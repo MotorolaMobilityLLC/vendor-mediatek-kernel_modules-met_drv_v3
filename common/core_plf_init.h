@@ -90,27 +90,6 @@ extern int  (*vcorefs_get_src_req_num_symbol)(void);
 extern char ** (*vcorefs_get_src_req_name_symbol)(void);
 extern unsigned int * (*vcorefs_get_src_req_symbol)(void);
 
-
-#ifdef VCOREDVFS_OLD_VER
-
-#include <mtk_spm.h>
-#include <mtk_vcorefs_manager.h>
-
-extern char *governor_get_kicker_name(int id);
-extern int vcorefs_enable_debug_isr(bool);
-
-extern u32 (*spm_vcorefs_get_MD_status_symbol)(void);
-extern void (*spm_vcorefs_register_handler_symbol)(vcorefs_handler_t handler);
-extern void (*vcorefs_register_req_notify_symbol)(vcorefs_req_handler_t handler);
-extern char *(*governor_get_kicker_name_symbol)(int id);
-extern int (*vcorefs_enable_debug_isr_symbol)(bool);
-extern int (*vcorefs_get_hw_opp_symbol)(void);
-extern int (*vcorefs_get_curr_vcore_symbol)(void);
-extern int (*vcorefs_get_curr_ddr_symbol)(void);
-extern int *kicker_table_symbol;
-
-#endif /* VCOREDVFS_OLD_VER */
-
 extern struct metdevice met_vcoredvfs;
 
 #endif /* MET_VCOREDVFS */
@@ -131,19 +110,6 @@ extern struct metdevice met_sspm_emi;
 #ifdef MET_SMI
 extern struct metdevice met_sspm_smi;
 #endif
-
-#ifdef MET_PTPOD
-#include <mtk_gpufreq.h>
-#include <mach/mtk_cpufreq_api.h>
-#include <mtk_cpufreq_config.h>
-
-extern unsigned int mt_gpufreq_get_cur_volt(void);
-extern unsigned int mt_cpufreq_get_cur_volt(unsigned int cluster_id);
-extern unsigned int (*mt_gpufreq_get_cur_volt_symbol)(void);
-extern unsigned int (*mt_cpufreq_get_cur_volt_symbol)(unsigned int cluster_id);
-
-extern struct metdevice met_ptpod;
-#endif /* MET_PTPOD */
 
 #ifdef MET_WALLTIME
 extern struct metdevice met_wall_time;
@@ -166,40 +132,5 @@ extern struct metdevice met_sspm_walltime;
 #ifdef MET_CPUDSU
 extern struct metdevice met_cpudsu;
 #endif
-
-#ifdef MET_SPM_TWAM
-#include "mtk_spm.h"
-
-/* ap side used */
-#ifdef SPMTWAM_AP
-extern void spm_twam_enable_monitor(const struct twam_sig *twamsig, bool speed_mode);
-extern void spm_twam_register_handler(twam_handler_t handler);
-extern void spm_twam_disable_monitor(void);
-extern void spm_twam_set_idle_select(unsigned int sel);
-extern void spm_twam_set_window_length(unsigned int len);
-extern void spm_twam_set_mon_type(struct twam_sig *mon);
-
-extern void (*spm_twam_enable_monitor_symbol)(const struct twam_sig *twamsig, bool speed_mode);
-extern void (*spm_twam_register_handler_symbol)(twam_handler_t handler);
-extern void (*spm_twam_disable_monitor_symbol)(void);
-extern void (*spm_twam_set_idle_select_symbol)(unsigned int sel);
-extern void (*spm_twam_set_window_length_symbol)(unsigned int len);
-extern void (*spm_twam_set_mon_type_symbol)(struct twam_sig *mon);
-#endif
-
-/* sspm side used */
-#ifdef SPMTWAM_SSPM
-extern void spm_twam_enable_monitor(bool en_monitor, bool debug_signal, twam_handler_t cb_handler);
-extern bool spm_twam_met_enable(void);
-extern void spm_twam_config_channel(struct twam_cfg *cfg, bool speed_mode, unsigned int window_len_hz);
-
-extern void (*spm_twam_enable_monitor_symbol)(bool en_monitor, bool debug_signal, twam_handler_t cb_handler);
-extern bool (*spm_twam_met_enable_symbol)(void);
-extern void (*spm_twam_config_channel_symbol)(struct twam_cfg *cfg, bool speed_mode, unsigned int window_len_hz);
-#endif
-
-extern struct metdevice met_spmtwam;
-#endif
-
 
 #endif /*__CORE_PLF_INIT_H__*/
