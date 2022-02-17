@@ -1464,8 +1464,9 @@ int fs_reg(int met_minor)
 		pr_debug("can not create kobject: kobj_bus\n");
 		return -1;
 	}
-
+#ifdef CONFIG_MTK_MET_DEBUG
 	met_register(&met_cookie);
+#endif
 	met_register(&met_cpupmu);
 	met_register(&met_memstat);
 	met_register(&met_switch);
@@ -1515,7 +1516,9 @@ void fs_unreg(void)
 	met_deregister(&met_switch);
 	met_deregister(&met_memstat);
 	met_deregister(&met_cpupmu);
+#ifdef CONFIG_MTK_MET_DEBUG
 	met_deregister(&met_cookie);
+#endif
 
 	kobject_del(kobj_misc);
 	kobject_put(kobj_misc);
