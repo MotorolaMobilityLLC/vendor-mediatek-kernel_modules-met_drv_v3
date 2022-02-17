@@ -189,12 +189,15 @@ struct notifier_block cpu_pm_pmu_notifier = {
 };
 #endif
 
-static DEFINE_PER_CPU(unsigned long long[MXNR_PMU_EVENTS], perfCurr);
-static DEFINE_PER_CPU(unsigned long long[MXNR_PMU_EVENTS], perfPrev);
-static DEFINE_PER_CPU(int[MXNR_PMU_EVENTS], perfCntFirst);
-static DEFINE_PER_CPU(struct perf_event * [MXNR_PMU_EVENTS], pevent);
-static DEFINE_PER_CPU(struct perf_event_attr [MXNR_PMU_EVENTS], pevent_attr);
-static DEFINE_PER_CPU(int, perfSet);
+struct pmu_perf_data {
+	unsigned long long perfCurr[MXNR_PMU_EVENTS];
+	unsigned long long perfPrev[MXNR_PMU_EVENTS];
+	int perfCntFirst[MXNR_PMU_EVENTS];
+	struct perf_event *pevent[MXNR_PMU_EVENTS];
+	struct perf_event_attr pevent_attr[MXNR_PMU_EVENTS];
+	int perfSet;
+};
+static struct pmu_perf_data __percpu *pmu_perf_data;
 static DEFINE_PER_CPU(int, cpu_status);
 
 #ifdef CPUPMU_V8_2
@@ -370,7 +373,7 @@ static void perf_cpupmu_polling(unsigned long long stamp, int cpu)
 	u64 value;
 	int ret;
 
-	if (per_cpu(perfSet, cpu) == 0)
+	if (per_cpu_ptr(pmu_perf_data, cpu)->perfSet == 0)
 		return;
 
 	count = 0;
@@ -378,7 +381,7 @@ static void perf_cpupmu_polling(unsigned long long stamp, int cpu)
 		if (pmu[i].mode == MODE_DISABLED)
 			continue;
 
-		ev = per_cpu(pevent, cpu)[i];
+		ev = per_cpu_ptr(pmu_perf_data, cpu)->pevent[i];
 		if ((ev != NULL) && (ev->state == PERF_EVENT_STATE_ACTIVE)) {
 
 			ret = __met_perf_event_read_local(ev, &value, NULL, NULL);
@@ -388,12 +391,12 @@ static void perf_cpupmu_polling(unsigned long long stamp, int cpu)
 				continue;
 			}
 
-			per_cpu(perfCurr, cpu)[i] = value;
-			delta = (per_cpu(perfCurr, cpu)[i] - per_cpu(perfPrev, cpu)[i]);
-			per_cpu(perfPrev, cpu)[i] = per_cpu(perfCurr, cpu)[i];
-			if (per_cpu(perfCntFirst, cpu)[i] == 1) {
+			per_cpu_ptr(pmu_perf_data, cpu)->perfCurr[i] = value;
+			delta = (per_cpu_ptr(pmu_perf_data, cpu)->perfCurr[i] - per_cpu_ptr(pmu_perf_data, cpu)->perfPrev[i]);
+			per_cpu_ptr(pmu_perf_data, cpu)->perfPrev[i] = per_cpu_ptr(pmu_perf_data, cpu)->perfCurr[i];
+			if (per_cpu_ptr(pmu_perf_data, cpu)->perfCntFirst[i] == 1) {
 				/* we shall omit delta counter when we get first counter */
-				per_cpu(perfCntFirst, cpu)[i] = 0;
+				per_cpu_ptr(pmu_perf_data, cpu)->perfCntFirst[i] = 0;
 				continue;
 			}
 			pmu_value[count] = (unsigned int)delta;
@@ -410,7 +413,7 @@ static struct perf_event* perf_event_create(int cpu, unsigned short event, int c
 	struct perf_event_attr	*ev_attr;
 	struct perf_event	*ev;
 
-	ev_attr = per_cpu(pevent_attr, cpu)+count;
+	ev_attr = per_cpu_ptr(pmu_perf_data, cpu)->pevent_attr + count;
 	memset(ev_attr, 0, sizeof(*ev_attr));
 	if (event == 0xff) {
 		ev_attr->config = PERF_COUNT_HW_CPU_CYCLES;
@@ -468,7 +471,7 @@ static irqreturn_t handle_irq_selective_ignore_overflow(struct arm_pmu *pmu)
 	event_count = cpu_pmu->event_count[cpu];
 
 	for (ii = 0; ii < event_count; ii++) {
-		ev = per_cpu(pevent, cpu)[ii];
+		ev = per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii];
 
 		if (metpmu[ii].mode != MODE_DISABLED) {
 			idx = __met_perf_event_idx_to_pmu_idx(ev->hw.idx);
@@ -510,7 +513,7 @@ static int __met_perf_events_set_all_events(int cpu)
 #endif
 
 	size = sizeof(struct perf_event_attr);
-	if (per_cpu(perfSet, cpu) == 0) {
+	if (per_cpu_ptr(pmu_perf_data, cpu)->perfSet == 0) {
 		int event_count = cpu_pmu->event_count[cpu];
 		struct met_pmu *pmu = cpu_pmu->pmu[cpu];
 		for (i = 0; i < event_count; i++) {
@@ -549,7 +552,7 @@ static int __met_perf_events_set_all_events(int cpu)
 				 * failed events will be ignored and reported to user in frontend.
 				 */
 				pmu[i].mode = MODE_DISABLED;
-				per_cpu(pevent, cpu)[i] = NULL;
+				per_cpu_ptr(pmu_perf_data, cpu)->pevent[i] = NULL;
 
 				if (cpu_online(cpu)) {
 					pmu[i].init_failed = PMU_INIT_FAIL_OCCUPIED;
@@ -584,11 +587,11 @@ static int __met_perf_events_set_all_events(int cpu)
 					 cpu, __met_perf_event_idx_to_pmu_idx(ev->hw.idx), pmu[i].event);
 			}
 
-			per_cpu(pevent, cpu)[i] = ev;
-			per_cpu(perfPrev, cpu)[i] = 0;
-			per_cpu(perfCurr, cpu)[i] = 0;
+			per_cpu_ptr(pmu_perf_data, cpu)->pevent[i] = ev;
+			per_cpu_ptr(pmu_perf_data, cpu)->perfPrev[i] = 0;
+			per_cpu_ptr(pmu_perf_data, cpu)->perfCurr[i] = 0;
 			perf_event_enable(ev);
-			per_cpu(perfCntFirst, cpu)[i] = 1;
+			per_cpu_ptr(pmu_perf_data, cpu)->perfCntFirst[i] = 1;
 
 #ifdef MET_SSPM
 			if (met_cpupmu.ondiemet_mode && override_handle_irq) {
@@ -607,7 +610,7 @@ static int __met_perf_events_set_all_events(int cpu)
 			}
 #endif
 		}	/* for all PMU counter */
-		per_cpu(perfSet, cpu) = 1;
+		per_cpu_ptr(pmu_perf_data, cpu)->perfSet = 1;
 	}	/* for perfSet */
 
 	return 0;
@@ -632,14 +635,14 @@ static void perf_thread_down(int cpu)
 	irqreturn_t (*handle_irq_fptr)(struct arm_pmu *pmu);
 #endif
 
-	if (per_cpu(perfSet, cpu) == 0)
+	if (per_cpu_ptr(pmu_perf_data, cpu)->perfSet == 0)
 		return;
 
-	per_cpu(perfSet, cpu) = 0;
+	per_cpu_ptr(pmu_perf_data, cpu)->perfSet = 0;
 	event_count = cpu_pmu->event_count[cpu];
 	pmu = cpu_pmu->pmu[cpu];
 	for (i = 0; i < event_count; i++) {
-		ev = per_cpu(pevent, cpu)[i];
+		ev = per_cpu_ptr(pmu_perf_data, cpu)->pevent[i];
 		if (ev != NULL) {
 
 #ifdef MET_SSPM
@@ -659,7 +662,7 @@ static void perf_thread_down(int cpu)
 			}
 #endif
 			perf_event_release(cpu, ev);
-			per_cpu(pevent, cpu)[i] = NULL;
+			per_cpu_ptr(pmu_perf_data, cpu)->pevent[i] = NULL;
 		}
 	}
 }
@@ -716,6 +719,10 @@ void met_perf_cpupmu_polling(unsigned long long stamp, int cpu)
 		return;
 
 	if (met_cpu_pmu_method) {
+		if (!pmu_perf_data) {
+			return;
+		}
+
 		perf_cpupmu_polling(stamp, cpu);
 	} else {
 		count = cpu_pmu->polling(cpu_pmu->pmu[cpu], cpu_pmu->event_count[cpu], pmu_value);
@@ -790,6 +797,13 @@ static void cpupmu_unique_start(void)
 	pr_debug("[MET_PMU] met_cpu_pm_pmu_reconfig=%u\n", met_cpu_pm_pmu_reconfig);
 
 	if (met_cpu_pmu_method) {
+		pmu_perf_data = alloc_percpu(struct pmu_perf_data);
+		if (!pmu_perf_data) {
+			MET_TRACE("[MET_PMU] percpu pmu_perf_data allocate fail\n");
+			pr_debug("[MET_PMU] percpu pmu_perf_data allocate fail\n");
+			return;
+		}
+
 		for_each_possible_cpu(cpu) {
 			met_perf_cpupmu_start(cpu);
 
@@ -907,10 +921,10 @@ static int __is_pmu_regular_reg_allocated(int cpu, int hw_idx)
 		for (ii = 0; ii < event_count - 1; ii ++) {
 
 			if (pmu[ii].mode == MODE_DISABLED ||
-			    per_cpu(pevent, cpu)[ii] == NULL)
+			    per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii] == NULL)
 				continue;
 
-			hwc = &(per_cpu(pevent, cpu)[ii]->hw);
+			hwc = &(per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii]->hw);
 			if (hw_idx == __met_perf_event_idx_to_pmu_idx(hwc->idx)) {
 				return 1;
 			}
@@ -945,10 +959,10 @@ static int __pmu_event_on_hw_idx(int cpu, int hw_idx)
 		for (ii = 0; ii < event_count - 1; ii ++) {
 
 			if (pmu[ii].mode == MODE_DISABLED ||
-			    per_cpu(pevent, cpu)[ii] == NULL)
+			    per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii] == NULL)
 				continue;
 
-			hwc = &(per_cpu(pevent, cpu)[ii]->hw);
+			hwc = &(per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii]->hw);
 			if (hw_idx == __met_perf_event_idx_to_pmu_idx(hwc->idx)) {
 				return pmu[ii].event;
 			}
@@ -1143,6 +1157,10 @@ static int cpupmu_print_header(char *buf, int len)
 		for_each_possible_cpu(cpu) {
 			met_perf_cpupmu_stop(cpu);
 		}
+
+		if (pmu_perf_data) {
+			free_percpu(pmu_perf_data);
+		}
 	}
 
 	reset_driver_stat();
@@ -1332,7 +1350,10 @@ static void cpupmu_cpu_state_notify(long cpu, unsigned long action)
 		struct platform_device *pmu_device = NULL;
 		int irq = 0;
 
-		event = per_cpu(pevent, cpu)[0];
+		if (pmu_perf_data) {
+			event = per_cpu_ptr(pmu_perf_data, cpu)->pevent[0];
+		}
+
 		if (event)
 			armpmu = to_arm_pmu(event->pmu);
 		pr_debug("!!!!!!!! %s_%ld, event=%p\n", __FUNCTION__, cpu, event);
@@ -1403,8 +1424,8 @@ static void ipi_config_pmu_counter_cnt(void) {
 		for (ii = 0; ii < 4; ii++)
 			ipi_buf[ii] = 0;
 
-		if (!ondiemet_sample_all_cnt && per_cpu(pevent, cpu)[0]) {
-			hwc = &(per_cpu(pevent, cpu)[0]->hw);
+		if (!ondiemet_sample_all_cnt && per_cpu_ptr(pmu_perf_data, cpu)->pevent[0]) {
+			hwc = &(per_cpu_ptr(pmu_perf_data, cpu)->pevent[0]->hw);
 			base_offset = __met_perf_event_idx_to_pmu_idx(hwc->idx);
 		} else {
 			base_offset = 0;
@@ -1448,7 +1469,7 @@ static int __is_perf_event_hw_slot_seq_order(int cpu) {
 	 * perf-event descriptor list would not have any hole
 	 * (excepts special 0xff, which will always be the last element)
 	 */
-	if (per_cpu(pevent, cpu)[0] == NULL)
+	if (per_cpu_ptr(pmu_perf_data, cpu)->pevent[0] == NULL)
 		return 1;
 
 	/*
@@ -1458,11 +1479,11 @@ static int __is_perf_event_hw_slot_seq_order(int cpu) {
 	for (ii = 1; ii < event_count - 1; ii++) {
 
 		/* this condition check also works when met_cpu_pmu_method == 0 */
-		if (per_cpu(pevent, cpu)[ii] == NULL)
+		if (per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii] == NULL)
 			return 1;
 
-		hwc = &(per_cpu(pevent, cpu)[ii]->hw);
-		hwc_prev = &(per_cpu(pevent, cpu)[ii-1]->hw);
+		hwc = &(per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii]->hw);
+		hwc_prev = &(per_cpu_ptr(pmu_perf_data, cpu)->pevent[ii-1]->hw);
 
 		if (hwc->idx != hwc_prev->idx + 1)
 			return 0;
