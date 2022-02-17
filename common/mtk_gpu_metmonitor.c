@@ -295,9 +295,11 @@ static int gpu_dvfs_print_header(char *buf, int len)
 	int ret = 0;
 
 	ret = snprintf(buf, PAGE_SIZE,
-			"met-info [000] 0.0: met_gpu_dvfs_header: ");
+			"met-info [000] 0.0: met_gpu_dvfs_header: Freq(kHz)\n");
 	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"Freq(kHz),OppIdx,FloorIdx,FloorLimiter,CeilingIdx,CeilingLimiter\n");
+			"met-info [000] 0.0: met_gpu_opp_idx_header: CurIdx,FloorIdx,CeilingIdx\n");
+	ret += snprintf(buf+ret, PAGE_SIZE-ret,
+			"met-info [000] 0.0: met_gpu_opp_limiter_header: FloorLimiter,CeilingLimiter\n");
 
 	return ret;
 }
