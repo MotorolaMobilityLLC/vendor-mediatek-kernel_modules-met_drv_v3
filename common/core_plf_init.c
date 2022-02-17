@@ -239,7 +239,11 @@ int core_plf_init(void)
 #endif
 
 #ifdef MET_THERMAL
-met_register(&met_thermal);
+	met_register(&met_thermal);
+#endif
+
+#ifdef MET_PTPOD
+	met_register(&met_ptpod);
 #endif
 
 	return 0;
@@ -301,5 +305,9 @@ void core_plf_exit(void)
 
 #ifdef MET_THERMAL
 	met_deregister(&met_thermal);
+#endif
+
+#ifdef MET_PTPOD
+	met_deregister(&met_ptpod);
 #endif
 }

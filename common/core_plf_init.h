@@ -152,4 +152,8 @@ extern int (*mtk_leds_unregister_notifier_symbol)(struct notifier_block *nb);
 extern struct metdevice met_backlight;
 #endif
 
+#ifdef MET_PTPOD
+extern struct metdevice met_ptpod;
+#endif
+
 #endif /*__CORE_PLF_INIT_H__*/

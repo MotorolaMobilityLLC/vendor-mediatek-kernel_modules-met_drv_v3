@@ -63,6 +63,7 @@ FEATURE_MET_BACKLIGHT := y
 FEATURE_EVENT_POWER := y
 FEATURE_SSPM := y
 FEATURE_MCUPM := y
+FEATURE_PTPOD := y
 
 ################################################################################
 # Tinysys SSPM module
@@ -325,6 +326,17 @@ endif
 
 $(info MET_BACKLIGHT = $(MET_BACKLIGHT))
 met-$(MET_BACKLIGHT) += $(MET_CORE)/met_backlight.o
+
+################################################################################
+# MET_PTPOD
+################################################################################
+$(info FEATURE_PTPOD = $(FEATURE_PTPOD))
+
+ifneq ($(FEATURE_PTPOD), n)
+    MET_PTPOD := y
+endif
+
+met-$(MET_PTPOD) += $(MET_CORE)/met_ptpod.o
 
 ################################################################################
 # EVENT_POWER
