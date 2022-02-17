@@ -52,7 +52,7 @@
 // #define DRAM_TYPE_DEFAULT  3
 // #endif
 
-#define ADDR_EMI        ((unsigned long)BaseAddrEMI)
+// #define ADDR_EMI        ((unsigned long)BaseAddrEMI)
 
 #define MASK_MASTER     0xFF
 #define MASK_TRANS_TYPE 0xFF
@@ -894,10 +894,10 @@ extern int MET_BM_SetTtypeCounterRW(unsigned int bmrw0_val, unsigned int bmrw1_v
 extern int MET_BM_Set_WsctTsct_id_sel(unsigned int counter_num, unsigned int enable, unsigned int emi_no);
 // extern int MET_BM_SetMaster(const unsigned int counter_num, const unsigned int master);
 extern int MET_BM_SetbusID_En(const unsigned int counter_num,
-			      const unsigned int enable);
+			      const unsigned int enable, unsigned int emi_no);
 extern int MET_BM_SetbusID(const unsigned int counter_num,
-			   const unsigned int id);
-extern int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int enable);
+			   const unsigned int id, unsigned int emi_no);
+extern int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int enable, unsigned int emi_no);
 extern int MET_BM_SetLatencyCounter(unsigned int enable, unsigned int emi_no);
 extern void MET_BM_SetReadWriteType(const unsigned int ReadWriteType, unsigned int emi_no);
 
