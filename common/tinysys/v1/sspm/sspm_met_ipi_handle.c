@@ -70,10 +70,9 @@ EXPORT_SYMBOL(sspm_buf_available);
 /*****************************************************************************
  * internal variable declaration
  *****************************************************************************/
-static unsigned int ridx, widx, wlen;
-static unsigned int recv_buf[4];
+static unsigned int recv_buf[4], recv_buf_copy[4];
 static unsigned int ackdata;
-static unsigned int rdata;
+static unsigned int reply_data;
 static unsigned int log_size;
 static struct task_struct *_sspm_recv_task;
 static int sspm_ipi_thread_started;
@@ -333,50 +332,22 @@ static void _log_done_cb(const void *p)
 }
 
 
-static int _met_ipi_cb(unsigned int ipi_id, void *prdata, void *data, unsigned int len)
+static int _met_ipi_cb(unsigned int ipi_id,
+	void *prdata,
+	void *data,
+	unsigned int len)
 {
-	unsigned int *cmd_buf = (unsigned int *)data;
-	unsigned int cmd;
-	int ret;
+	/* prepare a copy of recv_buffer for deferred heavyweight cmd handling */
+	memcpy(recv_buf_copy, recv_buf, sizeof(recv_buf_copy));
 
-	if (sspm_recv_thread_comp == 1) {
-		PR_BOOTMSG("%s %d\n", __FUNCTION__, __LINE__);
-		return 0;
-	}
-
-	cmd = cmd_buf[0] & MET_SUB_ID_MASK;
-	switch (cmd) {
-	case MET_DUMP_BUFFER:	/* mbox 1: start index; 2: size */
-		sspm_buffer_dumping = 1;
-		ridx = cmd_buf[1];
-		widx = cmd_buf[2];
-		log_size = cmd_buf[3];
-		break;
-
-	case MET_CLOSE_FILE:	/* no argument */
-		/* do close file */
-		ridx = cmd_buf[1];
-		widx = cmd_buf[2];
-		if (widx < ridx) {	/* wrapping occurs */
-			wlen = log_size - ridx;
-			sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
-					wlen * 4, _log_done_cb, (void *)1);
-			sspm_log_req_enq((char *)(sspm_log_virt_addr),
-					widx * 4, _log_done_cb, (void *)1);
-		} else {
-			wlen = widx - ridx;
-			sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
-					wlen * 4, _log_done_cb, (void *)1);
-		}
-		ret = sspm_log_stop();
-		break;
-
+	/* lightweight cmd handling (support reply_data) */
+	reply_data = 0;
+	switch (recv_buf[0] & MET_SUB_ID_MASK) {
 	case MET_RESP_MD2AP:
-		break;
-
-	default:
+		sspm_buffer_dumping = 0;
 		break;
 	}
+
 	return 0;
 }
 
@@ -384,12 +355,14 @@ static int _met_ipi_cb(unsigned int ipi_id, void *prdata, void *data, unsigned i
 static int _sspm_recv_thread(void *data)
 {
 	int ret = 0;
-	unsigned int cmd = 0;
+	unsigned int ridx, widx, wlen;
 
 	do {
-		ret = mtk_ipi_recv_reply(sspm_ipidev_symbol, IPIR_C_MET, (void *)&rdata, 1);
+		ret = mtk_ipi_recv_reply(sspm_ipidev_symbol, IPIR_C_MET,
+				(void *)&reply_data, 1);
 		if (ret) {
-			pr_debug("[MET] ipi_register:%d failed:%d\n", IPIR_C_MET, ret);
+			// skip cmd handling if receive fail
+			continue;
 		}
 
 		if (sspm_recv_thread_comp == 1) {
@@ -399,9 +372,13 @@ static int _sspm_recv_thread(void *data)
 			return 0;
 		}
 
-		cmd = recv_buf[0] & MET_SUB_ID_MASK;
-		switch (cmd) {
+		/* heavyweight cmd handling (not support reply_data) */
+		switch (recv_buf_copy[0] & MET_SUB_ID_MASK) {
 		case MET_DUMP_BUFFER:	/* mbox 1: start index; 2: size */
+			sspm_buffer_dumping = 1;
+			ridx = recv_buf_copy[1];
+			widx = recv_buf_copy[2];
+			log_size = recv_buf_copy[3];
 			if (widx < ridx) {	/* wrapping occurs */
 				wlen = log_size - ridx;
 				sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
@@ -416,6 +393,23 @@ static int _sspm_recv_thread(void *data)
 			break;
 
 		case MET_CLOSE_FILE:	/* no argument */
+			/* do close file */
+			ridx = recv_buf_copy[1];
+			widx = recv_buf_copy[2];
+			if (widx < ridx) {	/* wrapping occurs */
+				wlen = log_size - ridx;
+				sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
+						wlen * 4, _log_done_cb, (void *)1);
+				sspm_log_req_enq((char *)(sspm_log_virt_addr),
+						widx * 4, _log_done_cb, (void *)1);
+			} else {
+				wlen = widx - ridx;
+				sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
+						wlen * 4, _log_done_cb, (void *)1);
+			}
+			ret = sspm_log_stop();
+
+			/* continuous mode handling */
 			if (sspm_run_mode == SSPM_RUN_CONTINUOUS) {
 				/* clear the memory */
 				memset_io((void *)sspm_log_virt_addr, 0,
@@ -423,10 +417,6 @@ static int _sspm_recv_thread(void *data)
 				/* re-start ondiemet again */
 				sspm_start();
 			}
-			break;
-
-		case MET_RESP_MD2AP:
-			sspm_buffer_dumping = 0;
 			break;
 
 		default:
