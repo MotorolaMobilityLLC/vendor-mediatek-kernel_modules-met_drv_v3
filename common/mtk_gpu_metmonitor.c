@@ -182,7 +182,7 @@ static int gpu_status_print_header(char *buf, int len)
 		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Loading,");
 
 	if ((1 << eMET_GPU_BLOCK_LOADING) & g_u4AvailableInfo)
-		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Blcok,");
+		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Block,");
 
 	if ((1 << eMET_GPU_IDLE_LOADING) & g_u4AvailableInfo)
 		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Idle");
