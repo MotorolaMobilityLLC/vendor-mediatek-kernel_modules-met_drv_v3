@@ -553,8 +553,10 @@ static int __met_perf_events_set_all_events(int cpu)
 
 				if (cpu_online(cpu)) {
 					pmu[i].init_failed = PMU_INIT_FAIL_OCCUPIED;
+					counter_cnt[cpu] --;
 				} else {
 					pmu[i].init_failed = PMU_INIT_FAIL_CPU_OFFLINE;
+					counter_cnt[cpu] --;
 				}
 
 				MET_TRACE("[MET_PMU] cpu %d failed to register event %#04x\n",
