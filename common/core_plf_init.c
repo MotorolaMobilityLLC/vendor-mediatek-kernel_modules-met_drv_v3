@@ -66,6 +66,11 @@ int (*get_cur_ddr_ratio_symbol)(void);
 #endif
 #endif /* MET_EMI */
 
+#ifdef MET_BACKLIGHT
+int (*mtk_leds_register_notifier_symbol)(struct notifier_block *nb);
+int (*mtk_leds_unregister_notifier_symbol)(struct notifier_block *nb);
+#endif
+
 static int met_symbol_get(void)
 {
 #ifdef MET_GPU
@@ -111,6 +116,11 @@ static int met_symbol_get(void)
 #if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
 	_MET_SYMBOL_GET(get_cur_ddr_ratio);
 #endif
+#endif
+
+#ifdef MET_BACKLIGHT
+	_MET_SYMBOL_GET(mtk_leds_register_notifier);
+	_MET_SYMBOL_GET(mtk_leds_unregister_notifier);
 #endif
 
 	return 0;
@@ -161,6 +171,11 @@ static int met_symbol_put(void)
 #if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
 	_MET_SYMBOL_PUT(get_cur_ddr_ratio);
 #endif
+#endif
+
+#ifdef MET_BACKLIGHT
+	_MET_SYMBOL_PUT(mtk_leds_register_notifier);
+	_MET_SYMBOL_PUT(mtk_leds_unregister_notifier);
 #endif
 
 	return 0;

@@ -143,4 +143,13 @@ extern struct metdevice met_cpudsu;
 extern struct metdevice met_thermal;
 #endif
 
+#ifdef MET_BACKLIGHT
+extern int mtk_leds_register_notifier(struct notifier_block *nb);
+extern int mtk_leds_unregister_notifier(struct notifier_block *nb);
+
+extern int (*mtk_leds_register_notifier_symbol)(struct notifier_block *nb);
+extern int (*mtk_leds_unregister_notifier_symbol)(struct notifier_block *nb);
+extern struct metdevice met_backlight;
+#endif
+
 #endif /*__CORE_PLF_INIT_H__*/
