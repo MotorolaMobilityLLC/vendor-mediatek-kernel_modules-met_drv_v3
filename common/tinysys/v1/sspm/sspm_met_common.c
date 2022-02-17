@@ -8,7 +8,7 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
-#include <linux/module.h> /* for symbol_get */
+#include <linux/of.h>
 
 #include "met_drv.h"
 #include "tinysys_sspm.h"
@@ -21,23 +21,11 @@
 /*****************************************************************************
  * struct & enum declaration
  *****************************************************************************/
-struct sspm_met_evnet_header {
+struct sspm_met_event_header {
 	unsigned int rts_event_id;
-	char *rts_event_name;
-	char *chart_line_name;
-	char *key_list;
-};
-
-enum {
-	#ifdef MET_SSPM_RTS_EVNET
-	#undef MET_SSPM_RTS_EVNET
-	#endif
-	#define MET_SSPM_RTS_EVNET(rts_event_id, key_list) rts_event_id,
-	#include "met_sspm_rts_event.h"
-
-	/* Note: always put at last */
-	CUR_MET_RTS_EVENT_NUM,
-	MAX_MET_RTS_EVENT_NUM = 128
+	const char *rts_event_name;
+	const char *chart_line_name;
+	const char *key_list;
 };
 
 
@@ -54,28 +42,21 @@ static int ondiemet_sspm_print_header(char *buf, int len);
 /*****************************************************************************
  * external function declaration
  *****************************************************************************/
-//unsigned int update_sspm_met_evnet_header(
-//	void* met_evnet_header,
-//	unsigned int cur_met_rts_event_num);
 
 
 /*****************************************************************************
  * internal variable
  *****************************************************************************/
+#define NR_RTS_STR_ARRAY 2
+#define MXNR_NODE_NAME 32
+#define MXNR_EVENT_NAME 64
+#define MAX_MET_RTS_EVENT_NUM 128
 static unsigned int event_id_flag[MAX_MET_RTS_EVENT_NUM / 32];
-static char *update_rts_event_tbl[MAX_MET_RTS_EVENT_NUM];
+static struct sspm_met_event_header met_event_header[MAX_MET_RTS_EVENT_NUM];
 static char sspm_help[] = "  --sspm_common=rts_event_name\n";
 static char header[] = 	"met-info [000] 0.0: sspm_common_header: ";
-static unsigned int additional_rts_cnt = 0;
-
-static struct sspm_met_evnet_header met_evnet_header[MAX_MET_RTS_EVENT_NUM] = {
-	#ifdef MET_SSPM_RTS_EVNET
-	#undef MET_SSPM_RTS_EVNET
-	#endif
-	#define MET_SSPM_RTS_EVNET(rts_event_id, key_list) \
-		{rts_event_id, #rts_event_id, #rts_event_id, key_list},
-	#include "met_sspm_rts_event.h"
-};
+static bool met_event_header_updated = false;
+static int nr_dts_header = 0;
 
 struct metdevice met_sspm_common = {
 	.name = "sspm_common",
@@ -100,6 +81,41 @@ static int ondiemet_sspm_print_help(char *buf, int len)
 }
 
 
+static int get_rts_header_from_dts_table(struct sspm_met_event_header* __met_event_header)
+{
+	int idx;
+	struct device_node *np;
+	const char *rts_string[NR_RTS_STR_ARRAY];
+	int nr_str = 0;
+
+	/*get rts root node*/
+	np = of_find_node_by_name(NULL, "sspm-rts-header");
+	if (!np) {
+		pr_debug("unable to find sspm-rts-header\n");
+		return 0;
+	}
+
+	/*get string array*/
+	for (idx = 0; idx < MAX_MET_RTS_EVENT_NUM; idx++) {
+		char node_name[MXNR_NODE_NAME];
+		sprintf(node_name, "node_%d", idx);
+		nr_str = of_property_read_string_array(np,
+				node_name, &rts_string[0], NR_RTS_STR_ARRAY);
+		if (nr_str != NR_RTS_STR_ARRAY) {
+			pr_debug("%s: nr_str != %d\n", node_name, NR_RTS_STR_ARRAY);
+			break;
+		} else {
+			__met_event_header[idx].rts_event_id = idx;
+			__met_event_header[idx].rts_event_name = rts_string[0];
+			__met_event_header[idx].chart_line_name = rts_string[0];
+			__met_event_header[idx].key_list = rts_string[1];
+		}
+	}
+
+	return idx;
+}
+
+
 static int ondiemet_sspm_print_header(char *buf, int len)
 {
 	int i;
@@ -117,8 +133,8 @@ static int ondiemet_sspm_print_header(char *buf, int len)
 		is_dump_header = 1;
 	}
 
-	for (i = read_idx; i < CUR_MET_RTS_EVENT_NUM + additional_rts_cnt; i++) {
-		if (met_evnet_header[i].chart_line_name) {
+	for (i = read_idx; i < nr_dts_header; i++) {
+		if (met_event_header[i].chart_line_name) {
 			group = i / 32;
 			mask = 1 << (i - group * 32);
 			flag = event_id_flag[group] & mask;
@@ -126,12 +142,12 @@ static int ondiemet_sspm_print_header(char *buf, int len)
 				continue;
 			}
 
-			write_len = strlen(met_evnet_header[i].chart_line_name) + strlen(met_evnet_header[i].key_list) + 3;
+			write_len = strlen(met_event_header[i].chart_line_name) + strlen(met_event_header[i].key_list) + 3;
 			if ((len + write_len) < PAGE_SIZE) {
 				len += snprintf(buf+len, PAGE_SIZE-len, "%u,%s,%s;",
-					met_evnet_header[i].rts_event_id,
-					met_evnet_header[i].chart_line_name,
-					met_evnet_header[i].key_list);
+					met_event_header[i].rts_event_id,
+					met_event_header[i].chart_line_name,
+					met_event_header[i].key_list);
 			} else {
 				met_sspm_common.header_read_again = 1;
 				read_idx = i;
@@ -140,16 +156,10 @@ static int ondiemet_sspm_print_header(char *buf, int len)
 		}
 	}
 
-	if (i == CUR_MET_RTS_EVENT_NUM + additional_rts_cnt) {
+	if (i == nr_dts_header) {
 		is_dump_header = 0;
 		read_idx = 0;
 		buf[len - 1] = '\n';
-		for (i = 0; i < CUR_MET_RTS_EVENT_NUM + additional_rts_cnt; i++) {
-			if (update_rts_event_tbl[i]) {
-				kfree(update_rts_event_tbl[i]);
-				update_rts_event_tbl[i] = NULL;
-			}
-		}
 		met_sspm_common.mode = 0;
 		for (i = 0 ; i < MAX_MET_RTS_EVENT_NUM / 32; i++) {
 			event_id_flag[i] = 0;
@@ -217,16 +227,14 @@ static int ondiemet_sspm_process_argument(const char *arg, int len)
 	int res = 0;
 	char *line = NULL;
 	char *token = NULL;
-	//unsigned int (*update_sspm_met_evnet_header_sym)(void*, unsigned int) = NULL;
 
-	//update_sspm_met_evnet_header_sym = symbol_get(update_sspm_met_evnet_header);
-	//if (update_sspm_met_evnet_header_sym) {
-	//	additional_rts_cnt = update_sspm_met_evnet_header_sym(met_evnet_header,
-	//		CUR_MET_RTS_EVENT_NUM);
-	//}
+	if (!met_event_header_updated) {
+		nr_dts_header = get_rts_header_from_dts_table(met_event_header);
+		met_event_header_updated = true;
+	}
 
-	for (i = 0; met_evnet_header[i].rts_event_name && i < MAX_MET_RTS_EVENT_NUM; i++) {
-		if (strcmp(met_evnet_header[i].rts_event_name, arg) == 0) {
+	for (i = 0; met_event_header[i].rts_event_name && i < nr_dts_header; i++) {
+		if (strncmp(met_event_header[i].rts_event_name, arg, MXNR_EVENT_NAME) == 0) {
 			rts_event_id = i;
 			break;
 		}
@@ -246,21 +254,19 @@ static int ondiemet_sspm_process_argument(const char *arg, int len)
 		/* rts_event_id, */
 		token = strsep(&line, ";");
 		res = kstrtoint(token, 10, &rts_event_id);
-		met_evnet_header[rts_event_id].rts_event_id = rts_event_id;
+		met_event_header[rts_event_id].rts_event_id = rts_event_id;
 
 		/* rts_event_name */
 		token = strsep(&line, ";");
-		met_evnet_header[rts_event_id].rts_event_name = token;
+		met_event_header[rts_event_id].rts_event_name = token;
 
 		/* chart_line_name */
 		token = strsep(&line, ";");
-		met_evnet_header[rts_event_id].chart_line_name = token;
+		met_event_header[rts_event_id].chart_line_name = token;
 
 		/* key_list */
 		token = strsep(&line, ";\n");
-		met_evnet_header[rts_event_id].key_list = token;
-
-		update_rts_event_tbl[rts_event_id] = ptr;
+		met_event_header[rts_event_id].key_list = token;
 	}
 
 	if (rts_event_id >= 0) {
