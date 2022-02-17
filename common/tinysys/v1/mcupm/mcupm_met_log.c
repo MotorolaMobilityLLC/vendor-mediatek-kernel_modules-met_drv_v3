@@ -219,7 +219,7 @@ int mcupm_log_init(struct device *dev)
 		mcupm_buf_available = 0;
 	}
 #else
-	get_size_sym = symbol_get(mcupm_reserve_mem_get_size);
+	get_size_sym = mcupm_reserve_mem_get_size;
 	if (get_size_sym) {
 		mcupm_buffer_size = get_size_sym(MCUPM_MET_ID);
 		PR_BOOTMSG("mcupm_buffer_size=%x\n", mcupm_buffer_size);
@@ -231,8 +231,8 @@ int mcupm_log_init(struct device *dev)
 		phys_addr_t (*get_phys_sym)(unsigned int id) = NULL;
 		phys_addr_t (*get_virt_sym)(unsigned int id) = NULL;
 
-		get_phys_sym = symbol_get(mcupm_reserve_mem_get_virt);
-		get_virt_sym = symbol_get(mcupm_reserve_mem_get_phys);
+		get_phys_sym = mcupm_reserve_mem_get_virt;
+		get_virt_sym = mcupm_reserve_mem_get_phys;
 		if (get_phys_sym) {
 			mcupm_log_virt_addr = (void*)get_phys_sym(MCUPM_MET_ID);
 			PR_BOOTMSG("mcupm_log_virt_addr=%p\n", mcupm_log_virt_addr);

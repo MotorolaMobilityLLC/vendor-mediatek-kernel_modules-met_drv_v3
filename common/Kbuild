@@ -122,7 +122,7 @@ endif
 
 ifeq ($(MET_MCUPM), y)
     ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
-        subdir-ccflags-y += -I(srctree)/drivers/misc/mediatek/mcupm/include/
+        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/mcupm/include/
     else
         $(info ======== Missing $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h========)
         $(info ======== disable MET_MCUPM ========)

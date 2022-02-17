@@ -23,6 +23,7 @@
 
 #include "mtk_tinysys_ipi.h"  /* for mtk_ipi_device */
 #include "mcupm_ipi_id.h"  /* for mcupm_ipidev */
+#include "mcupm_ipi_table.h"
 
 #include "mcupm_met_log.h"
 #include "mcupm_met_ipi_handle.h"
@@ -30,6 +31,7 @@
 #include "tinysys_mgr.h" /* for ondiemet_module */
 #include "interface.h"
 #include "core_plf_init.h"
+#include "met_kernel_symbol.h"
 
 
 /*****************************************************************************
@@ -90,7 +92,7 @@ void start_mcupm_ipi_recv_thread()
 	int ret = 0;
 
 	if (mcupm_ipidev_symbol == NULL) {
-		mcupm_ipidev_symbol = (struct mtk_ipi_device *)symbol_get(mcupm_ipidev);
+		_MET_SYMBOL_GET(mcupm_ipidev);
 	}
 
 	if (mcupm_ipidev_symbol == NULL) {

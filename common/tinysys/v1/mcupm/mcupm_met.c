@@ -69,7 +69,8 @@ EXPORT_SYMBOL(met_mcupm);
 static const char help[] = "--mcupm=module_name\n";
 static const char header[] = "met-info [000] 0.0: mcupm_header: ";
 static char mcupm_cpu_pmu_header[MCUPM_CPU_PMU_HEADER_LEN] = "";
-
+static void (*mcupm_process_argument_real_sym)(const char *arg) = NULL;
+static int (*mcupm_print_header_real_sym)(char *buf, int len, int cnt) = NULL;
 
 /*****************************************************************************
  * external function implement
@@ -83,6 +84,29 @@ void notify_mcupm_cpu_pmu(int flag)
 	}
 }
 
+void register_mcupm_process_argument(void (*fn)(const char *arg))
+{
+	mcupm_process_argument_real_sym = fn;
+}
+EXPORT_SYMBOL(register_mcupm_process_argument);
+
+void register_mcupm_print_header(int (*fn)(char *buf, int len, int cnt))
+{
+	mcupm_print_header_real_sym = fn;
+}
+EXPORT_SYMBOL(register_mcupm_print_header);
+
+void deregister_mcupm_process_argument(void)
+{
+	mcupm_process_argument_real_sym = NULL;
+}
+EXPORT_SYMBOL(deregister_mcupm_process_argument);
+
+void deregister_mcupm_print_header(void)
+{
+	mcupm_print_header_real_sym = NULL;
+}
+EXPORT_SYMBOL(deregister_mcupm_print_header);
 
 /*****************************************************************************
  * internal function implement
@@ -107,15 +131,12 @@ static void _mcupm_stop(void)
 
 static int _mcupm_process_argument(const char *arg, int len)
 {
-	void (*mcupm_process_argument_real_sym)(const char *arg) = NULL;
-
 	if (strncmp(arg, "cpu_pmu", strlen("cpu_pmu")) == 0) {
 		ondiemet_module[ONDIEMET_MCUPM] |= (0x1 << MID_MCUPM_CPU_PMU);
 	} else if (strncmp(arg, "cpu_dvfs", strlen("cpu_dvfs")) == 0) {
 		ondiemet_module[ONDIEMET_MCUPM] |= (0x1 << MID_MCUPM_CPU_DVFS);
 	}
 
-	mcupm_process_argument_real_sym = symbol_get(mcupm_process_argument_real);
 	if (mcupm_process_argument_real_sym) {
 		mcupm_process_argument_real_sym(arg);
 	}
@@ -200,7 +221,6 @@ static int _mcupm_print_header(char *buf, int len)
 {
 	int cnt = 0;
 	int cpu_pmu_flag = 0;
-	int (*mcupm_print_header_real_sym)(char *buf, int len, int cnt) = NULL;
 
 	if (met_mcupm.mode == 0) {
 		PR_BOOTMSG("mcupm %s %d\n", __FUNCTION__, __LINE__);
@@ -217,7 +237,6 @@ static int _mcupm_print_header(char *buf, int len)
 		cpu_pmu_flag = 1;
 	}
 
-	mcupm_print_header_real_sym = symbol_get(mcupm_print_header_real);
 	if (mcupm_print_header_real_sym) {
 		len = mcupm_print_header_real_sym(buf, len, cnt);
 	}
