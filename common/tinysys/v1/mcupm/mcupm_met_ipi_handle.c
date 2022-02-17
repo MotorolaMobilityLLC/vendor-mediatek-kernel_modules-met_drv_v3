@@ -99,21 +99,21 @@ void start_mcupm_ipi_recv_thread()
 	}
 
 	// Tinysys send ipi to APSYS
-	ret = mtk_ipi_register(mcupm_ipidev_symbol, IPIR_C_MET, _met_ipi_cb,
+	ret = mtk_ipi_register(mcupm_ipidev_symbol, CH_IPIR_C_MET, _met_ipi_cb,
 				NULL, (void *) &recv_buf);
 	if (ret) {
-		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", IPIR_C_MET, ret);
+		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", CH_IPIR_C_MET, ret);
 	} else {
-		PR_BOOTMSG("mtk_ipi_register IPIR_C_MET success \n");
+		PR_BOOTMSG("mtk_ipi_register CH_IPIR_C_MET success \n");
 	}
 
 	// APSYS send ipi to Tinysys
-	ret = mtk_ipi_register(mcupm_ipidev_symbol, IPIS_C_MET, NULL,
+	ret = mtk_ipi_register(mcupm_ipidev_symbol, CH_IPIS_C_MET, NULL,
 				NULL, (void *) &ackdata);
 	if (ret) {
-		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", IPIS_C_MET, ret);
+		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", CH_IPIS_C_MET, ret);
 	} else {
-		PR_BOOTMSG("mtk_ipi_register IPIS_C_MET success \n");
+		PR_BOOTMSG("mtk_ipi_register CH_IPIS_C_MET success \n");
 	}
 
 	if (mcupm_ipi_thread_started != 1) {
@@ -137,9 +137,9 @@ void stop_mcupm_ipi_recv_thread()
 
 		if (mcupm_ipidev_symbol) {
 			// Tinysys send ipi to APSYS
-			mtk_ipi_unregister(mcupm_ipidev_symbol, IPIR_C_MET);
+			mtk_ipi_unregister(mcupm_ipidev_symbol, CH_IPIR_C_MET);
 			// APSYS send ipi to Tinysys
-			mtk_ipi_unregister(mcupm_ipidev_symbol, IPIS_C_MET);
+			mtk_ipi_unregister(mcupm_ipidev_symbol, CH_IPIS_C_MET);
 		}
 
 		kthread_stop(_mcupm_recv_task);
@@ -263,7 +263,7 @@ int met_ipi_to_mcupm_command(
 		return -1;
 	}
 
-	ret = mtk_ipi_send_compl(mcupm_ipidev_symbol, IPIS_C_MET,
+	ret = mtk_ipi_send_compl(mcupm_ipidev_symbol, CH_IPIS_C_MET,
 		IPI_SEND_WAIT, (void*)buffer, slot, 2000);
 	*retbuf = ackdata;
 	if (ret != 0) {
@@ -286,7 +286,7 @@ int met_ipi_to_mcupm_command_async(
 	if (mcupm_ipidev_symbol == NULL) {
 		return -1;
 	}
-	ret = mtk_ipi_send(mcupm_ipidev_symbol, IPIS_C_MET,
+	ret = mtk_ipi_send(mcupm_ipidev_symbol, CH_IPIS_C_MET,
 		IPI_SEND_WAIT, (void*)buffer, slot, 2000);
 	*retbuf = ackdata;
 
@@ -344,7 +344,7 @@ static int _mcupm_recv_thread(void *data)
 	unsigned int ridx, widx, wlen;
 
 	do {
-		ret = mtk_ipi_recv_reply(mcupm_ipidev_symbol, IPIR_C_MET,
+		ret = mtk_ipi_recv_reply(mcupm_ipidev_symbol, CH_IPIR_C_MET,
 				(void *)&reply_data, 1);
 		if (ret) {
 			// skip cmd handling if receive fail
