@@ -69,11 +69,6 @@ static int met_minor = -1;
 module_param(met_minor, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 
 
-#ifdef MTK_PLATFORM
-#define _SHOW_MTK_PLATFORM(X) #X
-#define SHOW_MTK_PLATFORM(X) _SHOW_MTK_PLATFORM(X)
-#endif
-
 static int is_platform_name_valid(const char * buf)
 {
 	int len = strlen(buf);
@@ -89,31 +84,6 @@ static int is_platform_name_valid(const char * buf)
 	}
 	return -1;
 }
-
-#if 0
-const char *met_get_platform_name(void)
-{
-	const char default_platform_name[7] = "mtxxxx";
-	int found = -1;
-
-	found = is_platform_name_valid(platform_name);
-
-	if(found < 0){
-#ifdef MTK_PLATFORM
-		const char buf[7] = SHOW_MTK_PLATFORM(MTK_PLATFORM);
-		found = is_platform_name_valid(buf);
-		if ( !(found < 0) )
-			platform_name = buf;
-		else
-#endif
-			platform_name = default_platform_name;
-	}
-
-	strncpy(&buf_tmp[2], &platform_name[found+2], 4);
-	return platform_name;
-}
-EXPORT_SYMBOL(met_get_platform_name);
-#endif
 
 static void get_cpu_type_name(const char *compatible, char *cpu_type)
 {
@@ -296,20 +266,8 @@ static int __init met_drv_init(void)
 			met_set_platform(buf, 1);
 			PR_BOOTMSG("Get platform info from dts, platform_name=%s\n", buf);
 		} else {
-#ifdef MTK_PLATFORM
-			memset(buf, 0x0, 7);
-			strcpy(buf, SHOW_MTK_PLATFORM(MTK_PLATFORM));
-			found = is_platform_name_valid((const char *)buf);
-			if( !(found < 0) ){
-				PR_BOOTMSG("Get platform info from met_drv Kbuild, platform_name=%s\n", buf);
-				met_set_platform(buf, 1);
-			}
-			else
-#endif
-			{
-				PR_BOOTMSG("Can not get platform info from dts nor met_drv Kbuild, set platform_name=mtxxxx\n");
-				met_set_platform("mtxxxx", 1);
-			}
+			PR_BOOTMSG("Can not get platform info from dts nor met_drv Kbuild, set platform_name=mtxxxx\n");
+			met_set_platform("mtxxxx", 1);
 		}
 	}
 

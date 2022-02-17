@@ -11,12 +11,6 @@ MET_CORE := common
 
 obj-$(CONFIG_MTK_MET) := met.o
 
-ifneq ($(wildcard $(MET_PLF_DIR)/Kbuild.platform.inc),)
-    include $(MET_PLF_DIR)/Kbuild.platform.inc
-else
-    $(info ======= Missing $(MET_PLF_DIR)/Kbuild.platform.inc ========)
-endif
-
 ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/sync_write.h),)
     ccflags-y += -DUSE_KERNEL_SYNC_WRITE_H
 endif
@@ -28,18 +22,13 @@ endif
 ccflags-y += -DCONFIG_MET_MODULE
 ccflags-y += -DMET_PLF_USE
 ccflags-y += -I$(MET_COMMON_DIR)
-ccflags-y += -I$(MET_PLF_DIR)
 ccflags-y += -I$(srctree)/include/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/leds/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/leds/$(MTK_PLATFORM)/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/met_drv/core/
 
 ccflags-y += $(EXTRA_ARGS) $(EXTRA_CFLAGS)
-ccflags-y += -DMTK_PLATFORM=$(MTK_PLATFORM)
 #ccflags-y += -DONDIEMET_MOUNT_DEBUGFS
 
 met-y := $(MET_CORE)/met_main.o \
@@ -174,12 +163,6 @@ endif
 #    subdir-ccflags-y += -DEMI_LOWEFF_SUPPORT
 #endif
 
-#ifneq ($(wildcard $(MET_PLF_DIR)/met_reg_addr.h),)
-#    ccflags-y += -DMET_REG_ARRD
-#else
-#    $(info ======= there is no $(MET_PLF_DIR)/met_reg_addr.h, will use API to get addr info ========)
-#endif
-
 ################################################################################
 # MET_GPU
 ################################################################################
@@ -247,9 +230,7 @@ ifneq ($(FEATURE_PTPOD), n)
     MET_PTPOD := y
 
     # for mtk_gpufreq.h
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/mtk_gpufreq.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/
-    else ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/base/power/include/mtk_gpufreq.h)","")
+    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/base/power/include/mtk_gpufreq.h)","")
         ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/
     else ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/gpufreq/include/mtk_gpufreq.h)","")
         ccflags-y += -I$(srctree)/drivers/gpu/mediatek/gpufreq/include/
@@ -257,19 +238,9 @@ ifneq ($(FEATURE_PTPOD), n)
         ccflags-y += -I$(srctree)/drivers/gpu/mediatek/gpufreq_v1/include/
     else
         MET_PTPOD = n
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/mtk_gpufreq.h ========)
         $(info ======== Missing $(srctree)/drivers/misc/mediatek/base/power/include/mtk_gpufreq.h ========)
         $(info ======== Missing $(srctree)/drivers/gpu/mediatek/gpufreq/include/mtk_gpufreq.h ========)
         $(info ======== Missing $(srctree)/drivers/gpu/mediatek/gpufreq_v1/include/mtk_gpufreq.h ========)
-        $(info ======== disable MET_PTPOD ========)
-    endif
-
-    # for mtk_cpufreq_api.h
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/mach/mtk_cpufreq_api.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/
-    else
-        MET_PTPOD = n
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/mach/mtk_cpufreq_api.h ========)
         $(info ======== disable MET_PTPOD ========)
     endif
 
@@ -353,7 +324,6 @@ ifneq ($(FEATURE_ONDIEMET), n)
 
     ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SSPM_SUPPORT),y m))
         subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm
-        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(MTK_PLATFORM)
 
         met-y += $(MET_CORE)/ondiemet.o
         met-y += $(MET_CORE)/ondiemet_log.o
@@ -434,7 +404,6 @@ ifeq ($(FEATURE_TINYSYS),y)
         met-y += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_log.o
         met-y += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_ipi_handle.o
         ccflags-y += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/mcupm/
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/mcupm/$(MTK_PLATFORM)
         ccflags-y += -DTINYSYS_MUCPM_SUPPORT
     endif
 
@@ -451,7 +420,6 @@ ifeq ($(FEATURE_TINYSYS),y)
         ccflags-y += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/sspm
         ccflags-y += -I$(srctree)/drivers/misc/mediatek/include
         ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(MTK_PLATFORM)
         ccflags-y += -DTINYSYS_SSPM_SUPPORT
         ccflags-y += -DMTK_TINYSYS_SSPM_SUPPORT
 
@@ -469,11 +437,7 @@ ifeq ($(FEATURE_TINYSYS),y)
             MET_SSPM_IPI := sspm_ipi_table.h
         endif
 
-        ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(MTK_PLATFORM)/$(MET_SSPM_IPI))","")
-            subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm
-            subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(MTK_PLATFORM)
-            TINYSYS_SSPM_READY := y
-        else ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/$(MET_SSPM_IPI))","")
+        ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/$(MET_SSPM_IPI))","")
             subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm
             subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
             TINYSYS_SSPM_READY := y
@@ -516,15 +480,6 @@ ifeq ($(FEATURE_TINYSYS),y)
         MET_SMI := $(if $(filter n,$(FEATURE_SMI)),n,y)
         met-$(MET_SMI) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_smi.o
     endif
-endif
-
-##############################################################################################
-# include $(MET_PLF_DIR)/Kbuild
-##############################################################################################
-ifneq ($(wildcard $(MET_PLF_DIR)/Kbuild),)
-    include $(MET_PLF_DIR)/Kbuild
-else
-    $(info ======= Missing $(MET_PLF_DIR)/Kbuild ========)
 endif
 
 #################################################################################
