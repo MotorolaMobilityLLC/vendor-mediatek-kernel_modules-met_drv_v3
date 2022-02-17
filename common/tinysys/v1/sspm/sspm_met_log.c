@@ -18,6 +18,7 @@
 #include <linux/completion.h>
 #include <linux/module.h>	/* symbol_get */
 
+#include "core_plf_init.h"
 #include "sspm_reservedmem.h"
 #include "sspm_reservedmem_define.h"
 
@@ -165,6 +166,11 @@ static const struct proc_ops sspm_trace_fops = {
 	.proc_release = seq_release
 };
 
+#ifdef ONDIEMET_MOUNT_DEBUGFS
+static struct dentry *trace_dentry;
+#else
+static struct proc_dir_entry *trace_dentry;
+#endif
 
 /*****************************************************************************
  * external function ipmlement
@@ -173,10 +179,8 @@ int sspm_log_init(struct device *dev)
 {
 	int ret = 0;
 #ifdef ONDIEMET_MOUNT_DEBUGFS
-	struct dentry *d;
 	struct dentry *met_dir = NULL;
 #else
-	struct proc_dir_entry *d;
 	struct proc_dir_entry *met_dir = NULL;
 #endif
 	phys_addr_t (*get_size_sym)(unsigned int id) = NULL;
@@ -189,14 +193,14 @@ int sspm_log_init(struct device *dev)
 	mutex_init(&lock_trace_owner_pid);
 
 #ifdef ONDIEMET_MOUNT_DEBUGFS
-	d = debugfs_create_file("trace", 0600, met_dir, NULL, &sspm_trace_fops);
-	if (!d) {
+	trace_dentry = debugfs_create_file("trace", 0600, met_dir, NULL, &sspm_trace_fops);
+	if (!trace_dentry) {
 		PR_BOOTMSG("can not create devide node in debugfs: sspm_trace\n");
 		return -ENOMEM;
 	}
 #else
-	d = proc_create("trace", 0600, met_dir, &sspm_trace_fops);
-	if (!d) {
+	trace_dentry = proc_create("trace", 0600, met_dir, &sspm_trace_fops);
+	if (!trace_dentry) {
 		PR_BOOTMSG("can not create devide node in procfs: sspm_trace\n");
 		return -ENOMEM;
 	}
@@ -219,7 +223,7 @@ int sspm_log_init(struct device *dev)
 		sspm_buf_available = 0;
 	}
 #else
-	get_size_sym = sspm_reserve_mem_get_size;
+	get_size_sym = sspm_reserve_mem_get_size_symbol;
 	if (get_size_sym) {
 		sspm_buffer_size = get_size_sym(MET_MEM_ID);
 		PR_BOOTMSG("sspm_buffer_size=%x \n", sspm_buffer_size);
@@ -231,8 +235,8 @@ int sspm_log_init(struct device *dev)
 		phys_addr_t (*get_phys_sym)(unsigned int id) = NULL;
 		phys_addr_t (*get_virt_sym)(unsigned int id) = NULL;
 
-		get_phys_sym = sspm_reserve_mem_get_virt;
-		get_virt_sym = sspm_reserve_mem_get_phys;
+		get_phys_sym = sspm_reserve_mem_get_virt_symbol;
+		get_virt_sym = sspm_reserve_mem_get_phys_symbol;
 		if (get_phys_sym) {
 			sspm_log_virt_addr = (void*)get_phys_sym(MET_MEM_ID);
 			PR_BOOTMSG("sspm_log_virt_addr=%x \n", sspm_log_virt_addr);
@@ -271,6 +275,13 @@ int sspm_log_uninit(struct device *dev)
 	}
 
 	device_remove_file(dev, &dev_attr_ondiemet_log_run);
+
+#ifdef ONDIEMET_MOUNT_DEBUGFS
+       debugfs_remove(trace_dentry);
+#else
+       proc_remove(trace_dentry);
+#endif
+
 	return 0;
 }
 

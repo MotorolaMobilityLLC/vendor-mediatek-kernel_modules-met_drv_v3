@@ -62,6 +62,8 @@ extern unsigned int met_cpu_pmu_method;
  */
 extern unsigned int met_cpu_pm_pmu_reconfig;
 
+extern int metdevice_check_dependency(struct metdevice *c, int init_once);
+
 extern int met_parse_num(const char *str, unsigned int *value, int len);
 extern void met_set_suspend_notify(int flag);
 

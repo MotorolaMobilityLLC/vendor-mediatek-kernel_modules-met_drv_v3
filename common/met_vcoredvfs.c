@@ -290,6 +290,10 @@ static int vcoredvfs_print_header(char *buf, int len)
 	return ret;
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(dependencies) = {
+	{.symbol=(void**)&met_vcore_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=0},
+};
+
 struct metdevice met_vcoredvfs = {
 	.name = "vcoredvfs",
 	.owner = THIS_MODULE,
@@ -303,4 +307,5 @@ struct metdevice met_vcoredvfs = {
 	.timed_polling = met_vcoredvfs_polling,
 	.print_help = vcoredvfs_print_help,
 	.print_header = vcoredvfs_print_header,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(dependencies)
 };
