@@ -58,7 +58,9 @@ enum {
 /*****************************************************************************
  * internal function declaration
  *****************************************************************************/
+#ifdef MET_TINYSYS
 static void _reset(int status, int type);
+#endif
 
 
 /*****************************************************************************
@@ -184,6 +186,7 @@ int tinysys_log_manager_stop(void)
 /*****************************************************************************
  * internal function ipmlement
  *****************************************************************************/
+#ifdef MET_TINYSYS
 static void _reset(int status, int type)
 {
 	switch (type) {
@@ -203,4 +206,5 @@ static void _reset(int status, int type)
 		return;
 	}
 }
+#endif
 

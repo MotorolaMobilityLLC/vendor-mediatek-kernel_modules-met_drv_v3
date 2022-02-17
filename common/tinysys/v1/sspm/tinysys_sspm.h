@@ -72,6 +72,7 @@
 #define ID_CPU_INFO_MAPPING     (1 << MID_CPU_INFO_MAPPING)
 #define ID_SMI                  (1 << MID_SMI)
 #define ID_PMU                  (1 << MID_PMU)
+#define ID_CPU_PMUE             (1 << MID_CPU_PMUE)
 
 #define SSPM_LOG_FILE           0
 #define SSPM_LOG_SRAM           1
@@ -109,6 +110,8 @@ enum {
 	MID_SMI,
 	MID_PMU,
 
+	MID_CPU_PMUE = 0x1D,
+	MID_SYS_PI = 0x1E,
 	MID_COMMON = 0x1F
 };
 

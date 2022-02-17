@@ -200,7 +200,7 @@ int ondiemet_attr_init(struct device *dev)
 #ifdef MET_MCUPM
 	ret = _create_mcupm_node(_g_tinysys_kobj);
 	if (ret != 0) {
-		pr_debug("can not create cpu eb node\n");
+		pr_debug("can not create mcupm node\n");
 		return ret;
 	}
 #endif

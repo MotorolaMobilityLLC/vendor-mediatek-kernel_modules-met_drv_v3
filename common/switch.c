@@ -87,8 +87,8 @@ void met_sched_switch(void *data, bool preempt, struct task_struct *prev, struct
 		mt_switch(prev, next);
 
 	/* met_perf_cpupmu_status: 0: stop, others: polling */
-	//if ((met_switch.mode & MT_SWITCH_SCHEDSWITCH) && met_perf_cpupmu_status)
-	//	met_perf_cpupmu_polling(0, smp_processor_id());
+	if ((met_switch.mode & MT_SWITCH_SCHEDSWITCH) && met_perf_cpupmu_status)
+		met_perf_cpupmu_polling(0, smp_processor_id());
 }
 
 #ifdef IRQ_TRIGGER
@@ -179,7 +179,7 @@ static void met_switch_delete_subfs(void)
 }
 
 
-//static void (*cpu_timed_polling)(unsigned long long stamp, int cpu);
+static void (*cpu_timed_polling)(unsigned long long stamp, int cpu);
 /* static void (*cpu_tagged_polling)(unsigned long long stamp, int cpu); */
 
 static void met_switch_start(void)
@@ -187,9 +187,9 @@ static void met_switch_start(void)
 	int cpu;
 
 	if (met_switch.mode & MT_SWITCH_SCHEDSWITCH) {
-		//cpu_timed_polling = met_cpupmu.timed_polling;
+		cpu_timed_polling = met_cpupmu.timed_polling;
 		/* cpu_tagged_polling = met_cpupmu.tagged_polling; */
-		//met_cpupmu.timed_polling = NULL;
+		met_cpupmu.timed_polling = NULL;
 		/* met_cpupmu.tagged_polling = NULL; */
 	}
 
@@ -204,7 +204,7 @@ static void met_switch_stop(void)
 	int cpu;
 
 	if (met_switch.mode & MT_SWITCH_SCHEDSWITCH) {
-		//met_cpupmu.timed_polling = cpu_timed_polling;
+		met_cpupmu.timed_polling = cpu_timed_polling;
 		/* met_cpupmu.tagged_polling = cpu_tagged_polling; */
 	}
 
