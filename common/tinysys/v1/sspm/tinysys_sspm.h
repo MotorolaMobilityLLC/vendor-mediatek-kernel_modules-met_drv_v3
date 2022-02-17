@@ -7,7 +7,6 @@
 /*****************************************************************************
  * headers
  *****************************************************************************/
-#include "mtk_tinysys_ipi.h"  /* for mtk_ipi_device */
 
 
 /*****************************************************************************
@@ -56,6 +55,8 @@
 #define MET_CLOSE_FILE          (15 << FUNC_BIT_SHIFT) /* Inform to close the SD file */
 #define MET_RESP_MD2AP          (16 << FUNC_BIT_SHIFT)
 #define MET_RUN_MODE            (17 << FUNC_BIT_SHIFT)
+#define MET_SSPM_ACK            (18 << FUNC_BIT_SHIFT)
+#define MET_AP_ACK              (19 << FUNC_BIT_SHIFT)
 
 #define ID_PMQOS                (1 << MID_PMQOS)
 #define ID_SMI                  (1 << MID_SMI)
@@ -119,7 +120,6 @@ enum {
 /*****************************************************************************
  * external variable declaration
  *****************************************************************************/
-extern struct mtk_ipi_device *sspm_ipidev_symbol;
 extern int sspm_buf_available;
 
 #endif /* __ONDIEMET_SSPM_H__ */

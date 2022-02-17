@@ -50,7 +50,7 @@ met-y := $(MET_CORE)/met_main.o \
 # MET feature declaration
 ################################################################################
 TINYSYS_VERSION := v1
-SSPM_VERSION := v2
+SSPM_VERSION := v3
 
 FEATURE_SSPM_EMI := y
 FEATURE_GPU := y
@@ -78,26 +78,29 @@ else
     MET_SSPM := n
 endif
 
-ifeq ($(MET_SSPM), y)
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_ipi_table.h)","")
-        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
-    else
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_ipi_table.h ========)
-        $(info ======== disable MET_SSPM ========)
-        MET_SSPM := n
-    endif
-
-    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
-        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
-    else
-        $(info ======== Missing $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
-        $(info ======== disable MET_SSPM ========)
-        MET_SSPM := n
-    endif
+ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SCMI),y m))
+    $(info CONFIG_MTK_TINYSYS_SCMI = y)
+else
+    $(info CONFIG_MTK_TINYSYS_SCMI = n)
+    MET_SSPM := n
 endif
 
-ifeq ($(SSPM_VERSION), v2)
-    ccflags-y += -DSSPM_VERSION_V2
+ifeq ($(MET_SSPM), y)
+    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_reservedmem.h)","")
+        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
+    else
+        $(info ======== Missing $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_reservedmem.h ========)
+        $(info ======== disable MET_SSPM ========)
+        MET_SSPM := n
+    endif
+
+    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/tinysys_scmi/tinysys-scmi.h)","")
+        ccflags-y += -I$(srctree)/drivers/misc/mediatek/tinysys_scmi/
+    else
+        $(info ======== Missing $(srctree)/drivers/misc/mediatek/tinysys_scmi/tinysys-scmi.h ========)
+        $(info ======== disable MET_SSPM ========)
+        MET_SSPM := n
+    endif
 endif
 
 $(info MET_SSPM = $(MET_SSPM))
@@ -297,9 +300,10 @@ $(info FEATURE_SMI = $(FEATURE_SMI))
 MET_SMI := $(if $(filter n,$(FEATURE_SMI)),n,y)
 MET_SMI := $(if $(filter n,$(MET_SSPM)),n,$(MET_SMI))
 
-ifeq ($(SSPM_VERSION), v2)
+ifneq ($(SSPM_VERSION), v1)
     ccflags-y += -DSMI_MASTER_8BIT
 endif
+
 
 $(info MET_SMI = $(MET_SMI))
 met-$(MET_SMI) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_smi.o

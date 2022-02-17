@@ -26,12 +26,6 @@
 #include "interface.h"
 #include <linux/of.h>
 
-#ifdef MET_SSPM
-#if defined(SSPM_VERSION_V2)
-#include "sspm_ipi_id.h"  /* for sspm_ipidev */
-#endif
-#endif
-
 extern struct device_node *of_root;
 static const char *platform_name;
 
@@ -52,12 +46,6 @@ static struct cpu_type_name met_known_cpu_type[] = {
 	(sizeof(met_known_cpu_type)/sizeof(struct cpu_type_name))
 
 static char met_cpu_topology[64];
-
-#ifdef MET_SSPM
-#if defined(SSPM_VERSION_V2)
-struct mtk_ipi_device *sspm_ipidev_symbol = NULL;
-#endif
-#endif
 
 unsigned int (*mt_get_chip_id_symbol)(void);
 
@@ -180,28 +168,6 @@ static int met_create_cpu_topology(void)
 	return strlen(met_cpu_topology);
 }
 
-static int met_kernel_symbol_get(void)
-{
-	int ret = 0;
-
-
-#ifdef MET_SSPM
-#if defined(SSPM_VERSION_V2)
-	ret += _MET_SYMBOL_GET(sspm_ipidev);
-#endif
-#endif
-	return ret;
-}
-
-static void met_kernel_symbol_put(void)
-{
-#ifdef MET_SSPM
-#ifdef SSPM_VERSION_V2
-	_MET_SYMBOL_PUT(sspm_ipidev);
-#endif
-#endif
-}
-
 DEFINE_PER_CPU(struct met_cpu_struct, met_cpu);
 
 static int __init met_drv_init(void)
@@ -216,12 +182,6 @@ static int __init met_drv_init(void)
 		met_cpu_ptr = &per_cpu(met_cpu, cpu);
 		/* snprintf(&(met_cpu_ptr->name[0]), sizeof(met_cpu_ptr->name), "met%02d", cpu); */
 		met_cpu_ptr->cpu = cpu;
-	}
-
-	ret = met_kernel_symbol_get();
-	if (ret) {
-		pr_notice("[MET] met_kernel_symbol_get fail, ret = %d\n", ret);
-		return ret;
 	}
 
 	tracepoint_reg();
@@ -290,7 +250,6 @@ static void __exit met_drv_exit(void)
 
 	tracepoint_unreg();
 
-	met_kernel_symbol_put();
 	_MET_SYMBOL_PUT(mt_get_chip_id);
 }
 module_init(met_drv_init);

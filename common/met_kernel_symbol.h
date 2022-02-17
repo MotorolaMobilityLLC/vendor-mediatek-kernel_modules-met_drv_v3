@@ -32,14 +32,6 @@
 		} \
 	}
 
-#ifdef MET_SSPM
-#ifdef SSPM_VERSION_V2
-#include "tinysys_sspm.h"
-extern struct mtk_ipi_device sspm_ipidev;
-extern struct mtk_ipi_device *sspm_ipidev_symbol;
-#endif
-#endif
-
 extern unsigned int mt_get_chip_id(void);
 extern unsigned int (*mt_get_chip_id_symbol)(void);
 
