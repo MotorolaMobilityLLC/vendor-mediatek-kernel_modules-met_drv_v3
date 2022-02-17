@@ -158,12 +158,11 @@ static const struct seq_operations sspm_trace_seq_ops = {
 	.show = sspm_trace_seq_show
 };
 
-static const struct file_operations sspm_trace_fops = {
-	.owner = THIS_MODULE,
-	.open = sspm_trace_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = seq_release
+static const struct proc_ops sspm_trace_fops = {
+	.proc_open = sspm_trace_open,
+	.proc_read = seq_read,
+	.proc_lseek = seq_lseek,
+	.proc_release = seq_release
 };
 
 
