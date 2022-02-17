@@ -18,24 +18,28 @@
 /*
  *   GPU
  */
+#ifdef MET_GPU_LOAD_MONITOR
 bool (*mtk_get_gpu_loading_symbol)(unsigned int *pLoading);
 bool (*mtk_get_gpu_block_symbol)(unsigned int *pBlock);
 bool (*mtk_get_gpu_idle_symbol)(unsigned int *pIdle);
+#endif
+#ifdef MET_GPU_MEM_MONITOR
 bool (*mtk_get_gpu_memory_usage_symbol)(unsigned int *pMemUsage);
+#endif
+#ifdef MET_GPU_PMU_MONITOR
 bool (*mtk_get_gpu_pmu_init_symbol)(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 bool (*mtk_get_gpu_pmu_swapnreset_symbol)(struct GPU_PMU *pmus, int pmu_size);
-#if 1
 bool (*mtk_get_gpu_pmu_deinit_symbol)(void);
 bool (*mtk_get_gpu_pmu_swapnreset_stop_symbol)(void);
 #endif
+#ifdef MET_GPU_DVFS_MONITOR
 bool (*mtk_get_gpu_cur_freq_symbol)(unsigned int *puiFreq);
 bool (*mtk_get_gpu_cur_oppidx_symbol)(int *piIndex);
 bool (*mtk_get_gpu_floor_index_symbol)(int *piIndex);
 bool (*mtk_get_gpu_ceiling_index_symbol)(int *piIndex);
 bool (*mtk_get_gpu_floor_limiter_symbol)(unsigned int *puiLimiter);
 bool (*mtk_get_gpu_ceiling_limiter_symbol)(unsigned int *puiLimiter);
-bool (*mtk_register_gpu_power_change_symbol)(const char *name, void (*callback)(int power_on));
-bool (*mtk_unregister_gpu_power_change_symbol)(const char *name);
+#endif
 #endif /* MET_GPU */
 
 #ifdef MET_VCOREDVFS
@@ -53,31 +57,39 @@ int (*vcorefs_get_num_opp_symbol)(void);
 #endif /* MET_VCOREDVFS */
 
 #ifdef MET_EMI
+#ifdef CONFIG_MTK_DRAMC
 unsigned int (*mtk_dramc_get_data_rate_symbol)(void);
 unsigned int (*mtk_dramc_get_ddr_type_symbol)(void);
+#endif
+#ifdef CONFIG_MTK_DVFSRC_MET
 int (*get_cur_ddr_ratio_symbol)(void);
+#endif
 #endif /* MET_EMI */
 
 static int met_symbol_get(void)
 {
 #ifdef MET_GPU
+#ifdef MET_GPU_LOAD_MONITOR
 	_MET_SYMBOL_GET(mtk_get_gpu_loading);
 	_MET_SYMBOL_GET(mtk_get_gpu_block);
 	_MET_SYMBOL_GET(mtk_get_gpu_idle);
+#endif
+#ifdef MET_GPU_MEM_MONITOR
 	_MET_SYMBOL_GET(mtk_get_gpu_memory_usage);
+#endif
+#ifdef MET_GPU_PMU_MONITOR
 	_MET_SYMBOL_GET(mtk_get_gpu_pmu_init);
 	_MET_SYMBOL_GET(mtk_get_gpu_pmu_swapnreset);
+	_MET_SYMBOL_GET(mtk_get_gpu_pmu_deinit);
+	_MET_SYMBOL_GET(mtk_get_gpu_pmu_swapnreset_stop);
+#endif
+#ifdef MET_GPU_DVFS_MONITOR
 	_MET_SYMBOL_GET(mtk_get_gpu_cur_freq);
 	_MET_SYMBOL_GET(mtk_get_gpu_cur_oppidx);
 	_MET_SYMBOL_GET(mtk_get_gpu_floor_index);
 	_MET_SYMBOL_GET(mtk_get_gpu_ceiling_index);
 	_MET_SYMBOL_GET(mtk_get_gpu_floor_limiter);
 	_MET_SYMBOL_GET(mtk_get_gpu_ceiling_limiter);
-	_MET_SYMBOL_GET(mtk_register_gpu_power_change);
-	_MET_SYMBOL_GET(mtk_unregister_gpu_power_change);
-#if 1
-	_MET_SYMBOL_GET(mtk_get_gpu_pmu_swapnreset_stop);
-	_MET_SYMBOL_GET(mtk_get_gpu_pmu_deinit);
 #endif
 #endif /* MET_GPU */
 
@@ -92,9 +104,13 @@ static int met_symbol_get(void)
 #endif
 
 #ifdef MET_EMI
+#ifdef CONFIG_MTK_DRAMC
 	_MET_SYMBOL_GET(mtk_dramc_get_data_rate);
 	_MET_SYMBOL_GET(mtk_dramc_get_ddr_type);
+#endif
+#ifdef CONFIG_MTK_DVFSRC_MET
 	_MET_SYMBOL_GET(get_cur_ddr_ratio);
+#endif
 #endif
 
 	return 0;
@@ -103,23 +119,27 @@ static int met_symbol_get(void)
 static int met_symbol_put(void)
 {
 #ifdef MET_GPU
+#ifdef MET_GPU_LOAD_MONITOR
 	_MET_SYMBOL_PUT(mtk_get_gpu_loading);
 	_MET_SYMBOL_PUT(mtk_get_gpu_block);
 	_MET_SYMBOL_PUT(mtk_get_gpu_idle);
+#endif
+#ifdef MET_GPU_MEM_MONITOR
 	_MET_SYMBOL_PUT(mtk_get_gpu_memory_usage);
+#endif
+#ifdef MET_GPU_PMU_MONITOR
 	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_init);
 	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_swapnreset);
+	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_deinit);
+	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_swapnreset_stop);
+#endif
+#ifdef MET_GPU_DVFS_MONITOR
 	_MET_SYMBOL_PUT(mtk_get_gpu_cur_freq);
 	_MET_SYMBOL_PUT(mtk_get_gpu_cur_oppidx);
 	_MET_SYMBOL_PUT(mtk_get_gpu_floor_index);
 	_MET_SYMBOL_PUT(mtk_get_gpu_ceiling_index);
 	_MET_SYMBOL_PUT(mtk_get_gpu_floor_limiter);
 	_MET_SYMBOL_PUT(mtk_get_gpu_ceiling_limiter);
-	_MET_SYMBOL_PUT(mtk_register_gpu_power_change);
-	_MET_SYMBOL_PUT(mtk_unregister_gpu_power_change);
-#if 1
-	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_swapnreset_stop);
-	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_deinit);
 #endif
 #endif /* MET_GPU */
 
@@ -134,9 +154,13 @@ static int met_symbol_put(void)
 #endif
 
 #ifdef MET_EMI
+#ifdef CONFIG_MTK_DRAMC
 	_MET_SYMBOL_PUT(mtk_dramc_get_data_rate);
 	_MET_SYMBOL_PUT(mtk_dramc_get_ddr_type);
+#endif
+#ifdef CONFIG_MTK_DVFSRC_MET
 	_MET_SYMBOL_PUT(get_cur_ddr_ratio);
+#endif
 #endif
 
 	return 0;

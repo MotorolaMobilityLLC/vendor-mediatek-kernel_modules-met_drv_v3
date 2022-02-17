@@ -1413,7 +1413,7 @@ int fs_reg(int met_minor)
 	met_register(&met_cpupmu);
 	met_register(&met_memstat);
 	met_register(&met_switch);
-#ifdef MET_EVENT_POWER_SUPPORT
+#ifdef MET_EVENT_POWER
 	met_register(&met_trace_event);
 #endif
 
@@ -1453,7 +1453,7 @@ void fs_unreg(void)
 	met_deregister(&met_mcupm);
 #endif
 	met_deregister(&met_dummy_header);
-#ifdef MET_EVENT_POWER_SUPPORT
+#ifdef MET_EVENT_POWER
 	met_deregister(&met_trace_event);
 #endif
 	met_deregister(&met_switch);

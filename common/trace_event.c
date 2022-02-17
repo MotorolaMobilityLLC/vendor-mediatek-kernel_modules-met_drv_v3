@@ -46,7 +46,7 @@ noinline void gpu_job_enqueue(void *data, u32 ctx_id, u32 job_id, const char *ty
 #endif
 
 
-#ifdef  MET_EVENT_POWER_SUPPORT
+#ifdef  MET_EVENT_POWER
 #include "met_power.h"
 #include "met_kernel_symbol.h"
 
@@ -122,7 +122,7 @@ static int reset_driver_stat(void)
 #if	IS_ENABLED(CONFIG_GPU_TRACEPOINTS)
 	event_gpu_enabled = 0;
 #endif
-#ifdef MET_EVENT_POWER_SUPPORT
+#ifdef MET_EVENT_POWER
 	event_power_enabled = 0;
 #endif
 
@@ -150,7 +150,7 @@ static void met_event_start(void)
 	} while (0);
 #endif
 
-#ifdef  MET_EVENT_POWER_SUPPORT
+#ifdef  MET_EVENT_POWER
 	/* register trace event for power */
 	do {
 		if (!event_power_enabled)
@@ -175,7 +175,7 @@ static void met_event_stop(void)
 		event_gpu_registered = 0;
 #endif
 
-#ifdef  MET_EVENT_POWER_SUPPORT
+#ifdef  MET_EVENT_POWER
 	/* unregister trace event for power */
 	if (event_power_registered)
 		event_power_registered = 0;
@@ -193,7 +193,7 @@ static int met_event_process_argument(const char *arg, int len)
 		ret = 0;
 	}
 #endif
-#ifdef  MET_EVENT_POWER_SUPPORT
+#ifdef  MET_EVENT_POWER
 	if (strcasecmp(arg, "power") == 0) {
 		event_power_enabled = 1;
 		met_trace_event.mode = 1;
@@ -207,7 +207,7 @@ static const char help[] = "\b"
 #if	IS_ENABLED(CONFIG_GPU_TRACEPOINTS)
 	"  --event=gpu                           output gpu trace events\n"
 #endif
-#ifdef  MET_EVENT_POWER_SUPPORT
+#ifdef  MET_EVENT_POWER
 	"  --event=power						 output pmqos trace events\n"
 #endif
 	;
@@ -222,7 +222,7 @@ static const char header[] =
 #if	IS_ENABLED(CONFIG_GPU_TRACEPOINTS)
 	" gpu:gpu_sched_switch gpu:gpu_job_enqueue"
 #endif
-#ifdef  MET_EVENT_POWER_SUPPORT
+#ifdef  MET_EVENT_POWER
 	" power:pm_qos_update_request power:pm_qos_update_target"
 #endif
 	"\n";

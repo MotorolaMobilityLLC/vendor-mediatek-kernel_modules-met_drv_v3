@@ -2922,25 +2922,14 @@ enum DRAM_TYPE {
 };
 */
 	unsigned int dram_type=0;
-#if 0
+
+#ifdef CONFIG_MTK_DRAMC
 	if (mtk_dramc_get_ddr_type_symbol)
 		dram_type = mtk_dramc_get_ddr_type_symbol();
-	else if (get_ddr_type_symbol)
-		dram_type = get_ddr_type_symbol();
-
-	if (mtk_dramc_get_ddr_type_symbol || get_ddr_type_symbol) {
-		if (dram_type == 0)
-			dram_type = met_emi_default_val[e_MET_DRAM_TYPE];
-	} else {
-		dram_type = met_emi_default_val[e_MET_DRAM_TYPE];
-	}
-#else //for kernel 5.X
-	if (mtk_dramc_get_ddr_type_symbol)
-		dram_type = mtk_dramc_get_ddr_type_symbol();
-
+#endif
 	if (dram_type == 0)
 		dram_type = met_emi_default_val[e_MET_DRAM_TYPE];
-#endif
+
 	return dram_type;
 }
 
@@ -2948,21 +2937,14 @@ enum DRAM_TYPE {
 unsigned int MET_EMI_Get_BaseClock_Rate(void)
 {
 	unsigned int ddr_ratio = 0;
-#if 0
-	if (get_cur_ddr_ratio_symbol){
-		ddr_ratio = get_cur_ddr_ratio_symbol();
 
-		if (ddr_ratio == 0)
-			ddr_ratio = met_emi_default_val[e_MET_DDR_RATIO];
-	} else {
-		ddr_ratio = met_emi_default_val[e_MET_DDR_RATIO];
-	}
-#else //for kernel 5.X
+#ifdef CONFIG_MTK_DRAMC
 	if (get_cur_ddr_ratio_symbol)
 		ddr_ratio = get_cur_ddr_ratio_symbol();
+#endif
 	if (ddr_ratio == 0)
 		ddr_ratio = met_emi_default_val[e_MET_DDR_RATIO];
-#endif
+
 	return ddr_ratio;
 
 }
@@ -2970,27 +2952,14 @@ unsigned int MET_EMI_Get_BaseClock_Rate(void)
 unsigned met_get_dram_data_rate(void)
 {
 	unsigned int dram_data_rate_MHz = 0;
-#if 0
-	if (mtk_dramc_get_data_rate_symbol)
-		dram_data_rate_MHz = mtk_dramc_get_data_rate_symbol();
-	else if (get_dram_data_rate_symbol)
-		dram_data_rate_MHz = get_dram_data_rate_symbol();
 
-	if (mtk_dramc_get_data_rate_symbol || get_dram_data_rate_symbol) {
-		if (dram_data_rate_MHz == 0)
-			dram_data_rate_MHz = met_emi_default_val[e_MET_DRAM_FREQ];
-	} else {
-		// METERROR("mtk_dramc_get_data_rate_symbol = NULL\n");
-		// ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: ##_EMI_warning: mtk_dramc_get_data_rate_symbol = NULL\n");
-		dram_data_rate_MHz = met_emi_default_val[e_MET_DRAM_FREQ];
-	}
-#else	//for kernel 5.X
+#ifdef CONFIG_MTK_DVFSRC_MET
 	if (mtk_dramc_get_data_rate_symbol)
 		dram_data_rate_MHz = mtk_dramc_get_data_rate_symbol();
-	
+#endif
 	if (dram_data_rate_MHz == 0)
 		dram_data_rate_MHz = met_emi_default_val[e_MET_DRAM_FREQ];
-#endif
+
 	return dram_data_rate_MHz;
 }
 

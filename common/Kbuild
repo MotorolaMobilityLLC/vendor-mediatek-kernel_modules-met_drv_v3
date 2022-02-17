@@ -65,6 +65,97 @@ FEATURE_SSPM := y
 FEATURE_MCUPM := y
 
 ################################################################################
+# Tinysys SSPM module
+################################################################################
+$(info FEATURE_SSPM = $(FEATURE_SSPM))
+
+MET_SSPM := $(if $(filter n,$(FEATURE_SSPM)),n,y)
+
+ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SSPM_SUPPORT),y m))
+    $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = y)
+else
+    $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = n)
+    MET_SSPM := n
+endif
+
+ifeq ($(MET_SSPM), y)
+    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_ipi_table.h)","")
+        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
+    else
+        $(info ======== Missing $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_ipi_table.h ========)
+        $(info ======== disable MET_SSPM ========)
+        MET_SSPM := n
+    endif
+
+    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
+        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
+    else
+        $(info ======== Missing $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
+        $(info ======== disable MET_SSPM ========)
+        MET_SSPM := n
+    endif
+endif
+
+ifeq ($(SSPM_VERSION), v2)
+    ccflags-y += -DSSPM_VERSION_V2
+endif
+
+$(info MET_SSPM = $(MET_SSPM))
+met-$(MET_SSPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_common.o
+met-$(MET_SSPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_log.o
+met-$(MET_SSPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_ipi_handle.o
+ccflags-$(MET_SSPM) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/sspm
+
+################################################################################
+# Tinysys MCUPM module
+################################################################################
+$(info FEATURE_MCUPM = $(FEATURE_MCUPM))
+
+MET_MCUPM := $(if $(filter n,$(FEATURE_MCUPM)),n,y)
+
+ifneq (,$(filter $(CONFIG_MTK_TINYSYS_MCUPM_SUPPORT),y m))
+    $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = y)
+else
+    $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = n)
+    MET_MCUPM := n
+endif
+
+ifeq ($(MET_MCUPM), y)
+    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
+        subdir-ccflags-y += -I(srctree)/drivers/misc/mediatek/mcupm/include/
+    else
+        $(info ======== Missing $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h========)
+        $(info ======== disable MET_MCUPM ========)
+        MET_MCUPM := n
+    endif
+
+    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
+        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
+    else
+        $(info ======== Missing $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
+        $(info ======== disable MET_MCUPM ========)
+        MET_MCUPM := n
+    endif
+endif
+
+$(info MET_MCUPM = $(MET_MCUPM))
+met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met.o
+met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_log.o
+met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_ipi_handle.o
+ccflags-$(MET_MCUPM) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/mcupm/
+
+################################################################################
+# Tinysys common
+################################################################################
+MET_TINYSYS := $(if $(filter y,$(MET_SSPM)),y,n)
+MET_TINYSYS := $(if $(filter y,$(MET_MCUPM)),y,$(MET_TINYSYS))
+
+$(info MET_TINYSYS = $(MET_TINYSYS))
+met-$(MET_TINYSYS) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_log.o
+met-$(MET_TINYSYS) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_mgr.o
+ccflags-$(MET_TINYSYS) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)
+
+################################################################################
 # MET_CPU_PMU
 ################################################################################
 $(info CPUPMU_VERSION = $(CPUPMU_VERSION))
@@ -102,34 +193,27 @@ endif
 ################################################################################
 $(info FEATURE_SSPM_EMI = $(FEATURE_SSPM_EMI))
 
-ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SSPM_SUPPORT),y m))
-    ifneq ($(FEATURE_ONDIEMET), n)
-        BUILD_SSPM_EMI := y
-    else ifneq ($(FEATURE_TINYSYS), n)
-        BUILD_SSPM_EMI := y
-    else
-        BUILD_SSPM_EMI := n
-    endif
-endif
+MET_EMI := $(if $(filter n,$(FEATURE_SSPM_EMI)),n,y)
 
-ifeq ($(BUILD_SSPM_EMI),y)
-    MET_EMI := $(if $(filter n,$(FEATURE_SSPM_EMI)),n,y)
-    met-$(MET_EMI) += $(MET_CORE)/met_emi.o \
-                $(MET_CORE)/mtk_emi_bm.o
-endif
-
-#EMI_LOWEFF_SUPPORT := $(if $(EMI_LOWEFF_SUPPORT),$(EMI_LOWEFF_SUPPORT),n)
-#ifeq ($(EMI_LOWEFF_SUPPORT), y)
-#    subdir-ccflags-y += -DEMI_LOWEFF_SUPPORT
-#endif
+$(info MET_EMI = $(MET_EMI))
+met-$(MET_EMI) += $(MET_CORE)/met_emi.o \
+                  $(MET_CORE)/mtk_emi_bm.o
 
 ################################################################################
 # MET_GPU
 ################################################################################
 $(info FEATURE_GPU = $(FEATURE_GPU))
 
-ifneq ($(FEATURE_GPU), n)
-    MET_GPU := y
+MET_GPU := $(if $(filter n,$(FEATURE_GPU)),n,y)
+
+ifneq (,$(filter $(CONFIG_MTK_GPU_SUPPORT),y m))
+    $(info CONFIG_MTK_GPU_SUPPORT = y)
+else
+    $(info CONFIG_MTK_GPU_SUPPORT = n)
+    MET_GPU := n
+endif
+
+ifeq ($(MET_GPU), y)
     ccflags-y += -DMET_GPU_LOAD_MONITOR
     ccflags-y += -DMET_GPU_DVFS_MONITOR
 
@@ -137,31 +221,30 @@ ifneq ($(FEATURE_GPU), n)
     ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h)","")
         ccflags-y += -I$(srctree)/drivers/gpu/mediatek/mt-plat/
     else
-        MET_GPU = n
         $(info ======== Missing $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h ========)
         $(info ======== disable MET_GPU ========)
-    endif
-
-    ifeq (,$(filter $(CONFIG_MTK_GPU_SUPPORT),y m))
         MET_GPU = n
-        $(info ======== CONFIG_MTK_GPU_SUPPORT = n ========)
-        $(info ======== disable MET_GPU ========)
     endif
-else
-    MET_GPU := n
 endif
 
+$(info MET_GPU = $(MET_GPU))
 met-$(MET_GPU) += $(MET_CORE)/mtk_gpu_metmonitor.o
-
 
 ################################################################################
 # MET_VCOREDVFS
 ################################################################################
 $(info FEATURE_VCOREDVFS = $(FEATURE_VCOREDVFS))
 
-ifneq ($(FEATURE_VCOREDVFS), n)
-    MET_VCOREDVFS := y
+MET_VCOREDVFS := $(if $(filter n,$(FEATURE_VCOREDVFS)),n,y)
 
+ifneq (,$(filter $( CONFIG_MTK_DVFSRC_MET),y m))
+    $(info CONFIG_MTK_DVFSRC_MET = y)
+else
+    $(info CONFIG_MTK_DVFSRC_MET = n)
+    MET_VCOREDVFS := n
+endif
+
+ifeq ($(MET_VCOREDVFS), y)
     # for dvfsrc-exp.h
     ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h)","")
         ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
@@ -170,10 +253,9 @@ ifneq ($(FEATURE_VCOREDVFS), n)
         $(info ======== Missing $(srctree)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h ========)
         $(info ======== disable MET_VCOREDVFS ========)
     endif
-else
-    MET_VCOREDVFS := n
 endif
 
+$(info MET_VCOREDVFS = $(MET_VCOREDVFS))
 met-$(MET_VCOREDVFS) += $(MET_CORE)/met_vcoredvfs.o
 
 ################################################################################
@@ -183,6 +265,7 @@ $(info FEATURE_THERMAL = $(FEATURE_THERMAL))
 
 MET_THERMAL := $(if $(filter n,$(FEATURE_THERMAL)),n,y)
 
+$(info MET_THERMAL = $(MET_THERMAL))
 met-$(MET_THERMAL) += $(MET_CORE)/met_thermal.o
 
 ################################################################################
@@ -192,6 +275,7 @@ $(info FEATURE_CPUDSU = $(FEATURE_CPUDSU))
 
 MET_CPUDSU := $(if $(filter n,$(FEATURE_CPUDSU)),n,y)
 
+$(info MET_CPUDSU = $(MET_CPUDSU))
 met-$(MET_CPUDSU) += $(MET_CORE)/cpu_dsu.o \
                      $(MET_CORE)/v8_dsu_hw.o
 
@@ -202,12 +286,23 @@ $(info FEATURE_WALLTIME = $(FEATURE_WALLTIME))
 
 MET_WALLTIME := $(if $(filter n,$(FEATURE_WALLTIME)),n,y)
 
+$(info MET_WALLTIME = $(MET_WALLTIME))
 met-$(MET_WALLTIME) += $(MET_CORE)/met_wall_time.o
 
 ################################################################################
 # MET_SMI
 ################################################################################
 $(info FEATURE_SMI = $(FEATURE_SMI))
+
+MET_SMI := $(if $(filter n,$(FEATURE_SMI)),n,y)
+MET_SMI := $(if $(filter n,$(MET_SSPM)),n,$(MET_SMI))
+
+ifeq ($(SSPM_VERSION), v2)
+    ccflags-y += -DSMI_MASTER_8BIT
+endif
+
+$(info MET_SMI = $(MET_SMI))
+met-$(MET_SMI) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_smi.o
 
 ################################################################################
 # MET_BACKLIGHT
@@ -216,6 +311,7 @@ $(info FEATURE_MET_BACKLIGHT = $(FEATURE_MET_BACKLIGHT))
 
 MET_BACKLIGHT := $(if $(filter n,$(FEATURE_MET_BACKLIGHT)),n,y)
 
+$(info MET_BACKLIGHT = $(MET_BACKLIGHT))
 met-$(MET_BACKLIGHT) += $(MET_CORE)/met_backlight.o
 
 ################################################################################
@@ -223,93 +319,7 @@ met-$(MET_BACKLIGHT) += $(MET_CORE)/met_backlight.o
 ################################################################################
 $(info FEATURE_EVENT_POWER = $(FEATURE_EVENT_POWER))
 
-ifeq ($(FEATURE_EVENT_POWER), y)
-    ccflags-y += -DMET_EVENT_POWER_SUPPORT
-endif
-
-################################################################################
-# Tinysys SSPM module
-################################################################################
-$(info FEATURE_SSPM = $(FEATURE_SSPM))
-
-MET_SSPM := $(if $(filter n,$(FEATURE_SSPM)),n,y)
-
-ifneq (,$(filter $(CONFIG_MTK_TINYSYS_SSPM_SUPPORT),y m))
-    $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = y)
-else
-    $(info CONFIG_MTK_TINYSYS_SSPM_SUPPORT = n)
-    MET_SSPM := n
-endif
-
-ifeq ($(MET_SSPM), y)
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_ipi_table.h)","")
-        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
-    else
-        $(info ======== Missing sspm_ipi_table.h ========)
-        MET_SSPM := n
-    endif
-
-    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
-        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
-    else
-        $(info ======== Missing mtk_tinysys_ipi.h ========)
-        MET_SSPM := n
-    endif
-endif
-
-ifeq ($(SSPM_VERSION), v2)
-    ccflags-y += -DSSPM_VERSION_V2
-endif
-
-met-$(MET_SSPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_common.o
-met-$(MET_SSPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_log.o
-met-$(MET_SSPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/sspm/sspm_met_ipi_handle.o
-ccflags-$(MET_SSPM) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/sspm
-
-################################################################################
-# Tinysys MCUPM module
-################################################################################
-$(info FEATURE_MCUPM = $(FEATURE_MCUPM))
-
-MET_MCUPM := $(if $(filter n,$(FEATURE_MCUPM)),n,y)
-
-ifneq (,$(filter $(CONFIG_MTK_TINYSYS_MCUPM_SUPPORT),y m))
-    $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = y)
-else
-    $(info CONFIG_MTK_TINYSYS_MCUPM_SUPPORT = n)
-    MET_MCUPM := n
-endif
-
-ifeq ($(MET_MCUPM), y)
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
-        subdir-ccflags-y += -I(srctree)/drivers/misc/mediatek/mcupm/include/
-    else
-        $(info ======== Missing mcupm_driver.h========)
-        MET_MCUPM := n
-    endif
-
-    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
-        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
-    else
-        $(info ======== Missing mtk_tinysys_ipi.h ========)
-        MET_MCUPM := n
-    endif
-endif
-
-met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met.o
-met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_log.o
-met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_ipi_handle.o
-ccflags-$(MET_MCUPM) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/mcupm/
-
-################################################################################
-# Tinysys common
-################################################################################
-MET_TINYSYS := $(if $(filter y,$(MET_SSPM)),y,n)
-MET_TINYSYS := $(if $(filter y,$(MET_MCUPM)),y,$(MET_TINYSYS))
-
-met-$(MET_TINYSYS) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_log.o
-met-$(MET_TINYSYS) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_mgr.o
-ccflags-$(MET_TINYSYS) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)
+MET_EVENT_POWER := $(if $(filter n,$(FEATURE_EVENT_POWER)),n,y)
 
 #################################################################################
 # add met_device flags

@@ -19,31 +19,41 @@ extern struct miscdevice met_device;
 #include <mtk_gpu_utility.h>
 
 
+#ifdef MET_GPU_LOAD_MONITOR
 extern bool mtk_get_gpu_loading(unsigned int *pLoading);
 extern bool mtk_get_gpu_block(unsigned int *pBlock);
 extern bool mtk_get_gpu_idle(unsigned int *pIdle);
+
+extern bool (*mtk_get_gpu_loading_symbol)(unsigned int *pLoading);
+extern bool (*mtk_get_gpu_block_symbol)(unsigned int *pBlock);
+extern bool (*mtk_get_gpu_idle_symbol)(unsigned int *pIdle);
+
+extern struct metdevice met_gpu;
+#endif
+
+#ifdef MET_GPU_MEM_MONITOR
 extern bool mtk_get_gpu_memory_usage(unsigned int *pMemUsage);
+
+extern bool (*mtk_get_gpu_memory_usage_symbol)(unsigned int *pMemUsage);
+
+extern struct metdevice met_gpumem;
+#endif
+
+#ifdef MET_GPU_PMU_MONITOR
 extern bool mtk_get_gpu_pmu_init(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 extern bool mtk_get_gpu_pmu_swapnreset(struct GPU_PMU *pmus, int pmu_size);
 extern bool mtk_get_gpu_pmu_deinit(void);
 extern bool mtk_get_gpu_pmu_swapnreset_stop(void);
 
-extern bool (*mtk_get_gpu_loading_symbol)(unsigned int *pLoading);
-extern bool (*mtk_get_gpu_block_symbol)(unsigned int *pBlock);
-extern bool (*mtk_get_gpu_idle_symbol)(unsigned int *pIdle);
-extern bool (*mtk_get_gpu_memory_usage_symbol)(unsigned int *pMemUsage);
 extern bool (*mtk_get_gpu_pmu_init_symbol)(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 extern bool (*mtk_get_gpu_pmu_swapnreset_symbol)(struct GPU_PMU *pmus, int pmu_size);
 extern bool (*mtk_get_gpu_pmu_deinit_symbol)(void);
 extern bool (*mtk_get_gpu_pmu_swapnreset_stop_symbol)(void);
 
-extern bool mtk_register_gpu_power_change(const char *name, void (*callback)(int power_on));
-extern bool mtk_unregister_gpu_power_change(const char *name);
-extern bool (*mtk_register_gpu_power_change_symbol)(const char *name,
-					void (*callback)(int power_on));
-extern bool (*mtk_unregister_gpu_power_change_symbol)(const char *name);
+extern struct metdevice met_gpu_pmu;
+#endif
 
-
+#ifdef MET_GPU_DVFS_MONITOR
 extern bool mtk_get_gpu_cur_freq(unsigned int *puiFreq);
 extern bool mtk_get_gpu_cur_oppidx(int *piIndex);
 extern bool mtk_get_gpu_floor_index(int *piIndex);
@@ -58,12 +68,13 @@ extern bool (*mtk_get_gpu_ceiling_index_symbol)(int *piIndex);
 extern bool (*mtk_get_gpu_floor_limiter_symbol)(unsigned int *puiLimiter);
 extern bool (*mtk_get_gpu_ceiling_limiter_symbol)(unsigned int *puiLimiter);
 
-
-extern struct metdevice met_gpu;
 extern struct metdevice met_gpudvfs;
-extern struct metdevice met_gpumem;
+#endif
+
+#ifdef MET_GPU_PWR_MONITOR
 extern struct metdevice met_gpupwr;
-extern struct metdevice met_gpu_pmu;
+#endif
+
 #ifdef MET_GPU_STALL_MONITOR
 extern struct metdevice met_gpu_stall;
 #endif
@@ -96,13 +107,21 @@ extern struct metdevice met_vcoredvfs;
 
 
 #ifdef MET_EMI
+#ifdef CONFIG_MTK_DRAMC
 extern unsigned int mtk_dramc_get_data_rate(void);      /* in Mhz */
 extern unsigned int mtk_dramc_get_ddr_type(void);
+#endif
+#ifdef CONFIG_MTK_DVFSRC_MET
 extern int get_cur_ddr_ratio(void);
+#endif
 
+#ifdef CONFIG_MTK_DRAMC
 extern unsigned int (*mtk_dramc_get_data_rate_symbol)(void); /* in Mhz */
 extern unsigned int (*mtk_dramc_get_ddr_type_symbol)(void);
+#endif
+#ifdef CONFIG_MTK_DVFSRC_MET
 extern int (*get_cur_ddr_ratio_symbol)(void);
+#endif
 
 extern struct metdevice met_sspm_emi;
 #endif /* MET_EMI */
