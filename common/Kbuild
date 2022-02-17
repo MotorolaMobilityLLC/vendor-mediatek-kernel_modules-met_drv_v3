@@ -145,6 +145,7 @@ $(info MET_MCUPM = $(MET_MCUPM))
 met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met.o
 met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_log.o
 met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_ipi_handle.o
+met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_common.o
 ccflags-$(MET_MCUPM) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/mcupm/
 
 ################################################################################
