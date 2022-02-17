@@ -543,7 +543,6 @@ static int __met_perf_events_set_all_events(int cpu)
 			    !__met_perf_event_is_cyc_cnt_idx(ev->hw.idx)) {
 				perf_event_release_kernel(ev);
 				ev = NULL;
-				counter_cnt[cpu] --;
 			}
 
 			if (ev == NULL) {
