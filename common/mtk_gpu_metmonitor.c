@@ -31,14 +31,6 @@
  */
 #undef GPU_HAL_RUN_PREMPTIBLE
 
-#ifdef GPU_HAL_RUN_PREMPTIBLE
-static struct delayed_work gpu_dwork;
-static struct delayed_work gpu_pwr_dwork;
-#endif
-
-/* the mt_gpufreq_get_thermal_limit_freq use mutex_lock to do its job */
-/* so, change the gpu-dvfs implementation to dwork */
-static struct delayed_work gpu_dvfs_dwork;
 
 /*
  * GPU monitor HAL comes from alps\mediatek\kernel\include\linux\mtk_gpu_utility.h
@@ -47,6 +39,11 @@ static struct delayed_work gpu_dvfs_dwork;
  *
  * mtk_get_gpu_xxx_loading are in unit of %
 */
+#ifdef MET_GPU_LOAD_MONITOR
+
+#ifdef GPU_HAL_RUN_PREMPTIBLE
+static struct delayed_work gpu_dwork;
+#endif
 
 enum MET_GPU_PROFILE_INDEX {
 	eMET_GPU_LOADING = 0,
@@ -57,8 +54,7 @@ enum MET_GPU_PROFILE_INDEX {
 
 static unsigned long g_u4AvailableInfo;
 
-static unsigned int output_header_pmu_len;
-static unsigned int output_pmu_str_len;
+
 
 noinline void GPU_Loading(unsigned char cnt, unsigned int *value)
 {
@@ -79,16 +75,6 @@ noinline void GPU_Loading(unsigned char cnt, unsigned int *value)
 		break;
 	}
 
-}
-
-noinline void GPU_Sub_Loading(unsigned int loading)
-{
-	MET_TRACE("%u\n", loading);
-}
-
-noinline void GPU_3D_Fences_Count(int count)
-{
-	MET_TRACE("%d\n", count);
 }
 
 #ifdef GPU_HAL_RUN_PREMPTIBLE
@@ -117,20 +103,12 @@ static void gpu_GPULoading(struct work_struct *work)
 
 	if (g_u4AvailableInfo)
 		GPU_Loading(u4Index, pu4Value);
-
-	if (mtk_get_gpu_sub_loading_symbol && mtk_get_gpu_sub_loading_symbol(&loading))
-		GPU_Sub_Loading(loading);
-
-	if (mtk_get_3D_fences_count_symbol && mtk_get_3D_fences_count_symbol(&count))
-		GPU_3D_Fences_Count(count);
 }
 #else
 static void gpu_GPULoading(unsigned long long stamp, int cpu)
 {
 	unsigned int	pu4Value[eMET_GPU_PROFILE_CNT];
 	unsigned long	u4Index = 0;
-	unsigned int	loading = 0;
-	int		count = 0;
 
 	memset(pu4Value, 0x00, eMET_GPU_PROFILE_CNT);
 	if ((1 << eMET_GPU_LOADING) & g_u4AvailableInfo) {
@@ -156,16 +134,6 @@ static void gpu_GPULoading(unsigned long long stamp, int cpu)
 
 	if (g_u4AvailableInfo)
 		GPU_Loading(u4Index, pu4Value);
-
-	if (mtk_get_gpu_sub_loading_symbol) {
-		mtk_get_gpu_sub_loading_symbol(&loading);
-		GPU_Sub_Loading(loading);
-	}
-
-	if (mtk_get_3D_fences_count_symbol) {
-		mtk_get_3D_fences_count_symbol(&count);
-		GPU_3D_Fences_Count(count);
-	}
 }
 #endif
 
@@ -221,11 +189,6 @@ static int gpu_status_print_header(char *buf, int len)
 
 	ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "\n");
 
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"met-info [000] 0.0: met_gpu_sub_loading_header: Loading\n");
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"met-info [000] 0.0: met_gpu_3d_fences_count_header: Count\n");
-
 	return ret;
 }
 
@@ -246,82 +209,57 @@ struct metdevice met_gpu = {
 	.print_help		= gpu_status_print_help,
 	.print_header		= gpu_status_print_header,
 };
+#endif
 
 /*
  * GPU DVFS Monitor
  */
-#define	MTK_GPU_DVFS_TYPE_ITEM(type)	#type,
-static char *gpu_dvfs_type_name[] = MTK_GPU_DVFS_TYPE_LIST;
-#undef	MTK_GPU_DVFS_TYPE_ITEM
+#ifdef MET_GPU_DVFS_MONITOR
+/* the mt_gpufreq_get_thermal_limit_freq use mutex_lock to do its job */
+/* so, change the gpu-dvfs implementation to dwork */
+static struct delayed_work gpu_dvfs_dwork;
 
-static enum MTK_GPU_DVFS_TYPE gpu_dvfs_type_prev;
-static unsigned long gpu_dvfs_type_freq_prev;
-static unsigned int gpu_dvfs_type_freq[ARRAY_SIZE(gpu_dvfs_type_name)];
-
-noinline void GPU_DVFS(unsigned int Freq, unsigned int ThermalLimit,
-			unsigned int CustomBoost, unsigned int CustomUpbound)
+noinline void GPU_DVFS(unsigned int curFreq)
 {
-	MET_TRACE("%u,%u,%u,%u\n", Freq, ThermalLimit, CustomBoost, CustomUpbound);
+	MET_TRACE("%u\n", curFreq);
 }
 
-noinline void GPU_DVFS_TYPE(void)
+noinline void GPU_OPP_IDX(int curOppIdx, int floorIdx, int ceilingIdx)
 {
-	char	*SOB, *EOB;
-
-	MET_TRACE_GETBUF(&SOB, &EOB);
-	EOB = ms_formatD_EOL(EOB, ARRAY_SIZE(gpu_dvfs_type_freq), gpu_dvfs_type_freq);
-	MET_TRACE_PUTBUF(SOB, EOB);
+	MET_TRACE("%d,%d,%d\n", curOppIdx, floorIdx, ceilingIdx);
 }
 
-noinline void GPU_DVFS_VSYNC(unsigned long freq)
+noinline void GPU_OPP_LIMITER(unsigned int floorLimiter, unsigned int ceilingLimiter)
 {
-	MET_TRACE("%lu\n", freq);
-}
-
-noinline void GPU_VSYNC_OFFSET_STATUS(unsigned int event_status, unsigned int debug_status)
-{
-	MET_TRACE("%u,%u\n", event_status, debug_status);
+	MET_TRACE("%u,%u\n", floorLimiter, ceilingLimiter);
 }
 
 static void gpu_dvfs(void)
 {
-	unsigned int		freq = 0;
-	unsigned int		ThermalLimit = 0;
-	enum MTK_GPU_DVFS_TYPE	peType;
-	unsigned long		pulFreq = 0;
-	unsigned int		CustomBoost = 0;
-	unsigned int		CustomUpbound = 0;
-	unsigned int		event_status = 0;
-	unsigned int		debug_status = 0;
+	unsigned int curFreq = 0;
+	int curOppIdx = 0;
+	int floorIdx = 0;
+	int ceilingIdx = 0;
+	unsigned int floorLimiter = 0;
+	unsigned int ceilingLimiter = 0;
 
-	freq = mt_gpufreq_get_cur_freq_symbol ? mt_gpufreq_get_cur_freq_symbol() : 0;
-	ThermalLimit = mt_gpufreq_get_thermal_limit_freq_symbol ? mt_gpufreq_get_thermal_limit_freq_symbol() : 0;
-	if (mtk_get_custom_boost_gpu_freq_symbol)
-		mtk_get_custom_boost_gpu_freq_symbol(&CustomBoost);
-	if (mtk_get_custom_upbound_gpu_freq_symbol)
-		mtk_get_custom_upbound_gpu_freq_symbol(&CustomUpbound);
-	GPU_DVFS(freq, ThermalLimit, CustomBoost, CustomUpbound);
+	if (mtk_get_gpu_cur_freq_symbol)
+		mtk_get_gpu_cur_freq_symbol(&curFreq);
+	if (mtk_get_gpu_cur_oppidx_symbol)
+		mtk_get_gpu_cur_oppidx_symbol(&curOppIdx);
+	if (mtk_get_gpu_floor_index_symbol)
+		mtk_get_gpu_floor_index_symbol(&floorIdx);
+	if (mtk_get_gpu_ceiling_index_symbol)
+		mtk_get_gpu_ceiling_index_symbol(&ceilingIdx);
+	if (mtk_get_gpu_floor_limiter_symbol)
+		mtk_get_gpu_floor_limiter_symbol(&floorLimiter);
+	if (mtk_get_gpu_ceiling_limiter_symbol)
+		mtk_get_gpu_ceiling_limiter_symbol(&ceilingLimiter);
 
-	/* gpu dvfs type */
-	if (mtk_get_gpu_dvfs_from_symbol && mtk_get_gpu_dvfs_from_symbol(&peType, &pulFreq)) {
-		if (gpu_dvfs_type_prev != peType || gpu_dvfs_type_freq_prev != pulFreq) {
-			gpu_dvfs_type_freq[gpu_dvfs_type_prev] = 0;
-			gpu_dvfs_type_prev = peType;
-			gpu_dvfs_type_freq_prev = pulFreq;
-			gpu_dvfs_type_freq[gpu_dvfs_type_prev] = gpu_dvfs_type_freq_prev;
-			GPU_DVFS_TYPE();
-		}
-	}
+	GPU_DVFS(curFreq);
+	GPU_OPP_IDX(curOppIdx, floorIdx, ceilingIdx);
+	GPU_OPP_LIMITER(floorLimiter, ceilingLimiter);
 
-	if (mtk_get_vsync_based_target_freq_symbol && mtk_get_vsync_based_target_freq_symbol(&pulFreq))
-		GPU_DVFS_VSYNC(pulFreq);
-
-	if (mtk_get_vsync_offset_event_status_symbol && mtk_get_vsync_offset_debug_status_symbol) {
-		if (mtk_get_vsync_offset_event_status_symbol(&event_status)
-		    && mtk_get_vsync_offset_debug_status_symbol(&debug_status)) {
-			GPU_VSYNC_OFFSET_STATUS(event_status, debug_status);
-		}
-	}
 }
 
 static void gpu_dvfs_work(struct work_struct *work)
@@ -339,10 +277,6 @@ static void gpu_dvfs_monitor_stop(void)
 {
 	cancel_delayed_work_sync(&gpu_dvfs_dwork);
 	gpu_dvfs();
-
-	/* reset status */
-	gpu_dvfs_type_prev = 0;
-	gpu_dvfs_type_freq_prev = 0;
 }
 
 static void gpu_dvfs_monitor_polling(unsigned long long stamp, int cpu)
@@ -359,23 +293,11 @@ static int gpu_dvfs_print_help(char *buf, int len)
 static int gpu_dvfs_print_header(char *buf, int len)
 {
 	int ret = 0;
-	int i = 0;
 
 	ret = snprintf(buf, PAGE_SIZE,
 			"met-info [000] 0.0: met_gpu_dvfs_header: ");
 	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"Freq(kHz),ThermalLimit(kHz),CustomBoost,CustomUpbound\n");
-
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"met-info [000] 0.0: met_gpu_dvfs_type_header: %s", gpu_dvfs_type_name[0]);
-	for (i = 1; i < ARRAY_SIZE(gpu_dvfs_type_name); i++)
-		ret += snprintf(buf+ret, PAGE_SIZE-ret, ",%s", gpu_dvfs_type_name[i]);
-	ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "\n");
-
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"met-info [000] 0.0: met_gpu_dvfs_vsync_header: VSYNC Based Freq\n");
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
-			"met-info [000] 0.0: met_gpu_vsync_offset_status_header: Event Status,Debug Status\n");
+			"Freq(kHz),OppIdx,FloorIdx,FloorLimiter,CeilingIdx,CeilingLimiter\n");
 
 	return ret;
 }
@@ -393,10 +315,12 @@ struct metdevice met_gpudvfs = {
 	.print_header		= gpu_dvfs_print_header,
 	.ondiemet_mode		= 0,
 };
+#endif
 
 /*
  * GPU MEM monitor
  */
+#ifdef MET_GPU_MEM_MONITOR
 static unsigned long g_u4MemProfileIsOn;
 
 static void gpu_mem_monitor_start(void)
@@ -456,10 +380,17 @@ struct metdevice met_gpumem = {
 	.print_help		= gpu_mem_status_print_help,
 	.print_header		= gpu_mem_status_print_header,
 };
+#endif
 
 /*
  * GPU power monitor
  */
+#ifdef MET_GPU_PWR_MONITOR
+
+#ifdef GPU_HAL_RUN_PREMPTIBLE
+static struct delayed_work gpu_pwr_dwork;
+#endif
+
 static unsigned long g_u4PowerProfileIsOn;
 
 #ifdef GPU_HAL_RUN_PREMPTIBLE
@@ -549,11 +480,12 @@ struct metdevice met_gpupwr = {
 	.print_help		= gpu_Power_status_print_help,
 	.print_header		= gpu_Power_status_print_header,
 };
-
+#endif
 
 /*
  * GPU PMU
  */
+#ifdef MET_GPU_PMU_MONITOR
 #define UNUSE_ARG(arg) ((void)arg)
 
 #ifdef GPU_HAL_RUN_PREMPTIBLE
@@ -564,6 +496,8 @@ static struct delayed_work gpu_pmu_dwork;
 
 static const char help_pmu[] = "  --gpu-pmu				monitor gpu pmu status";
 static const char header_pmu[] = "met-info [000] 0.0: met_gpu_pmu_header: ";
+static unsigned int output_header_pmu_len;
+static unsigned int output_pmu_str_len;
 static char pmu_str[MAX_PMU_STR_LEN];
 static int pmu_cnt;
 /* static int gpu_pwr_status = 1; */
@@ -765,6 +699,7 @@ struct metdevice met_gpu_pmu = {
 	.print_help		= gpu_pmu_print_help,
 	.print_header		= gpu_pmu_print_header,
 };
+#endif
 
 /*
  * GPU stall counters

@@ -17,23 +17,12 @@ extern struct miscdevice met_device;
  *   GPU
  */
 #include <mtk_gpu_utility.h>
-#include <mtk_gpufreq.h>
-#include "met_gpu_monitor.h"
+
 
 extern bool mtk_get_gpu_loading(unsigned int *pLoading);
 extern bool mtk_get_gpu_block(unsigned int *pBlock);
 extern bool mtk_get_gpu_idle(unsigned int *pIdle);
-extern bool mtk_get_gpu_dvfs_from(enum MTK_GPU_DVFS_TYPE *peType, unsigned long *pulFreq);
-extern bool mtk_get_gpu_sub_loading(unsigned int *pLoading);
-extern bool mtk_get_3D_fences_count(int *pi32Count);
 extern bool mtk_get_gpu_memory_usage(unsigned int *pMemUsage);
-extern bool mtk_get_gpu_power_loading(unsigned int *pLoading);
-extern bool mtk_get_custom_boost_gpu_freq(unsigned int *pui32FreqLevel);
-extern bool mtk_get_custom_upbound_gpu_freq(unsigned int *pui32FreqLevel);
-extern bool mtk_get_vsync_based_target_freq(unsigned long *pulFreq);
-extern bool mtk_get_vsync_offset_event_status(unsigned int *pui32EventStatus);
-extern bool mtk_get_vsync_offset_debug_status(unsigned int *pui32EventStatus);
-extern bool mtk_enable_gpu_perf_monitor(bool enable);
 extern bool mtk_get_gpu_pmu_init(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 extern bool mtk_get_gpu_pmu_swapnreset(struct GPU_PMU *pmus, int pmu_size);
 extern bool mtk_get_gpu_pmu_deinit(void);
@@ -42,17 +31,7 @@ extern bool mtk_get_gpu_pmu_swapnreset_stop(void);
 extern bool (*mtk_get_gpu_loading_symbol)(unsigned int *pLoading);
 extern bool (*mtk_get_gpu_block_symbol)(unsigned int *pBlock);
 extern bool (*mtk_get_gpu_idle_symbol)(unsigned int *pIdle);
-extern bool (*mtk_get_gpu_dvfs_from_symbol)(enum MTK_GPU_DVFS_TYPE *peType, unsigned long *pulFreq);
-extern bool (*mtk_get_gpu_sub_loading_symbol)(unsigned int *pLoading);
-extern bool (*mtk_get_3D_fences_count_symbol)(int *pi32Count);
 extern bool (*mtk_get_gpu_memory_usage_symbol)(unsigned int *pMemUsage);
-extern bool (*mtk_get_gpu_power_loading_symbol)(unsigned int *pLoading);
-extern bool (*mtk_get_custom_boost_gpu_freq_symbol)(unsigned int *pulFreq);
-extern bool (*mtk_get_custom_upbound_gpu_freq_symbol)(unsigned int *pulFreq);
-extern bool (*mtk_get_vsync_based_target_freq_symbol)(unsigned long *pulFreq);
-extern bool (*mtk_get_vsync_offset_event_status_symbol)(unsigned int *pui32EventStatus);
-extern bool (*mtk_get_vsync_offset_debug_status_symbol)(unsigned int *pui32EventStatus);
-extern bool (*mtk_enable_gpu_perf_monitor_symbol)(bool enable);
 extern bool (*mtk_get_gpu_pmu_init_symbol)(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 extern bool (*mtk_get_gpu_pmu_swapnreset_symbol)(struct GPU_PMU *pmus, int pmu_size);
 extern bool (*mtk_get_gpu_pmu_deinit_symbol)(void);
@@ -65,10 +44,20 @@ extern bool (*mtk_register_gpu_power_change_symbol)(const char *name,
 extern bool (*mtk_unregister_gpu_power_change_symbol)(const char *name);
 
 
-extern unsigned int mt_gpufreq_get_cur_freq(void);
-extern unsigned int mt_gpufreq_get_thermal_limit_freq(void);
-extern unsigned int (*mt_gpufreq_get_cur_freq_symbol)(void);
-extern unsigned int (*mt_gpufreq_get_thermal_limit_freq_symbol)(void);
+extern bool mtk_get_gpu_cur_freq(unsigned int *puiFreq);
+extern bool mtk_get_gpu_cur_oppidx(int *piIndex);
+extern bool mtk_get_gpu_floor_index(int *piIndex);
+extern bool mtk_get_gpu_ceiling_index(int *piIndex);
+extern bool mtk_get_gpu_floor_limiter(unsigned int *puiLimiter);
+extern bool mtk_get_gpu_ceiling_limiter(unsigned int *puiLimiter);
+
+extern bool (*mtk_get_gpu_cur_freq_symbol)(unsigned int *puiFreq);
+extern bool (*mtk_get_gpu_cur_oppidx_symbol)(int *piIndex);
+extern bool (*mtk_get_gpu_floor_index_symbol)(int *piIndex);
+extern bool (*mtk_get_gpu_ceiling_index_symbol)(int *piIndex);
+extern bool (*mtk_get_gpu_floor_limiter_symbol)(unsigned int *puiLimiter);
+extern bool (*mtk_get_gpu_ceiling_limiter_symbol)(unsigned int *puiLimiter);
+
 
 extern struct metdevice met_gpu;
 extern struct metdevice met_gpudvfs;

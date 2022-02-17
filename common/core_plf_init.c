@@ -21,25 +21,19 @@
 bool (*mtk_get_gpu_loading_symbol)(unsigned int *pLoading);
 bool (*mtk_get_gpu_block_symbol)(unsigned int *pBlock);
 bool (*mtk_get_gpu_idle_symbol)(unsigned int *pIdle);
-bool (*mtk_get_gpu_dvfs_from_symbol)(enum MTK_GPU_DVFS_TYPE *peType, unsigned long *pulFreq);
-bool (*mtk_get_gpu_sub_loading_symbol)(unsigned int *pLoading);
-bool (*mtk_get_3D_fences_count_symbol)(int *pi32Count);
 bool (*mtk_get_gpu_memory_usage_symbol)(unsigned int *pMemUsage);
-bool (*mtk_get_gpu_power_loading_symbol)(unsigned int *pLoading);
-bool (*mtk_get_custom_boost_gpu_freq_symbol)(unsigned int *pulFreq);
-bool (*mtk_get_custom_upbound_gpu_freq_symbol)(unsigned int *pulFreq);
-bool (*mtk_get_vsync_based_target_freq_symbol)(unsigned long *pulFreq);
-bool (*mtk_get_vsync_offset_event_status_symbol)(unsigned int *pui32EventStatus);
-bool (*mtk_get_vsync_offset_debug_status_symbol)(unsigned int *pui32EventStatus);
-bool (*mtk_enable_gpu_perf_monitor_symbol)(bool enable);
 bool (*mtk_get_gpu_pmu_init_symbol)(struct GPU_PMU *pmus, int pmu_size, int *ret_size);
 bool (*mtk_get_gpu_pmu_swapnreset_symbol)(struct GPU_PMU *pmus, int pmu_size);
 #if 1
 bool (*mtk_get_gpu_pmu_deinit_symbol)(void);
 bool (*mtk_get_gpu_pmu_swapnreset_stop_symbol)(void);
 #endif
-unsigned int (*mt_gpufreq_get_cur_freq_symbol)(void);
-unsigned int (*mt_gpufreq_get_thermal_limit_freq_symbol)(void);
+bool (*mtk_get_gpu_cur_freq_symbol)(unsigned int *puiFreq);
+bool (*mtk_get_gpu_cur_oppidx_symbol)(int *piIndex);
+bool (*mtk_get_gpu_floor_index_symbol)(int *piIndex);
+bool (*mtk_get_gpu_ceiling_index_symbol)(int *piIndex);
+bool (*mtk_get_gpu_floor_limiter_symbol)(unsigned int *puiLimiter);
+bool (*mtk_get_gpu_ceiling_limiter_symbol)(unsigned int *puiLimiter);
 bool (*mtk_register_gpu_power_change_symbol)(const char *name, void (*callback)(int power_on));
 bool (*mtk_unregister_gpu_power_change_symbol)(const char *name);
 #endif /* MET_GPU */
@@ -115,21 +109,15 @@ static int met_symbol_get(void)
 	_MET_SYMBOL_GET(mtk_get_gpu_loading);
 	_MET_SYMBOL_GET(mtk_get_gpu_block);
 	_MET_SYMBOL_GET(mtk_get_gpu_idle);
-	_MET_SYMBOL_GET(mtk_get_gpu_dvfs_from);
-	_MET_SYMBOL_GET(mtk_get_gpu_sub_loading);
-	_MET_SYMBOL_GET(mtk_get_3D_fences_count);
 	_MET_SYMBOL_GET(mtk_get_gpu_memory_usage);
-	_MET_SYMBOL_GET(mtk_get_gpu_power_loading);
-	_MET_SYMBOL_GET(mtk_get_custom_boost_gpu_freq);
-	_MET_SYMBOL_GET(mtk_get_custom_upbound_gpu_freq);
-	_MET_SYMBOL_GET(mtk_get_vsync_based_target_freq);
-	_MET_SYMBOL_GET(mtk_get_vsync_offset_event_status);
-	_MET_SYMBOL_GET(mtk_get_vsync_offset_debug_status);
-	_MET_SYMBOL_GET(mtk_enable_gpu_perf_monitor);
 	_MET_SYMBOL_GET(mtk_get_gpu_pmu_init);
 	_MET_SYMBOL_GET(mtk_get_gpu_pmu_swapnreset);
-	_MET_SYMBOL_GET(mt_gpufreq_get_cur_freq);
-	_MET_SYMBOL_GET(mt_gpufreq_get_thermal_limit_freq);
+	_MET_SYMBOL_GET(mtk_get_gpu_cur_freq);
+	_MET_SYMBOL_GET(mtk_get_gpu_cur_oppidx);
+	_MET_SYMBOL_GET(mtk_get_gpu_floor_index);
+	_MET_SYMBOL_GET(mtk_get_gpu_ceiling_index);
+	_MET_SYMBOL_GET(mtk_get_gpu_floor_limiter);
+	_MET_SYMBOL_GET(mtk_get_gpu_ceiling_limiter);
 	_MET_SYMBOL_GET(mtk_register_gpu_power_change);
 	_MET_SYMBOL_GET(mtk_unregister_gpu_power_change);
 #if 1
@@ -200,21 +188,15 @@ static int met_symbol_put(void)
 	_MET_SYMBOL_PUT(mtk_get_gpu_loading);
 	_MET_SYMBOL_PUT(mtk_get_gpu_block);
 	_MET_SYMBOL_PUT(mtk_get_gpu_idle);
-	_MET_SYMBOL_PUT(mtk_get_gpu_dvfs_from);
-	_MET_SYMBOL_PUT(mtk_get_gpu_sub_loading);
-	_MET_SYMBOL_PUT(mtk_get_3D_fences_count);
 	_MET_SYMBOL_PUT(mtk_get_gpu_memory_usage);
-	_MET_SYMBOL_PUT(mtk_get_gpu_power_loading);
-	_MET_SYMBOL_PUT(mtk_get_custom_boost_gpu_freq);
-	_MET_SYMBOL_PUT(mtk_get_custom_upbound_gpu_freq);
-	_MET_SYMBOL_PUT(mtk_get_vsync_based_target_freq);
-	_MET_SYMBOL_PUT(mtk_get_vsync_offset_event_status);
-	_MET_SYMBOL_PUT(mtk_get_vsync_offset_debug_status);
-	_MET_SYMBOL_PUT(mtk_enable_gpu_perf_monitor);
 	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_init);
 	_MET_SYMBOL_PUT(mtk_get_gpu_pmu_swapnreset);
-	_MET_SYMBOL_PUT(mt_gpufreq_get_cur_freq);
-	_MET_SYMBOL_PUT(mt_gpufreq_get_thermal_limit_freq);
+	_MET_SYMBOL_PUT(mtk_get_gpu_cur_freq);
+	_MET_SYMBOL_PUT(mtk_get_gpu_cur_oppidx);
+	_MET_SYMBOL_PUT(mtk_get_gpu_floor_index);
+	_MET_SYMBOL_PUT(mtk_get_gpu_ceiling_index);
+	_MET_SYMBOL_PUT(mtk_get_gpu_floor_limiter);
+	_MET_SYMBOL_PUT(mtk_get_gpu_ceiling_limiter);
 	_MET_SYMBOL_PUT(mtk_register_gpu_power_change);
 	_MET_SYMBOL_PUT(mtk_unregister_gpu_power_change);
 #if 1
@@ -285,11 +267,24 @@ int core_plf_init(void)
 	met_symbol_get();
 
 #ifdef MET_GPU
+#ifdef MET_GPU_LOAD_MONITOR
 	met_register(&met_gpu);
-	met_register(&met_gpudvfs);
+#endif
+#ifdef MET_GPU_DVFS_MONITOR
+    met_register(&met_gpudvfs);
+#endif
+#ifdef MET_GPU_MEM_MONITOR
 	met_register(&met_gpumem);
+#endif
+#ifdef MET_GPU_PWR_MONITOR
 	met_register(&met_gpupwr);
+#endif
+#ifdef MET_GPU_PMU_MONITOR
 	met_register(&met_gpu_pmu);
+#endif
+#ifdef MET_GPU_STALL_MONITOR
+	met_register(&met_gpu_stall);
+#endif
 #ifdef MET_GPU_STALL_MONITOR
 	met_register(&met_gpu_stall);
 #endif
@@ -348,11 +343,21 @@ void core_plf_exit(void)
 	met_symbol_put();
 
 #ifdef MET_GPU
+#ifdef MET_GPU_LOAD_MONITOR
 	met_deregister(&met_gpu);
-	met_deregister(&met_gpudvfs);
+#endif
+#ifdef MET_GPU_DVFS_MONITOR
+    met_deregister(&met_gpudvfs);
+#endif
+#ifdef MET_GPU_MEM_MONITOR
 	met_deregister(&met_gpumem);
+#endif
+#ifdef MET_GPU_PWR_MONITOR
 	met_deregister(&met_gpupwr);
+#endif
+#ifdef MET_GPU_PMU_MONITOR
 	met_deregister(&met_gpu_pmu);
+#endif
 #ifdef MET_GPU_STALL_MONITOR
 	met_deregister(&met_gpu_stall);
 #endif

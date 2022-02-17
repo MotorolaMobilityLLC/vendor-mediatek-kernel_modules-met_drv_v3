@@ -187,33 +187,14 @@ $(info FEATURE_GPU = $(FEATURE_GPU))
 
 ifneq ($(FEATURE_GPU), n)
     MET_GPU := y
-
-    # for mtk_gpufreq.h
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/mtk_gpufreq.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/
-    else ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/base/power/include/mtk_gpufreq.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/
-    else ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/gpufreq/include/mtk_gpufreq.h)","")
-        ccflags-y += -I$(srctree)/drivers/gpu/mediatek/gpufreq/include/
-    else ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/gpufreq_v1/include/mtk_gpufreq.h)","")
-        ccflags-y += -I$(srctree)/drivers/gpu/mediatek/gpufreq_v1/include/
-    else
-        MET_GPU = n
-        $(info ======= Missing $(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)/mtk_gpufreq.h ========)
-        $(info ======= Missing $(srctree)/drivers/misc/mediatek/base/power/include/mtk_gpufreq.h ========)
-        $(info ======= Missing $(srctree)/drivers/gpu/mediatek/gpufreq/include/mtk_gpufreq.h ========)
-        $(info ======= Missing $(srctree)/drivers/gpu/mediatek/gpufreq_v1/include/mtk_gpufreq.h ========)
-        $(info ======== disable MET_GPU ========)
-    endif
+    ccflags-y += -DMET_GPU_LOAD_MONITOR
+    ccflags-y += -DMET_GPU_DVFS_MONITOR
 
     # for mtk_gpu_utility.h
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/mtk_gpu_utility.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
-    else ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h)","")
+    ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h)","")
         ccflags-y += -I$(srctree)/drivers/gpu/mediatek/mt-plat/
     else
         MET_GPU = n
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/include/mt-plat/mtk_gpu_utility.h ========)
         $(info ======== Missing $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h ========)
         $(info ======== disable MET_GPU ========)
     endif
@@ -222,13 +203,6 @@ ifneq ($(FEATURE_GPU), n)
         MET_GPU = n
         $(info ======== CONFIG_MTK_GPU_SUPPORT = n ========)
         $(info ======== disable MET_GPU ========)
-    endif
-
-    GPU_STALL_CNT_TYPE := $(if $(GPU_STALL_CNT_TYPE),$(GPU_STALL_CNT_TYPE),multiple)
-    $(info GPU_STALL_CNT_TYPE = $(GPU_STALL_CNT_TYPE))
-
-    ifeq ("$(GPU_STALL_CNT_TYPE)", "single")
-        ccflags-y += -DGPU_STALL_CNT_SINGLE
     endif
 else
     MET_GPU := n
