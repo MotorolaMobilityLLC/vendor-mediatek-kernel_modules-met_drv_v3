@@ -993,7 +993,7 @@ static int cpupmu_print_header(char *buf, int len)
 		if (nr_ignored_arg[cpu]) {
 			ret += snprintf(buf + ret,
 					len - ret,
-					"met-info [000] 0.0: !!_PMU_INIT_FAIL: "
+					"met-info [000] 0.0: ##_PMU_INIT_FAIL: "
 					"too many events requested on CPU %d (max = %d+1), %d events ignored\n",
 					cpu, cpu_pmu->event_count[cpu]-1, nr_ignored_arg[cpu]);
 		}
@@ -1018,8 +1018,8 @@ static int cpupmu_print_header(char *buf, int len)
 			if (first) {
 				ret += snprintf(buf + ret,
 						len - ret,
-						"met-info [000] 0.0: !!_PMU_INIT_FAIL: "
-						"CPU %d offline, unable to allocate following PMU event(s): 0x%x",
+						"met-info [000] 0.0: ##_PMU_INIT_FAIL: "
+						"CPU %d offline, unable to allocate following PMU event(s) 0x%x",
 						cpu, pmu[i].event);
 				first = 0;
 				continue;
@@ -1048,8 +1048,8 @@ static int cpupmu_print_header(char *buf, int len)
 			if (first) {
 				ret += snprintf(buf + ret,
 						len - ret,
-						"met-info [000] 0.0: !!_PMU_INIT_FAIL: "
-						"on CPU %d, no enough PMU register slots to allocate events: 0x%x",
+						"met-info [000] 0.0: ##_PMU_INIT_FAIL: "
+						"on CPU %d, no enough PMU register slots to allocate events 0x%x",
 						cpu, pmu[i].event);
 				first = 0;
 				continue;
