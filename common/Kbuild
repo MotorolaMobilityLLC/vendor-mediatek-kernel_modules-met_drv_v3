@@ -237,7 +237,7 @@ $(info FEATURE_VCOREDVFS = $(FEATURE_VCOREDVFS))
 
 MET_VCOREDVFS := $(if $(filter n,$(FEATURE_VCOREDVFS)),n,y)
 
-ifneq (,$(filter $( CONFIG_MTK_DVFSRC_MET),y m))
+ifneq (,$(filter $(CONFIG_MTK_DVFSRC_MET),y m))
     $(info CONFIG_MTK_DVFSRC_MET = y)
 else
     $(info CONFIG_MTK_DVFSRC_MET = n)
