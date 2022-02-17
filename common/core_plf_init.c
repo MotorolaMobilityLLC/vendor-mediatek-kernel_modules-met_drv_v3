@@ -57,11 +57,11 @@ int (*vcorefs_get_num_opp_symbol)(void);
 #endif /* MET_VCOREDVFS */
 
 #ifdef MET_EMI
-#ifdef CONFIG_MTK_DRAMC
+#if IS_ENABLED(CONFIG_MTK_DRAMC)
 unsigned int (*mtk_dramc_get_data_rate_symbol)(void);
 unsigned int (*mtk_dramc_get_ddr_type_symbol)(void);
 #endif
-#ifdef CONFIG_MTK_DVFSRC_MET
+#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
 int (*get_cur_ddr_ratio_symbol)(void);
 #endif
 #endif /* MET_EMI */
@@ -104,11 +104,11 @@ static int met_symbol_get(void)
 #endif
 
 #ifdef MET_EMI
-#ifdef CONFIG_MTK_DRAMC
+#if IS_ENABLED(CONFIG_MTK_DRAMC)
 	_MET_SYMBOL_GET(mtk_dramc_get_data_rate);
 	_MET_SYMBOL_GET(mtk_dramc_get_ddr_type);
 #endif
-#ifdef CONFIG_MTK_DVFSRC_MET
+#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
 	_MET_SYMBOL_GET(get_cur_ddr_ratio);
 #endif
 #endif
@@ -154,11 +154,11 @@ static int met_symbol_put(void)
 #endif
 
 #ifdef MET_EMI
-#ifdef CONFIG_MTK_DRAMC
+#if IS_ENABLED(CONFIG_MTK_DRAMC)
 	_MET_SYMBOL_PUT(mtk_dramc_get_data_rate);
 	_MET_SYMBOL_PUT(mtk_dramc_get_ddr_type);
 #endif
-#ifdef CONFIG_MTK_DVFSRC_MET
+#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
 	_MET_SYMBOL_PUT(get_cur_ddr_ratio);
 #endif
 #endif

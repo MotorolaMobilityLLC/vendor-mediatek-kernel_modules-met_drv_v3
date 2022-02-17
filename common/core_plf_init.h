@@ -107,19 +107,16 @@ extern struct metdevice met_vcoredvfs;
 
 
 #ifdef MET_EMI
-#ifdef CONFIG_MTK_DRAMC
+#if IS_ENABLED(CONFIG_MTK_DRAMC)
 extern unsigned int mtk_dramc_get_data_rate(void);      /* in Mhz */
 extern unsigned int mtk_dramc_get_ddr_type(void);
-#endif
-#ifdef CONFIG_MTK_DVFSRC_MET
-extern int get_cur_ddr_ratio(void);
-#endif
 
-#ifdef CONFIG_MTK_DRAMC
 extern unsigned int (*mtk_dramc_get_data_rate_symbol)(void); /* in Mhz */
 extern unsigned int (*mtk_dramc_get_ddr_type_symbol)(void);
 #endif
-#ifdef CONFIG_MTK_DVFSRC_MET
+#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
+extern int get_cur_ddr_ratio(void);
+
 extern int (*get_cur_ddr_ratio_symbol)(void);
 #endif
 

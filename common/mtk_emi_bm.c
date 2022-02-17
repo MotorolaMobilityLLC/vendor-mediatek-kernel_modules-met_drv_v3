@@ -2923,7 +2923,7 @@ enum DRAM_TYPE {
 */
 	unsigned int dram_type=0;
 
-#ifdef CONFIG_MTK_DRAMC
+#if IS_ENABLED(CONFIG_MTK_DRAMC)
 	if (mtk_dramc_get_ddr_type_symbol)
 		dram_type = mtk_dramc_get_ddr_type_symbol();
 #endif
@@ -2938,7 +2938,7 @@ unsigned int MET_EMI_Get_BaseClock_Rate(void)
 {
 	unsigned int ddr_ratio = 0;
 
-#ifdef CONFIG_MTK_DRAMC
+#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
 	if (get_cur_ddr_ratio_symbol)
 		ddr_ratio = get_cur_ddr_ratio_symbol();
 #endif
@@ -2953,7 +2953,7 @@ unsigned met_get_dram_data_rate(void)
 {
 	unsigned int dram_data_rate_MHz = 0;
 
-#ifdef CONFIG_MTK_DVFSRC_MET
+#if IS_ENABLED(CONFIG_MTK_DRAMC)
 	if (mtk_dramc_get_data_rate_symbol)
 		dram_data_rate_MHz = mtk_dramc_get_data_rate_symbol();
 #endif
