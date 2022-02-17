@@ -20,11 +20,13 @@
 #define MXSIZE_PMU_DESC 32
 #define MXNR_CPU	NR_CPUS
 
-#define	MXNR_PMU_EVENTS	8	/* max number of pmu counter for armv8 is 6+1 */
+/* max number of pmu counter for armv9 is 20+1 */
+#define	MXNR_PMU_EVENTS          22
+/* a roughly large enough size for pmu events buffers,       */
+/* if an input length is rediculously too many, we drop them */
+#define MXNR_PMU_EVENT_BUFFER_SZ ((MXNR_PMU_EVENTS) + 16)
 struct met_pmu {
 	unsigned char mode;
-	/* if event turned off because init was failed */
-	unsigned char init_failed;
 	unsigned short event;
 	unsigned long freq;
 	struct kobject *kobj_cpu_pmu;
@@ -41,6 +43,8 @@ struct cpu_pmu_hw {
 	unsigned int (*polling)(struct met_pmu *pmu, int count, unsigned int *pmu_value);
 	unsigned long (*perf_event_get_evttype)(struct perf_event *ev);
 	u32 (*pmu_read_clear_overflow_flag)(void);
+	void (*write_counter)(unsigned int idx,
+			      unsigned int val, int is_cyc_cnt);
 	void (*disable_intr)(unsigned int idx);
 	void (*disable_cyc_intr)(void);
 	struct met_pmu *pmu[MXNR_CPU];
@@ -52,6 +56,11 @@ struct cpu_pmu_hw {
 	unsigned int cpu_pm_unpolled_loss[MXNR_CPU][MXNR_PMU_EVENTS];
 };
 
+struct pmu_failed_desc {
+	unsigned int event;
+	unsigned char init_failed;
+};
+
 struct pmu_desc {
 	unsigned int event;
 	char name[MXSIZE_PMU_DESC];
@@ -60,7 +69,8 @@ struct pmu_desc {
 typedef enum {
 	SET_PMU_EVT_CNT = 0x0,
 	SET_PMU_CYCCNT_ENABLE = 0x1,
-	SET_PMU_BASE_OFFSET = 0x02
+	SET_PMU_BASE_OFFSET = 0x02,
+	SET_PMU_POLLING_BITMAP = 0x03
 } PMU_IPI_Type;
 
 struct cpu_pmu_hw *cpu_pmu_hw_init(void);

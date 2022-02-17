@@ -142,6 +142,7 @@ struct metdevice {
 	void (*delete_subfs)(void);
 	int mode;
 	int ondiemet_mode;	/* new for ondiemet; 1: call ondiemet functions */
+	int tinysys_type;       /* new for ondiemet; 0: sspm, 1: mcupm */
 	int cpu_related;
 	int polling_interval;
 	int polling_count_reload;

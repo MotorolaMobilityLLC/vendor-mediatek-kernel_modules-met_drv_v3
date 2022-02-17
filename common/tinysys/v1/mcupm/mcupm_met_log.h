@@ -7,11 +7,7 @@
 /*****************************************************************************
  * headers
  *****************************************************************************/
-#include <linux/device.h>
-#if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC)
-#include <linux/dma-mapping.h>
-#endif
-
+#include <tinysys_met_log.h>
 
 /*****************************************************************************
  * define declaration

@@ -19,10 +19,15 @@
 #include "sampler.h"
 #include "util.h"
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 #include "tinysys_mgr.h"
+#ifdef MET_SSPM
 #include "sspm_met_log.h"
-#endif
+#endif/*ifdef MET_SSPM*/
+#ifdef MET_MCUPM
+#include "mcupm_met_log.h"
+#endif /*ifdef MET_MCUPM*/
+#endif /*ifdef MET_TINYSYS*/
 
 #include "met_drv.h"
 #include "met_tag.h"
@@ -231,7 +236,7 @@ static int met_run(void)
 	bltab.flag &= (~MET_CLASS_ALL);
 #endif
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 	ondiemet_start();
 #endif
 
@@ -245,10 +250,9 @@ static void met_stop(void)
 #endif
 	sampler_stop();
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 	/* the met.ko will be use by script "cat ...", release it */
-	if ((ondiemet_module[ONDIEMET_SSPM] == 0) || (sspm_buffer_size == -1))
-		ondiemet_log_manager_stop();
+	ondiemet_log_manager_stop();
 	ondiemet_stop();
 	ondiemet_extract();
 #endif
@@ -725,7 +729,7 @@ static ssize_t mode_store(struct kobject *kobj, struct kobj_attribute *attr, con
 
 static struct kobj_attribute mode_attr = __ATTR(mode, 0664, mode_show, mode_store);
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 static ssize_t ondiemet_mode_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	struct metdevice *c = NULL;
@@ -759,6 +763,40 @@ static ssize_t ondiemet_mode_store(struct kobject *kobj, struct kobj_attribute *
 }
 
 static struct kobj_attribute ondiemet_mode_attr = __ATTR(ondiemet_mode, 0664, ondiemet_mode_show, ondiemet_mode_store);
+
+static ssize_t tinysys_type_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+	struct metdevice *c = NULL;
+
+	list_for_each_entry(c, &met_list, list) {
+		if (c->kobj == kobj)
+			break;
+	}
+	if (c == NULL)
+		return -ENOENT;
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", c->tinysys_type);
+}
+
+static ssize_t tinysys_type_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf,
+			  size_t n)
+{
+	struct metdevice *c = NULL;
+
+	list_for_each_entry(c, &met_list, list) {
+		if (c->kobj == kobj)
+			break;
+	}
+	if (c == NULL)
+		return -ENOENT;
+
+	if (kstrtoint(buf, 0, &(c->tinysys_type)) != 0)
+		return -EINVAL;
+
+	return n;
+}
+
+static struct kobj_attribute tinysys_type_attr = __ATTR(tinysys_type, 0664, tinysys_type_show, tinysys_type_store);
 #endif
 
 static ssize_t polling_interval_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
@@ -1027,8 +1065,11 @@ int met_register(struct metdevice *met)
 	if (ret)
 		goto err_out;
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 	ret = sysfs_create_file(met->kobj, &ondiemet_mode_attr.attr);
+	if (ret)
+		goto err_out;
+	ret = sysfs_create_file(met->kobj, &tinysys_type_attr.attr);
 	if (ret)
 		goto err_out;
 #endif
@@ -1109,8 +1150,9 @@ int met_deregister(struct metdevice *met)
 	sysfs_remove_file(met->kobj, &header_read_again_attr.attr);
 	sysfs_remove_file(met->kobj, &polling_interval_attr.attr);
 	sysfs_remove_file(met->kobj, &mode_attr.attr);
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 	sysfs_remove_file(met->kobj, &ondiemet_mode_attr.attr);
+	sysfs_remove_file(met->kobj, &tinysys_type_attr.attr);
 #endif
 
 	if (met->delete_subfs)
@@ -1434,7 +1476,7 @@ int fs_reg(int met_minor)
 
 	met_register(&met_stat);
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 	ondiemet_log_manager_init(met_device.this_device);
 	ondiemet_attr_init(met_device.this_device);
 #endif
@@ -1505,7 +1547,7 @@ void fs_unreg(void)
 	device_remove_file(met_device.this_device, &dev_attr_ipi_test);
 #endif
 
-#ifdef MET_SSPM
+#ifdef MET_TINYSYS
 	ondiemet_log_manager_uninit(met_device.this_device);
 	ondiemet_attr_uninit(met_device.this_device);
 #endif

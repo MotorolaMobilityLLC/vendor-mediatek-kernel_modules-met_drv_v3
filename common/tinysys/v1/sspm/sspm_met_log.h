@@ -2,16 +2,12 @@
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
-#ifndef _ONDIEMET_LOG_H_
-#define _ONDIEMET_LOG_H_
+#ifndef __SSPM_LOG_H__
+#define __SSPM_LOG_H__
 /*****************************************************************************
  * headers
  *****************************************************************************/
-#include <linux/device.h>
-#if IS_ENABLED(CONFIG_MTK_GMO_RAM_OPTIMIZE) || IS_ENABLED(CONFIG_MTK_MET_MEM_ALLOC)
-#include <linux/dma-mapping.h>
-#endif
-
+#include <tinysys_met_log.h>
 
 /*****************************************************************************
  * define declaration
@@ -51,4 +47,4 @@ extern unsigned int sspm_log_phy_addr;
 #endif
 extern unsigned int sspm_buffer_size;
 
-#endif				/* _ONDIEMET_LOG_H_ */
+#endif				/* __SSPM_LOG_H__ */
