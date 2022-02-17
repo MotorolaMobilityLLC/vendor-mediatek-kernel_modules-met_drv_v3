@@ -1020,13 +1020,13 @@ int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask, unsig
 	volatile unsigned int enable_tmp, busid_tmp, idmask_tmp;
 	int i;
 
-	const unsigned int Mask_busid = 0x1FFF;
+	const unsigned int Mask_busid = 0xFFFF;
 	const unsigned int offset_busid  = 16;
 
 	const unsigned int Mask_enable = 0x1;
 	const unsigned int offset_enable  = 3;
 
-	const unsigned int Mask_idMask = 0x1FFF;
+	const unsigned int Mask_idMask = 0xFFFF;
 	const unsigned int offset_idMask_even  = 0;
 	const unsigned int offset_idMask_odd  = 16;
 
@@ -1036,8 +1036,8 @@ int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask, unsig
 		/*enable, SEL_ID_TMP*/
 		if (*(busid+i)>0xffff) {
 			enable_tmp = 0;
-			busid_tmp = 0x1FFF;
-			idmask_tmp = 0x1FFF;
+			busid_tmp = 0xFFFF;
+			idmask_tmp = 0xFFFF;
 		}
 		else {
 			enable_tmp = 1;
@@ -1176,21 +1176,21 @@ int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int 
 	int i;
 	volatile unsigned int value, addr;
 
-	const unsigned int Mask_idMask = 0x1FFF;
+	const unsigned int Mask_idMask = 0xFFFF;
 	const unsigned int offset_idMask = 0;
 
 	if (_ttype1_16_en != BM_TTYPE1_16_ENABLE) {
 		/* mask set 0x1FFF , busid set disable*/
 		for (i = 1; i <= 16; i++) {
 			*(busid + i - 1) = 0xfffff;
-			*(idMask + i - 1) = 0x1FFF;
+			*(idMask + i - 1) = 0xFFFF;
 		}
 	}
 
 	if (_ttype17_21_en != BM_TTYPE17_21_ENABLE) {
 		for (i = 17; i <= 21; i++) {
 			*(busid + i - 1) = 0xfffff;
-			*(idMask + i - 1) = 0x1FFF;
+			*(idMask + i - 1) = 0xFFFF;
 		}
 	}
 
