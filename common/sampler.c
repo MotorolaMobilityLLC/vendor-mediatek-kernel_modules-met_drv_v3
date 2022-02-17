@@ -610,56 +610,42 @@ void sampler_stop(void)
 	cpu_related_polling_hdlr_cnt = 0;
 }
 
-#if 0 /* cann't use static now */
-enum {
-	MET_SUSPEND = 1,
-	MET_RESUME = 2,
-};
-
-static noinline void tracing_mark_write(int op)
-{
-	switch (op) {
-	case MET_SUSPEND:
-		MET_TRACE("C|0|MET_SUSPEND|1");
-		break;
-	case MET_RESUME:
-		MET_TRACE("C|0|MET_SUSPEND|0");
-		break;
-	}
-}
-#endif
-
-int met_hrtimer_suspend(void)
+void met_hrtimer_suspend(void __always_unused *data, u64 suspend_ns, u64 suspend_cycles)
 {
 	struct metdevice *c;
+
+	/* directly return if met doesn't start */
+	if (start == 0)
+		return;
 
 	met_set_suspend_notify(1);
 	/* tracing_mark_write(MET_SUSPEND); */
 	tracing_mark_write(TYPE_MET_SUSPEND, 0, 0, 0, 0, 0);
-	if (start == 0)
-		return 0;
+
+	/* print suspend timestamp & counter */
+	MET_TRACE("TS: %llu GPT: %llX", suspend_ns, suspend_cycles);
 
 	list_for_each_entry(c, &met_list, list) {
 		if (c->suspend)
 			c->suspend();
 	}
 
-	/* get current COUNT */
-	MET_TRACE("TS: %llu GPT: %llX", sched_clock(), __arch_counter_get_cntvct());
-	return 0;
+	return;
 }
 
-void met_hrtimer_resume(void)
+void met_hrtimer_resume(void __always_unused *data, u64 resume_cycles)
 {
 	struct metdevice *c;
+
+	/* directly return if met doesn't start */
+	if (start == 0)
+		return;
 
 	/* get current COUNT */
 	MET_TRACE("TS: %llu GPT: %llX", sched_clock(), __arch_counter_get_cntvct());
 
 	/* tracing_mark_write(MET_RESUME); */
 	tracing_mark_write(TYPE_MET_RESUME, 0, 0, 0, 0, 0);
-	if (start == 0)
-		return;
 
 	list_for_each_entry(c, &met_list, list) {
 		if (c->resume)
