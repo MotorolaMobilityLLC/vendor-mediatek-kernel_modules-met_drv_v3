@@ -55,6 +55,7 @@ SSPM_VERSION := v2
 FEATURE_SSPM_EMI := y
 FEATURE_GPU := y
 FEATURE_VCOREDVFS := y
+FEATURE_THERMAL := y
 FEATURE_CPUDSU := y
 FEATURE_WALLTIME := y
 FEATURE_SMI := y
@@ -177,6 +178,15 @@ else
 endif
 
 met-$(MET_VCOREDVFS) += $(MET_CORE)/met_vcoredvfs.o
+
+################################################################################
+# MET_THERMAL
+################################################################################
+$(info FEATURE_THERMAL = $(FEATURE_THERMAL))
+
+MET_THERMAL := $(if $(filter n,$(FEATURE_THERMAL)),n,y)
+
+met-$(MET_THERMAL) += $(MET_CORE)/met_thermal.o
 
 ################################################################################
 # MET_CPUDSU

@@ -133,4 +133,8 @@ extern struct metdevice met_sspm_walltime;
 extern struct metdevice met_cpudsu;
 #endif
 
+#ifdef MET_THERMAL
+extern struct metdevice met_thermal;
+#endif
+
 #endif /*__CORE_PLF_INIT_H__*/

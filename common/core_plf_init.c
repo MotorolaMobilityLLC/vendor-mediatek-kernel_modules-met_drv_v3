@@ -207,6 +207,10 @@ int core_plf_init(void)
 	met_register(&met_backlight);
 #endif
 
+#ifdef MET_THERMAL
+met_register(&met_thermal);
+#endif
+
 	return 0;
 }
 
@@ -272,5 +276,9 @@ void core_plf_exit(void)
 
 #ifdef MET_BACKLIGHT
 	met_deregister(&met_backlight);
+#endif
+
+#ifdef MET_THERMAL
+	met_deregister(&met_thermal);
 #endif
 }
