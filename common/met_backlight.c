@@ -5,16 +5,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <mtk_leds_drv.h>
-
-#if IS_ENABLED(CONFIG_LEDS_MTK_DISP)
-#include <leds-mtk-disp.h>
-#elif IS_ENABLED(CONFIG_LEDS_MTK_PWM)
-#include <leds-mtk-pwm.h>
-#elif IS_ENABLED(CONFIG_LEDS_MTK_I2C)
-#include <leds-mtk-pwm.h>
-#endif
-
+#include <leds-mtk.h>
 
 #define MET_USER_EVENT_SUPPORT
 #include "met_drv.h"

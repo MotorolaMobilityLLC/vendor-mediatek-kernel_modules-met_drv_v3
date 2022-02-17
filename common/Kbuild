@@ -311,11 +311,11 @@ $(info FEATURE_MET_BACKLIGHT = $(FEATURE_MET_BACKLIGHT))
 
 MET_BACKLIGHT := $(if $(filter n,$(FEATURE_MET_BACKLIGHT)),n,y)
 
-ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/leds/mtk_leds_drv.h)","")
-    ccflags-y += -I$(srctree)/drivers/misc/mediatek/leds/
+ifneq ("$(wildcard $(srctree)/include/linux/leds-mtk.h)","")
+    ccflags-y += -I$(srctree)/include/linux/
 else
     MET_BACKLIGHT = n
-    $(info ======== Missing $(srctree)/drivers/misc/mediatek/leds/mtk_leds_drv.h ========)
+    $(info ======== Missing $(srctree)/include/linux/leds-mtk.h ========)
     $(info ======== disable MET_BACKLIGHT ========)
 endif
 
