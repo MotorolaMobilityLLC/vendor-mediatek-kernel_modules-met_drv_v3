@@ -275,6 +275,9 @@ static int init_cg_regulator_setting(void)
 {
 	int ret = 0;
 
+	avail_cpu_hdlr_cnt = 0;
+	avail_gpu_hdlr_cnt = 0;
+
 	if (!cpu_rg_node) {
 		cpu_rg_node = kzalloc(sizeof(CPU_RG_NODE), GFP_KERNEL);
 		if (cpu_rg_node == NULL) {
