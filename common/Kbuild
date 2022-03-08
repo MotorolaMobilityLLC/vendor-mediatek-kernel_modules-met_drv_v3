@@ -251,6 +251,13 @@ else
     MET_VCOREDVFS := n
 endif
 
+ifneq (,$(filter $(CONFIG_MTK_DVFSRC_HELPER),y m))
+    $(info CONFIG_MTK_DVFSRC_HELPER = y)
+else
+    $(info CONFIG_MTK_DVFSRC_HELPER = n)
+    MET_VCOREDVFS := n
+endif
+
 ifeq ($(MET_VCOREDVFS), y)
     # for dvfsrc-exp.h
     ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h)","")
