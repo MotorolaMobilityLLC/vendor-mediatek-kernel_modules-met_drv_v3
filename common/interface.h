@@ -29,6 +29,8 @@ struct tracepoints_table {
 
 extern struct tracepoints_table met_reg_tracepoint[];
 extern int met_tracepoint_probe_reg(char *reg_tp, void *probe_func);
+extern int met_tracepoint_probe_unreg(char *reg_tp, void *probe_func);
+
 extern int init_met_strbuf (void);
 extern void deinit_met_strbuf (void);
 extern int tracepoint_reg(void);
@@ -51,6 +53,8 @@ extern struct metdevice met_trace_event;
 extern struct metdevice met_dummy_header;
 extern struct metdevice met_backlight;
 extern struct metdevice met_mcupm;
+extern struct metdevice met_workqueue;
+
 
 /* This variable will decide which method to access the CPU PMU counter */
 /*     0: access registers directly */
