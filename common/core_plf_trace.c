@@ -312,3 +312,55 @@ char *ms_formatD_EOL(char *__restrict__ buf, unsigned char cnt, unsigned int *__
 }
 EXPORT_SYMBOL(ms_formatD_EOL);
 
+char *ms_formatH_ulonglong_EOL(char *__restrict__ buf,
+						unsigned char cnt,
+						unsigned long long *__restrict__ value)
+{
+	char *s = buf;
+	int len;
+
+	if (cnt == 0) {
+		buf[0] = '\0';
+		return buf;
+	}
+
+	switch (cnt % 4) {
+	case 1:
+		len = sprintf(s, "%llx", value[0]);
+		s += len;
+		value += 1;
+		cnt -= 1;
+		break;
+	case 2:
+		len = sprintf(s, "%llx,%llx", value[0], value[1]);
+		s += len;
+		value += 2;
+		cnt -= 2;
+		break;
+	case 3:
+		len = sprintf(s, "%llx,%llx,%llx", value[0], value[1], value[2]);
+		s += len;
+		value += 3;
+		cnt -= 3;
+		break;
+	case 0:
+		len = sprintf(s, "%llx,%llx,%llx,%llx", value[0], value[1], value[2], value[3]);
+		s += len;
+		value += 4;
+		cnt -= 4;
+		break;
+	}
+
+	while (cnt) {
+		len = sprintf(s, ",%llx,%llx,%llx,%llx", value[0], value[1], value[2], value[3]);
+		s += len;
+		value += 4;
+		cnt -= 4;
+	}
+
+	s[0] = '\n';
+	s[1] = '\0';
+
+	return s + 1;
+}
+EXPORT_SYMBOL(ms_formatH_ulonglong_EOL);
