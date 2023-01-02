@@ -57,11 +57,13 @@ static int parsing_use_regulator(const char *buf,
 	char *reg_buf, *reg_name;
 	char *ch;
 	int input_cnt = 0;
+	int ret = 0;
 
 	reg_buf = kmalloc(n, GFP_KERNEL);
 	if (reg_buf == NULL) {
 		PR_BOOTMSG("alloc reg_buf fail !!!\n");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 
 	strncpy(reg_buf, buf, n);
@@ -81,18 +83,20 @@ static int parsing_use_regulator(const char *buf,
 	*rg = kzalloc(sizeof(struct regulator_hdlr) * input_cnt, GFP_KERNEL);
 	if (*rg == NULL) {
 		PR_BOOTMSG("alloc rg fail !!!\n");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 
 	while ((reg_name = strsep(&reg_buf, ","))) {
-		strncpy((*rg)[*rg_cnt].name, reg_name, strlen(reg_name));
+		strlcpy((*rg)[*rg_cnt].name, reg_name, sizeof((*rg)[*rg_cnt].name));
 		(*rg_cnt)++;
 	}
 
+out:
 	if (reg_buf)
 		kfree(reg_buf);
 
-	return 0;
+	return ret;
 }
 
 static ssize_t cpu_regulator_show(struct kobject *kobj,
@@ -285,7 +289,7 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strncpy(cpu_rg_node, CPU_RG_NODE, strlen(CPU_RG_NODE));
+		strlcpy(cpu_rg_node, CPU_RG_NODE, sizeof(CPU_RG_NODE));
 	}
 
 	if (!met_use_cpu_regulator) {
@@ -295,8 +299,8 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strncpy(met_use_cpu_regulator[0].name, CPU_REGULATOR_1, strlen(CPU_REGULATOR_1));
-		strncpy(met_use_cpu_regulator[1].name, CPU_REGULATOR_2, strlen(CPU_REGULATOR_2));
+		strlcpy(met_use_cpu_regulator[0].name, CPU_REGULATOR_1, sizeof(met_use_cpu_regulator[0].name));
+		strlcpy(met_use_cpu_regulator[1].name, CPU_REGULATOR_2, sizeof(met_use_cpu_regulator[1].name));
 
 		met_use_cpu_rg_cnt = 2;
 	}
@@ -308,7 +312,7 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strncpy(gpu_rg_node, GPU_RG_NODE, strlen(GPU_RG_NODE));
+		strlcpy(gpu_rg_node, GPU_RG_NODE, sizeof(GPU_RG_NODE));
 	}
 
 	if (!met_use_gpu_regulator) {
@@ -318,7 +322,7 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strncpy(met_use_gpu_regulator[0].name, GPU_REGULATOR_1, strlen(GPU_REGULATOR_1));
+		strlcpy(met_use_gpu_regulator[0].name, GPU_REGULATOR_1, sizeof(met_use_gpu_regulator[0].name));
 
 		met_use_gpu_rg_cnt = 1;
 	}
