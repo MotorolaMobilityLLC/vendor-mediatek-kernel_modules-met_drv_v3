@@ -1,5 +1,6 @@
 MET_ROOT_DIR := $(src)
 MET_COMMON_DIR := $(wildcard $(MET_ROOT_DIR)/common)
+MET_API_DIR := $(wildcard $(MET_ROOT_DIR)/met_api)
 MET_BUILD_DEFAULT := n
 
 ifeq ($(CONFIG_MODULES),y)
