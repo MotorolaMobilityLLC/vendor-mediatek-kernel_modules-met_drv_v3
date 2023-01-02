@@ -646,7 +646,7 @@ void MET_BM_RestoreCfg(void)
 			emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
 
 		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
-			for (i = 0; i < EMI_CONFIG_MX_NR; i++)
+			for (i = 0; i < SLC_CONFIG_MX_NR; i++)
 				emi_reg_sync_writel(slc_config_val[emi_no][i], (unsigned long)BaseAddrSLC_PMU[emi_no] + slc_config[i]);
 		}
 	}
@@ -3677,7 +3677,11 @@ int emi_create_header(char *buf, int buf_len)
 	ret += snprintf(buf + ret, buf_len - ret, 
 					"met-info [000] 0.0: ##_emi_use_ondiemet: %u,%X\n",
 					emi_use_ondiemet, get_sspm_support_feature());
-
+					
+	ret += snprintf(buf + ret, buf_len - ret, 
+					"met-info [000] 0.0: emi_use_ondiemet: %u,%X\n",
+					emi_use_ondiemet, get_sspm_support_feature());
+					
 	/*dram bank num*/
 	ret += snprintf(buf + ret, buf_len - ret,
 			"met-info [000] 0.0: met_dram_rank_num_header: %u,%u\n", MET_EMI_GetDramRankNum(0),
@@ -3937,6 +3941,37 @@ int emi_create_header(char *buf, int buf_len)
 		/* this header will trigger MW ttype rename operation*/
 		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_emi_ttype_enable: %d,%d,%d\n",
 										emi_no,ttype1_16_en_[emi_no], ttype17_21_en_[emi_no]);
+		
+		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: slc_pmu_cnt_setting_enable: %d,",emi_no);
+			for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+				ret += snprintf(buf + ret, buf_len - ret, "%d,",slc_pmu_cnt_setting_enable_val_[emi_no][i]);
+			}
+			err = snprintf(buf + ret -1, buf_len - ret + 1, "\n");
+			if (err < 0) return err;
+
+			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: slc_pmu_cnt_filter0: %d,",emi_no);
+			for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+				ret += snprintf(buf + ret, buf_len - ret, "%x,",slc_pmu_cnt_filter0_val_[emi_no][i]);
+			}
+			err = snprintf(buf + ret -1, buf_len - ret + 1, "\n");
+			if (err < 0) return err;
+
+			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: slc_pmu_cnt_filter1: %d,",emi_no);
+			for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+				ret += snprintf(buf + ret, buf_len - ret, "%x,",slc_pmu_cnt_filter1_val_[emi_no][i]);
+			}
+			err = snprintf(buf + ret -1, buf_len - ret + 1, "\n");
+			if (err < 0) return err;
+
+			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: slc_pmu_cnt_bw_lat_sel: %d,",emi_no);
+			for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
+				ret += snprintf(buf + ret, buf_len - ret, "%x,",slc_pmu_cnt_bw_lat_sel_val_[emi_no][i]);
+			}
+			err = snprintf(buf + ret -1, buf_len - ret + 1, "\n");
+			if (err < 0) return err;
+		}
+
 	}/* END OF for ( emi_no=0; emi_no<EMI_NUM; emi_no++) */
 
 
