@@ -26,7 +26,8 @@
 
 #include "mcupm_met_log.h"
 #include "mcupm_met_ipi_handle.h"
-
+#include <linux/of.h>
+#include <linux/io.h>
 
 /*****************************************************************************
  * define declaration
@@ -129,7 +130,7 @@ void *mcupm_log_virt_addr;
 #if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC)
 dma_addr_t mcupm_log_phy_addr;
 #else
-unsigned int mcupm_log_phy_addr;
+phys_addr_t mcupm_log_phy_addr;
 #endif
 
 unsigned int mcupm_buffer_size;
@@ -178,12 +179,12 @@ static struct proc_dir_entry *trace_dentry;
 int mcupm_log_init(struct device *dev)
 {
 	int ret = 0;
+	struct device_node *np;
 #ifdef ONDIEMET_MOUNT_DEBUGFS
 	struct dentry *met_dir = NULL;
 #else
 	struct proc_dir_entry *met_dir = NULL;
 #endif
-	phys_addr_t (*get_size_sym)(unsigned int id) = NULL;
 
 	met_dir = dev_get_drvdata(dev);
 	mutex_init(&lock_tracef);
@@ -223,32 +224,17 @@ int mcupm_log_init(struct device *dev)
 		mcupm_buf_available = 0;
 	}
 #else
-	get_size_sym = mcupm_reserve_mem_get_size_symbol;
-	if (get_size_sym) {
-		mcupm_buffer_size = get_size_sym(MCUPM_MET_ID);
-		PR_BOOTMSG("mcupm_buffer_size=%x\n", mcupm_buffer_size);
-	} else {
-		PR_BOOTMSG("symbol_get mcupm_reserve_mem_get_size failure\n");
+	np = of_find_node_by_name(NULL, "met_res_ram_mcupm");
+	if (!np) {
+		pr_debug("unable to find met_res_ram_mcupm\n");
+		return 0;
 	}
+	of_property_read_u64(np, "start", &mcupm_log_phy_addr);
+	of_property_read_u32(np, "size", &mcupm_buffer_size);
 
-	if (mcupm_buffer_size > 0) {
-		phys_addr_t (*get_phys_sym)(unsigned int id) = NULL;
-		phys_addr_t (*get_virt_sym)(unsigned int id) = NULL;
+	if ((mcupm_log_phy_addr > 0) && (mcupm_buffer_size > 0)) {
+		mcupm_log_virt_addr = (void*)ioremap_wc(mcupm_log_phy_addr, mcupm_buffer_size);
 
-		get_phys_sym = mcupm_reserve_mem_get_virt_symbol;
-		get_virt_sym = mcupm_reserve_mem_get_phys_symbol;
-		if (get_phys_sym) {
-			mcupm_log_virt_addr = (void*)get_phys_sym(MCUPM_MET_ID);
-			PR_BOOTMSG("mcupm_log_virt_addr=%p\n", mcupm_log_virt_addr);
-		} else {
-			PR_BOOTMSG("symbol_get mcupm_reserve_mem_get_virt failure\n");
-		}
-		if (get_virt_sym) {
-			mcupm_log_phy_addr = get_virt_sym(MCUPM_MET_ID);
-			PR_BOOTMSG("mcupm_log_phy_addr=%p\n", mcupm_log_phy_addr);
-		} else {
-			PR_BOOTMSG("symbol_get mcupm_reserve_mem_get_phys failure\n");
-		}
 		mcupm_buf_available = 1;
 	} else {
 		mcupm_buf_available = 0;
