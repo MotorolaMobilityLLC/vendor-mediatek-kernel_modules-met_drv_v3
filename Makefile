@@ -1,11 +1,18 @@
-extra_symbols := $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
-ifneq (,$(wildcard ../met_drv_secure_v3))
-	extra_symbols += $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_secure_v3/Module.symvers)
+ifneq ($(wildcard $(KERNEL_SRC)/$(DEVICE_MODULES_REL_DIR)/Makefile.include),)
+include $(KERNEL_SRC)/$(DEVICE_MODULES_REL_DIR)/Makefile.include
+ROOT=$(OUT_DIR)
+else
+ROOT=$(O)
 endif
 
-all: PRIVATE_SYMBOLS := $(extra_symbols)
+EXTRA_SYMBOLS += $(abspath $(ROOT)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
+ifneq (,$(wildcard ../met_drv_secure_v3))
+	EXTRA_SYMBOLS += $(abspath $(ROOT)/../vendor/mediatek/kernel_modules/met_drv_secure_v3/Module.symvers)
+endif
+
+all: PRIVATE_SYMBOLS := $(EXTRA_SYMBOLS)
 all:
-	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 ifneq (,$(wildcard ../met_drv_secure_v3))
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/../met_drv_secure_v3 modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 endif
