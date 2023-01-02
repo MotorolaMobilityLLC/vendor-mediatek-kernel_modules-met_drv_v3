@@ -1,4 +1,11 @@
-extra_symbols := $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
+ifneq ($(wildcard $(KERNEL_SRC)/$(DEVICE_MODULES_REL_DIR)/Makefile.include),)
+include $(KERNEL_SRC)/$(DEVICE_MODULES_REL_DIR)/Makefile.include
+ROOT=$(OUT_DIR)
+else
+ROOT=$(O)
+endif
+
+EXTRA_SYMBOLS += $(abspath $(ROOT)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
 
 all: PRIVATE_SYMBOLS := $(extra_symbols)
 all:
