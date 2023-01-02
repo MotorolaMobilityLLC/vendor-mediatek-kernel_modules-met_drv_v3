@@ -43,8 +43,11 @@ met-y := $(MET_CORE)/met_main.o \
     $(MET_CORE)/switch.o \
     $(MET_CORE)/trace_event.o \
     $(MET_CORE)/core_plf_init.o \
-    $(MET_CORE)/core_plf_trace.o \
-    $(MET_CORE)/cookie.o
+    $(MET_CORE)/core_plf_trace.o
+
+ifeq ($(CONFIG_MTK_MET_DEBUG), y)
+    met-y += $(MET_CORE)/cookie.o
+endif
 
 ################################################################################
 # MET feature declaration
