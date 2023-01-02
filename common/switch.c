@@ -23,7 +23,7 @@
 /* #define IRQ_TRIGGER */
 /* #define CPU_IDLE_TRIGGER */
 
-static DEFINE_PER_CPU(unsigned int, first_log);
+static unsigned int __percpu *first_log;
 
 #ifdef __aarch64__
 /* #include <asm/compat.h> */
@@ -41,9 +41,9 @@ noinline void mt_switch(struct task_struct *prev, struct task_struct *next)
 #endif
 
 	cpu = smp_processor_id();
-	if (per_cpu(first_log, cpu)) {
+	if (*per_cpu_ptr(first_log, cpu)) {
 		MET_TRACE("%d, %d, %d, %d\n", prev->pid, prev_state, next->pid, next_state);
-		per_cpu(first_log, cpu) = 0;
+		*per_cpu_ptr(first_log, cpu) = 0;
 	}
 	else if (prev_state != next_state)
 		MET_TRACE("%d, %d, %d, %d\n", prev->pid, prev_state, next->pid, next_state);
@@ -127,7 +127,21 @@ static struct kobject *kobj_cpu;
 
 static int met_switch_create_subfs(struct kobject *parent)
 {
+	int cpu;
 	int ret = 0;
+
+	first_log = alloc_percpu(typeof(*first_log));
+	if (!first_log) {
+		PR_BOOTMSG("percpu first_log allocate fail\n");
+		pr_debug("percpu first_log allocate fail\n");
+		return 0;
+	} else {
+		for_each_possible_cpu(cpu) {
+			memset(per_cpu_ptr(first_log, cpu),
+					0,
+					sizeof (*per_cpu_ptr(first_log, cpu)));
+		}
+	}
 
 	/* register tracepoints */
 	ret = met_tracepoint_probe_reg("sched_switch", met_sched_switch);
@@ -164,6 +178,10 @@ static int met_switch_create_subfs(struct kobject *parent)
 
 static void met_switch_delete_subfs(void)
 {
+	if (first_log) {
+		free_percpu(first_log);
+	}
+
 #ifdef MET_ANYTIME
 	if (kobj_cpu != NULL) {
 		sysfs_remove_file(kobj_cpu, &default_on_attr.attr);
@@ -186,6 +204,12 @@ static void met_switch_start(void)
 {
 	int cpu;
 
+	if (!first_log) {
+		MET_TRACE("percpu first_log allocate fail\n");
+		met_switch.mode = 0;
+		return;
+	}
+
 	if (met_switch.mode & MT_SWITCH_SCHEDSWITCH) {
 		cpu_timed_polling = met_cpupmu.timed_polling;
 		/* cpu_tagged_polling = met_cpupmu.tagged_polling; */
@@ -194,7 +218,7 @@ static void met_switch_start(void)
 	}
 
 	for_each_possible_cpu(cpu) {
-		per_cpu(first_log, cpu) = 1;
+		*per_cpu_ptr(first_log, cpu) = 1;
 	}
 
 }
@@ -209,7 +233,7 @@ static void met_switch_stop(void)
 	}
 
 	for_each_possible_cpu(cpu) {
-		per_cpu(first_log, cpu) = 0;
+		*per_cpu_ptr(first_log, cpu) = 0;
 	}
 
 }
@@ -220,6 +244,8 @@ static int met_switch_process_argument(const char *arg, int len)
 	/*ex: mxitem is 0x0005, max value should be (5-1) + (5-2) = 0x100 + 0x11 = 7 */
 	unsigned int max_value = ((MT_SWITCH_MX_ITEM * 2) - 3);
 
+	if (!first_log)
+		return 0;
 
 	if (met_parse_num(arg, &value, len) < 0)
 		goto arg_switch_exit;
