@@ -346,7 +346,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"emi_num",  //device name
+									"emi-num",  //device name
 									0, //offset
 									&EMI_NUM);
 	if (ret) {
@@ -354,7 +354,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"dram_num",  //device name
+									"dram-num",  //device name
 									0, //offset
 									&dram_chann_num);
 	if (ret) {
@@ -364,7 +364,7 @@ int MET_BM_Init(void)
 	DRAM_CH_NUM_PER_EMI = dram_chann_num;
 
 	ret = of_property_read_u32_index(node, // device node
-									"dram_freq_default",  //device name
+									"dram-freq-default",  //device name
 									0, //offset
 									&DRAM_FREQ_DEFAULT);
 	if (ret) {
@@ -373,7 +373,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"ddr_ratio_default",  //device name
+									"ddr-ratio-default",  //device name
 									0, //offset
 									&DDR_RATIO_DEFAULT);
 	if (ret) {
@@ -382,7 +382,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"dram_type_default",  //device name
+									"dram-type-default",  //device name
 									0, //offset
 									&DRAM_TYPE_DEFAULT);
 	if (ret) {
@@ -391,7 +391,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"met_emi_support_list",  //device name
+									"met-emi-support-list",  //device name
 									0, //offset
 									&MET_EMI_support_list);
 	if (ret) {
@@ -400,7 +400,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"cen_emi_reg_size",  //device name
+									"cen-emi-reg-size",  //device name
 									0, //offset
 									&cen_emi_reg_size);
 	if (ret) {
@@ -408,7 +408,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"chn_emi_reg_size",  //device name
+									"chn-emi-reg-size",  //device name
 									0, //offset
 									&chn_emi_reg_size);
 	if (ret) {
@@ -416,7 +416,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"dramc_nao_reg_size",  //device name
+									"dramc-nao-reg-size",  //device name
 									0, //offset
 									&dramc_nao_reg_size);
 	if (ret) {
@@ -424,7 +424,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"ddrphy_ao_reg_size",  //device name
+									"ddrphy-ao-reg-size",  //device name
 									0, //offset
 									&ddrphy_ao_reg_size);
 	if (ret) {
@@ -433,7 +433,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"ddrphy_ao_misc_cg_ctrl0",  //device name
+									"ddrphy-ao-misc-cg-ctrl0",  //device name
 									0, //offset
 									&ddrphy_ao_misc_cg_ctrl0);
 	if (ret) {
@@ -442,7 +442,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"ddrphy_ao_misc_cg_ctrl2",  //device name
+									"ddrphy-ao-misc-cg-ctrl2",  //device name
 									0, //offset
 									&ddrphy_ao_misc_cg_ctrl2);
 	if (ret) {
@@ -453,7 +453,7 @@ int MET_BM_Init(void)
 	if (MET_EMI_support_list & (1<<EMI_FREQ_SUPPORT))
 	{
 		ret = of_property_read_u32_index(node, // device node
-										"apmixedsys_reg_size",  //device name
+										"apmixedsys-reg-size",  //device name
 										0, //offset
 										&apmixedsys_reg_size);
 		if (ret) {
@@ -463,7 +463,7 @@ int MET_BM_Init(void)
 
 		/*get the emi freq*/
 		ret = of_property_read_u32_index(node, // device node
-										"apmixedsys_reg_base",  //device name
+										"apmixedsys-reg-base",  //device name
 										0, //offset
 										&APMIXEDSYS_ADDR);
 		if (ret) {
@@ -474,7 +474,7 @@ int MET_BM_Init(void)
 
 	if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
 		ret = of_property_read_u32_index(node, // device node
-										"slc_pmu_reg_size",  //device name
+										"slc-pmu-reg-size",  //device name
 										0, //offset
 										&slc_pmu_reg_size);
 		if (ret) {
@@ -489,14 +489,14 @@ int MET_BM_Init(void)
 	for (emi_no = 0; emi_no < EMI_NUM; emi_no++)
 	{
 		ret = of_property_read_u32_index(node, // device node
-										"cen_emi_reg_base",  //device name
+										"cen-emi-reg-base",  //device name
 										emi_no,
 										CEN_EMI_PHY_ADDR + emi_no);
 		if (ret)
 			PR_BOOTMSG("Cannot get cen_emi_reg_base index from dts\n");
 
 		ret = of_property_read_u32_index(node, // device node
-										"slc_pmu_reg_base",  //device name
+										"slc-pmu-reg-base",  //device name
 										emi_no,
 										SLC_PMU_PHY_ADDR + emi_no);
 		if (ret)
@@ -506,7 +506,7 @@ int MET_BM_Init(void)
 		for (i=0; i<dram_chann_num; i++)
 		{
 			ret = of_property_read_u32_index(node, // device node
-										"chn_emi_reg_base",  //device name
+										"chn-emi-reg-base",  //device name
 										emi_no,
 										CHN_EMI_PHY_ADDR[emi_no] + i);
 			if (ret) {
@@ -515,7 +515,7 @@ int MET_BM_Init(void)
 			}
 
 			ret = of_property_read_u32_index(node, // device node
-										"dramc_nao_reg_base",  //device name
+										"dramc-nao-reg-base",  //device name
 										emi_no,
 										DRAMC_NAO_PHY_ADDR[emi_no] + i);
 			if (ret) {
@@ -524,7 +524,7 @@ int MET_BM_Init(void)
 			}
 
 			ret = of_property_read_u32_index(node, // device node
-										"ddrphy_ao_reg_base",  //device name
+										"ddrphy-ao-reg-base",  //device name
 										emi_no,
 										DDRPHY_AO_PHY_ADDR[emi_no] + i);
 			if (ret) {
