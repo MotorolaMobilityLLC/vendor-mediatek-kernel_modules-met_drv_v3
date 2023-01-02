@@ -148,6 +148,10 @@ int core_plf_init(void)
 	met_register(&met_sspm_common);
 #endif
 
+#ifdef MET_MCUPM
+	met_register(&met_mcupm_common);
+#endif
+
 #ifdef MET_CPUDSU
 	met_register(&met_cpudsu);
 #endif
@@ -208,6 +212,10 @@ void core_plf_exit(void)
 
 #ifdef MET_SSPM
 	met_deregister(&met_sspm_common);
+#endif
+
+#ifdef MET_MCUPM
+	met_deregister(&met_mcupm_common);
 #endif
 
 #ifdef MET_CPUDSU
