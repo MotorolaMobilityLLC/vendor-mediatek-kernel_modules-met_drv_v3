@@ -1435,7 +1435,7 @@ static int cpupmu_process_argument(const char *arg, int len)
 		goto arg_out;
 
 	/* for each cpu in cpu_list, add all the events in event_list */
-	for_each_possible_cpu(cpu) {
+	for_each_online_cpu(cpu) {
 		if (cpu<0 || cpu>=NR_CPUS)
 			continue;
 
@@ -1452,6 +1452,8 @@ static int cpupmu_process_argument(const char *arg, int len)
 
 		if (cpu_list[cpu] == 0)
 			continue;
+		if (cpu_pmu->event_count[cpu] == 0)
+			update_pmu_event_count(cpu);
 
 		nr_counters = cpu_pmu->event_count[cpu];
 		pr_debug("[MET_PMU] pmu slot count=%d\n", nr_counters);
