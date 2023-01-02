@@ -8,6 +8,7 @@
 #include <linux/device.h> /* DEVICE_ATTR */
 
 #include "interface.h"
+#include "core_plf_init.h"
 
 #include "tinysys_mgr.h"
 #include "tinysys_log.h"
@@ -174,6 +175,7 @@ static struct kobj_attribute _attr_mcupm_op_ctrl = \
 	__ATTR(op_ctrl, 0220, NULL, _mcupm_op_ctrl_store);
 #endif
 
+static struct device *ondiemet_attr_dev;
 
 /*****************************************************************************
  * external function ipmlement
@@ -189,36 +191,49 @@ int ondiemet_attr_init(struct device *dev)
 		return -1;
 	}
 
+	ondiemet_attr_dev = dev;
+
+	return ret;
+}
+
+int met_ondiemet_attr_init_sspm(void)
+{
+	int ret = 0;
+
 #ifdef MET_SSPM
-	ret = _create_sspm_node(dev);
+	if (!(met_sspm_api_ready && met_scmi_api_ready))
+		return -1;
+
+	ret = _create_sspm_node(ondiemet_attr_dev);
 	if (ret != 0) {
 		pr_debug("can not create sspm node\n");
 		return ret;
 	}
 #endif
+	return ret;
+}
+EXPORT_SYMBOL(met_ondiemet_attr_init_sspm);
+
+int met_ondiemet_attr_init_mcupm(void)
+{
+	int ret = 0;
 
 #ifdef MET_MCUPM
+	if (!(met_mcupm_api_ready && met_ipi_api_ready))
+		return -1;
+
 	ret = _create_mcupm_node(_g_tinysys_kobj);
 	if (ret != 0) {
 		pr_debug("can not create mcupm node\n");
 		return ret;
 	}
 #endif
-
 	return ret;
 }
-
+EXPORT_SYMBOL(met_ondiemet_attr_init_mcupm);
 
 int ondiemet_attr_uninit(struct device *dev)
 {
-#ifdef MET_SSPM
-	_remove_sspm_node(dev);
-#endif
-
-#ifdef MET_MCUPM
-	_remove_mcupm_node();
-#endif
-
 	if (_g_tinysys_kobj != NULL) {
 		kobject_del(_g_tinysys_kobj);
 		kobject_put(_g_tinysys_kobj);
@@ -228,6 +243,27 @@ int ondiemet_attr_uninit(struct device *dev)
 	return 0;
 }
 
+int met_ondiemet_attr_uninit_sspm(void)
+{
+#ifdef MET_SSPM
+	if (!(met_sspm_api_ready && met_scmi_api_ready))
+		return -1;
+	_remove_sspm_node(ondiemet_attr_dev);
+#endif
+	return 0;
+}
+EXPORT_SYMBOL(met_ondiemet_attr_uninit_sspm);
+
+int met_ondiemet_attr_uninit_mcupm(void)
+{
+#ifdef MET_MCUPM
+	if (!(met_mcupm_api_ready && met_ipi_api_ready))
+		return -1;
+	_remove_mcupm_node();
+#endif
+	return 0;
+}
+EXPORT_SYMBOL(met_ondiemet_attr_uninit_mcupm);
 
 int ondiemet_log_manager_init(struct device *dev)
 {
@@ -256,11 +292,15 @@ void ondiemet_log_manager_stop()
 void ondiemet_start()
 {
 #ifdef MET_SSPM
-	sspm_start();
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		sspm_start();
+	}
 #endif
 
 #ifdef MET_MCUPM
-	mcupm_start();
+	if (met_mcupm_api_ready && met_ipi_api_ready) {
+		mcupm_start();
+	}
 #endif
 
 }
@@ -269,11 +309,15 @@ void ondiemet_start()
 void ondiemet_stop()
 {
 #ifdef MET_SSPM
-	sspm_stop();
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		sspm_stop();
+	}
 #endif
 
 #ifdef MET_MCUPM
-	mcupm_stop();
+	if (met_mcupm_api_ready && met_ipi_api_ready) {
+		mcupm_stop();
+	}
 #endif
 
 }
@@ -282,11 +326,15 @@ void ondiemet_stop()
 void ondiemet_extract()
 {
 #ifdef MET_SSPM
-	sspm_extract();
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		sspm_extract();
+	}
 #endif
 
 #ifdef MET_MCUPM
-	mcupm_extract();
+	if (met_mcupm_api_ready && met_ipi_api_ready) {
+		mcupm_extract();
+	}
 #endif
 
 }
@@ -463,14 +511,16 @@ static ssize_t sspm_op_ctrl_store(
 		return -EINVAL;
 	}
 
-	if (value == 1) {
-		sspm_start();
-	} else if (value == 2) {
-		sspm_stop();
-	} else if (value == 3) {
-		sspm_extract();
-	} else if (value == 4) {
-		sspm_flush();
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		if (value == 1) {
+			sspm_start();
+		} else if (value == 2) {
+			sspm_stop();
+		} else if (value == 3) {
+			sspm_extract();
+		} else if (value == 4) {
+			sspm_flush();
+		}
 	}
 
 	return count;
@@ -725,14 +775,16 @@ static ssize_t _mcupm_op_ctrl_store(
 		return -EINVAL;
 	}
 
-	if (value == 1) {
-		mcupm_start();
-	} else if (value == 2) {
-		mcupm_stop();
-	} else if (value == 3) {
-		mcupm_extract();
-	} else if (value == 4) {
-		mcupm_flush();
+	if (met_mcupm_api_ready && met_ipi_api_ready) {
+		if (value == 1) {
+			mcupm_start();
+		} else if (value == 2) {
+			mcupm_stop();
+		} else if (value == 3) {
+			mcupm_extract();
+		} else if (value == 4) {
+			mcupm_flush();
+		}
 	}
 
 	return count;
