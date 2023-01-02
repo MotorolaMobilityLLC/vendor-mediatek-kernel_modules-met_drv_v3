@@ -81,7 +81,7 @@ static void get_thermal_zone_from_dts(void) {
         struct thermal_zone_device *tz;
 
         tz = thermal_zone_get_zone_by_name(child->name);
-        if (IS_ERR(tz)) {
+        if (!tz || IS_ERR(tz)) {
             continue;
         }
 
@@ -107,7 +107,7 @@ static void get_thermal_zone_from_ext(void) {
         tz_name = strsep(&cur, delim_comma);
 
         tz = thermal_zone_get_zone_by_name(tz_name);
-        if (IS_ERR(tz)) {
+        if (!tz || IS_ERR(tz)) {
             continue;
         }
 

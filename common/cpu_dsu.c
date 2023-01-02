@@ -157,15 +157,14 @@ static int perf_thread_set_perf_events(unsigned int cpu)
 		ev_attr->pinned = 1;
 
 		ev = perf_event_create_kernel_counter(ev_attr, cpu, NULL, dummy_handler, NULL);
-		if (IS_ERR(ev))
+		if (!ev || IS_ERR(ev))
 			continue;
 		if (ev->state != PERF_EVENT_STATE_ACTIVE) {
 			perf_event_release_kernel(ev);
 			continue;
 		}
 		pevent[i] = ev;
-		if (ev != NULL)
-			perf_event_enable(ev);
+		perf_event_enable(ev);
 
 		perfCntFirst[i] = 1;
 	}	/* for all PMU counter */
@@ -334,7 +333,7 @@ static int met_parse_num_list(char *arg, int len, int *list, int list_cnt)
 
 static int cpudsu_process_argument(const char *arg, int len)
 {
-	int		nr_events, event_list[MXNR_DSU_EVENTS];
+	int		nr_events, event_list[MXNR_DSU_EVENTS] = {};
 	int		i;
 	int		nr_counters;
 	struct met_dsu	*pmu;
