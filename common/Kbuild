@@ -68,6 +68,7 @@ FEATURE_MET_BACKLIGHT := y
 FEATURE_EVENT_POWER := y
 FEATURE_SSPM := y
 FEATURE_MCUPM := y
+FEATURE_GPUEB := y
 FEATURE_PTPOD := y
 
 ################################################################################
@@ -155,10 +156,50 @@ met-$(MET_MCUPM) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/mcupm/mcupm_met_commo
 ccflags-$(MET_MCUPM) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/mcupm/
 
 ################################################################################
+# Tinysys GPUEB module
+################################################################################
+$(info FEATURE_GPUEB = $(FEATURE_GPUEB))
+
+MET_GPUEB := $(if $(filter n,$(FEATURE_GPUEB)),n,y)
+
+ifneq (,$(filter $(CONFIG_MTK_GPU_SUPPORT),y m))
+    $(info CONFIG_MTK_GPU_SUPPORT = y)
+else
+    $(info CONFIG_MTK_GPU_SUPPORT = n)
+    MET_GPUEB := n
+endif
+
+ifeq ($(MET_GPUEB), y)
+    ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/gpueb/include/gpueb_reserved_mem.h)","")
+        subdir-ccflags-y += -I$(srctree)/drivers/gpu/mediatek/gpueb/include/
+    else
+        $(info ======== Missing $(srctree)/drivers/gpu/mediatek/gpueb/include/gpueb_reserved_mem.h========)
+        $(info ======== disable MET_GPUEB ========)
+        MET_GPUEB := n
+    endif
+
+    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
+        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
+    else
+        $(info ======== Missing $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
+        $(info ======== disable MET_GPUEB ========)
+        MET_GPUEB := n
+    endif
+endif
+
+$(info MET_GPUEB = $(MET_GPUEB))
+met-$(MET_GPUEB) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/gpueb/gpueb_met.o
+met-$(MET_GPUEB) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/gpueb/gpueb_met_log.o
+met-$(MET_GPUEB) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/gpueb/gpueb_met_ipi_handle.o
+met-$(MET_GPUEB) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/gpueb/gpueb_met_common.o
+ccflags-$(MET_GPUEB) += -I$(MET_COMMON_DIR)/tinysys/$(TINYSYS_VERSION)/gpueb/
+
+################################################################################
 # Tinysys common
 ################################################################################
 MET_TINYSYS := $(if $(filter y,$(MET_SSPM)),y,n)
 MET_TINYSYS := $(if $(filter y,$(MET_MCUPM)),y,$(MET_TINYSYS))
+MET_TINYSYS := $(if $(filter y,$(MET_GPUEB)),y,$(MET_TINYSYS))
 
 $(info MET_TINYSYS = $(MET_TINYSYS))
 met-$(MET_TINYSYS) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/tinysys_log.o

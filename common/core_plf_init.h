@@ -76,6 +76,10 @@ extern struct metdevice met_sspm_common;
 extern struct metdevice met_mcupm_common;
 #endif
 
+#ifdef MET_GPUEB
+extern struct metdevice met_gpueb_common;
+#endif
+
 #ifdef MET_CPUDSU
 extern struct metdevice met_cpudsu;
 #endif
@@ -105,14 +109,19 @@ extern struct metdevice met_ptpod;
 #include "tinysys-scmi.h"
 #endif
 
-#include "met_scmi_api/met_scmi_api.h"
-
 #include "met_sspm_api/met_sspm_api.h"
 
 #endif /* MET_SSPM */
 
-extern long met_scmi_api_ready;
 extern long met_sspm_api_ready;
+
+#if defined(MET_SSPM) /* anyone of the scmi users */
+
+#include "met_scmi_api/met_scmi_api.h"
+
+#endif /* MET_SSPM (anyone of the scmi users) */
+
+extern long met_scmi_api_ready;
 
 #ifdef MET_MCUPM
 
@@ -122,11 +131,29 @@ extern long met_sspm_api_ready;
 
 #include "met_mcupm_api/met_mcupm_api.h"
 
-#include "met_ipi_api/met_ipi_api.h"
-
 #endif /* MET_MCUPM */
 
-extern long met_ipi_api_ready;
 extern long met_mcupm_api_ready;
+
+#ifdef MET_GPUEB
+
+#include "mtk_tinysys_ipi.h"
+#include <linux/platform_device.h>  /* for struct platform_device used in gpueb_reserved_mem.h & gpueb_ipi.h */
+#include "gpueb_reserved_mem.h"
+#include "gpueb_ipi.h"
+
+#include "met_gpueb_api/met_gpueb_api.h"
+
+#endif /* MET_GPUEB */
+
+extern long met_gpueb_api_ready;
+
+#if defined(MET_MCUPM) || defined(MET_GPUEB) /* anyone of the ipi users */
+
+#include "met_ipi_api/met_ipi_api.h"
+
+#endif /* MET_MCUPM || MET_GPUEB (anyone of the ipi users) */
+
+extern long met_ipi_api_ready;
 
 #endif /*__CORE_PLF_INIT_H__*/
