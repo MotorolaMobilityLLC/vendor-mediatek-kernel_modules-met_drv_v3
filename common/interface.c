@@ -64,7 +64,7 @@ struct met_strbuf_t __percpu *p_met_strbuf;
 EXPORT_PER_CPU_SYMBOL(p_met_strbuf);
 
 int init_met_strbuf (void) {
-	p_met_strbuf = alloc_percpu(struct met_strbuf_t);
+	p_met_strbuf = alloc_percpu(typeof(*p_met_strbuf));
 	if (!p_met_strbuf) {
 		return -1;
 	}
@@ -1024,7 +1024,7 @@ int met_register(struct metdevice *met)
 	INIT_LIST_HEAD(&met->list);
 
 	/* Allocate timer count for per CPU */
-	met->polling_count = alloc_percpu(int);
+	met->polling_count = alloc_percpu(typeof(*met->polling_count));
 	if (met->polling_count == NULL)
 		return -EINVAL;
 
@@ -1269,7 +1269,7 @@ void force_sample(void *unused)
 		return;
 
 	/* to avoid met tag is coming after __met_hrtimer_stop and before run=-1 */
-	met_cpu_ptr = this_cpu_ptr(&met_cpu);
+	met_cpu_ptr = this_cpu_ptr(met_cpu);
 	if (met_cpu_ptr->work_enabled == 0)
 		return;
 
