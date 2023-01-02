@@ -6,6 +6,7 @@
 #include <asm/page.h>
 #include "interface.h"
 #include "met_drv.h"
+#include "mtk_typedefs.h"
 
 #if	IS_ENABLED(CONFIG_GPU_TRACEPOINTS)
 #include <trace/events/gpu.h>
@@ -67,13 +68,13 @@ met_trace_print_symbols_seq(char* pclass_name, unsigned long val,
 		if (val != symbol_array[i].mask)
 			continue;
 
-		new_fsize = sprintf(pclass_name, symbol_array[i].name, strlen(symbol_array[i].name));
+		new_fsize = SPRINTF(pclass_name, symbol_array[i].name, strlen(symbol_array[i].name));
 		break;
 	}
 
 	if (new_fsize == 0) {
-		snprintf(_buf, 32, "0x%lx", val);
-		new_fsize = sprintf(pclass_name, _buf, strlen(_buf));
+		SNPRINTF(_buf, 32, "0x%lx", val);
+		SPRINTF(pclass_name, _buf, strlen(_buf));
 	}
 
 	return ret;
@@ -214,7 +215,7 @@ static const char help[] = "\b"
 
 static int met_event_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help);
+	return SNPRINTF(buf, PAGE_SIZE, help);
 }
 
 static const char header[] =
@@ -231,7 +232,7 @@ static int met_event_print_header(char *buf, int len)
 {
 	int	ret;
 
-	ret = snprintf(buf, PAGE_SIZE, header);
+	ret = SNPRINTF(buf, PAGE_SIZE, header);
 	return ret;
 }
 

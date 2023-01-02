@@ -5,6 +5,8 @@
 
 #ifndef _MT_TYPEDEFS_H__
 
+#include "interface.h"
+
 /*
  *  KOBJ ATTR Manipulations Macros
  */
@@ -306,5 +308,21 @@
  */
 #define METINFO(format, ...)	pr_debug("[MET]%s: "format, __func__, ##__VA_ARGS__)
 #define METERROR(format, ...)	pr_debug("[MET][ERR]%s: "format, __func__, ##__VA_ARGS__)
+
+#define SNPRINTF(str, size, format, ...) ({\
+       int _r_e_t_; \
+       _r_e_t_ = snprintf(str, size, format, ##__VA_ARGS__); \
+       if (_r_e_t_ < 0 || _r_e_t_ >= size) \
+               PR_BOOTMSG("!!ERROR: SNPRINTF fail!!\n"); \
+       _r_e_t_; \
+       })
+
+#define SPRINTF(str, format, ...) ({\
+       int _r_e_t_; \
+       _r_e_t_ = sprintf(str, format, ##__VA_ARGS__); \
+       if (_r_e_t_ < 0) \
+               PR_BOOTMSG("!!ERROR: SPRINTF fail!!\n"); \
+       _r_e_t_; \
+       })
 
 #endif	/* _MT_TYPEDEFS_H__ */

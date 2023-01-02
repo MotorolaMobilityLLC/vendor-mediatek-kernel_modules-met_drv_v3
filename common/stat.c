@@ -29,6 +29,7 @@
 #include "interface.h"
 #include "met_drv.h"
 #include "trace.h"
+#include "mtk_typedefs.h"
 
 #define MS_STAT_FMT	"%5lu.%06lu"
 #define FMTLX7		",%llx,%llx,%llx,%llx,%llx,%llx,%llx\n"

@@ -11,6 +11,7 @@
 #include "met_drv.h"
 #include "trace.h"
 #include "core_plf_init.h"
+#include "mtk_typedefs.h"
 
 static int met_backlight_enable;
 static DEFINE_SPINLOCK(met_backlight_lock);
@@ -73,7 +74,7 @@ static ssize_t bl_tag_enable_show(struct kobject *kobj, struct kobj_attribute *a
 {
 	int ret;
 
-	ret = snprintf(buf, PAGE_SIZE, "%d\n", met_backlight_enable);
+	ret = SNPRINTF(buf, PAGE_SIZE, "%d\n", met_backlight_enable);
 
 	return ret;
 }

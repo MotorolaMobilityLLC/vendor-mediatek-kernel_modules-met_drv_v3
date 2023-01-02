@@ -21,6 +21,7 @@
 #include "core_plf_init.h"
 #include "sspm_reservedmem.h"
 #include "sspm_reservedmem_define.h"
+#include "mtk_typedefs.h"
 
 #include "interface.h"
 
@@ -636,7 +637,7 @@ static ssize_t ondiemet_log_run_show(
 	int sz;
 
 	mutex_lock(&dev->mutex);
-	sz = snprintf(buf, PAGE_SIZE, "%d\n", sspm_trace_run);
+	sz = SNPRINTF(buf, PAGE_SIZE, "%d\n", sspm_trace_run);
 	mutex_unlock(&dev->mutex);
 	return sz;
 }
