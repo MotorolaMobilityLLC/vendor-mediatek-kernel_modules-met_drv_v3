@@ -107,7 +107,7 @@ void start_gpueb_ipi_recv_thread()
 
 	// Tinysys send ipi to APSYS
 	if (id_ch_ipir_c_met == -1) {
-		if (gpueb_get_send_PIN_ID_by_name_symbol) {
+		if (gpueb_get_recv_PIN_ID_by_name_symbol) {
 			id_ch_ipir_c_met = gpueb_get_recv_PIN_ID_by_name_symbol("CH_IPIR_C_MET");
 		}
 		if (id_ch_ipir_c_met == -1) {   // pin ID is not found
