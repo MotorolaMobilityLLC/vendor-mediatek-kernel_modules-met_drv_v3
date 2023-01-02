@@ -13,6 +13,8 @@
 #include <linux/hardirq.h>
 #include <linux/clk.h>
 
+#include "core_plf_trace.h"
+
 extern int met_mode;
 extern int core_plf_init(void);
 extern void core_plf_exit(void);
@@ -119,6 +121,17 @@ extern struct met_strbuf_t __percpu *p_met_strbuf;
 		trace_##TRACE_NAME(args);;			\
 	} while (0)
 
+
+#define MET_TRACE_FORMAT_H(cnt, value) \
+do { \
+	if (cnt>0) \
+	{ \
+		char *SOB, *EOB; \
+		MET_TRACE_GETBUF(&SOB, &EOB); \
+		EOB = ms_formatH_EOL(EOB, cnt, value); \
+		MET_TRACE_PUTBUF(SOB, EOB); \
+	} \
+} while(0)
 
 #define MET_TYPE_PMU	1
 #define MET_TYPE_BUS	2
