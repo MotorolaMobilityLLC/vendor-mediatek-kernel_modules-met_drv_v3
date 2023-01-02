@@ -3581,7 +3581,7 @@ unsigned int MET_EMI_Get_BaseClock_Rate(void)
 {
 	unsigned int ddr_ratio = 0;
 
-#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET)
+#if IS_ENABLED(CONFIG_MTK_DVFSRC_MET) && IS_ENABLED(CONFIG_MTK_DVFSRC_HELPER)
 	if (get_cur_ddr_ratio_symbol)
 		ddr_ratio = get_cur_ddr_ratio_symbol();
 #endif
