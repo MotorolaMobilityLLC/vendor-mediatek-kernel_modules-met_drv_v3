@@ -338,7 +338,6 @@ static int cpudsu_process_argument(const char *arg, int len)
 	int		nr_counters;
 	struct met_dsu	*pmu;
 	int		arg_nr;
-	int		counters;
 	int		event_no;
 
 	/* get event_list */
@@ -349,15 +348,6 @@ static int cpudsu_process_argument(const char *arg, int len)
 	nr_counters = cpu_dsu->event_count;
 	pmu = cpu_dsu->pmu;
 	arg_nr = nr_arg;
-
-	/*
-	 * setup nr_counters for linux native perf mode.
-	 * because the selected events are stored in pmu,
-	 * so nr_counters can't large then event count in pmu.
-	 */
-	counters = perf_num_counters();
-	if (counters < nr_counters)
-		nr_counters = counters;
 
 	if (nr_counters == 0)
 		goto arg_out;
