@@ -72,6 +72,10 @@ extern struct metdevice met_wall_time;
 extern struct metdevice met_sspm_common;
 #endif
 
+#ifdef MET_MCUPM
+extern struct metdevice met_mcupm_common;
+#endif
+
 #ifdef MET_CPUDSU
 extern struct metdevice met_cpudsu;
 #endif
