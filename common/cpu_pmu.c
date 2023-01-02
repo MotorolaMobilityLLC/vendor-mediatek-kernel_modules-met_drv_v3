@@ -680,7 +680,6 @@ static void perf_thread_down(int cpu)
 								armpmu_irq_hdlr[j].handle_irq_orig);
 							armpmu->handle_irq = armpmu_irq_hdlr[j].handle_irq_orig;
 							armpmu_irq_hdlr[j].handle_irq_orig = NULL;
-							armpmu_irq_hdlr_cnt--;
 							break;
 						}
 					}
