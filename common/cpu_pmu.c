@@ -150,7 +150,7 @@ ssize_t pmu_count_show(struct kobject *kobj,
     	smp_call_function_single(cpu, pmu_pmcr_read, cpu_pmu_num, 1);
     }
 #endif
-	ret += snprintf(buf + ret, PAGE_SIZE - ret, "perf_num_counters: %d\n", perf_num_counters());
+
 	ret += snprintf(buf + ret, PAGE_SIZE - ret, "read from pmcr_el10\n");
 
 	for(cpu=0; cpu<NR_CPUS; cpu++)
