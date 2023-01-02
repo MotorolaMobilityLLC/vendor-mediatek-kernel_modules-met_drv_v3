@@ -168,7 +168,7 @@ static int met_create_cpu_topology(void)
 	return strlen(met_cpu_topology);
 }
 
-DEFINE_PER_CPU(struct met_cpu_struct, met_cpu);
+struct met_cpu_struct __percpu *met_cpu;
 
 static int __init met_drv_init(void)
 {
@@ -178,8 +178,14 @@ static int __init met_drv_init(void)
 	struct met_cpu_struct *met_cpu_ptr;
 	unsigned int chip_id;
 
+	met_cpu = alloc_percpu(typeof(*met_cpu));
+	if (!met_cpu) {
+		pr_notice("[MET] percpu met_cpu allocate fail\n");
+		return -1;
+	}
+
 	for_each_possible_cpu(cpu) {
-		met_cpu_ptr = &per_cpu(met_cpu, cpu);
+		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		/* snprintf(&(met_cpu_ptr->name[0]), sizeof(met_cpu_ptr->name), "met%02d", cpu); */
 		met_cpu_ptr->cpu = cpu;
 	}
