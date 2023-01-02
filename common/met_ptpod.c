@@ -354,7 +354,7 @@ static int get_cg_regulator_hdlr(void)
 				met_use_cpu_regulator[i].name);
 		if (IS_ERR(hdlr)) {
 			met_use_cpu_regulator[i].hdlr = NULL;
-			PR_BOOTMSG("Failed to get %s regulator hdlr (%d)\n",
+			PR_BOOTMSG("Failed to get %s regulator hdlr (%ld)\n",
 					met_use_cpu_regulator[i].name, PTR_ERR(hdlr));
 		} else {
 			met_use_cpu_regulator[i].hdlr = hdlr;
@@ -374,7 +374,7 @@ static int get_cg_regulator_hdlr(void)
 				met_use_gpu_regulator[i].name);
 		if (IS_ERR(hdlr)) {
 			met_use_gpu_regulator[i].hdlr = NULL;
-			PR_BOOTMSG("Failed to get %s regulator hdlr (%d)\n",
+			PR_BOOTMSG("Failed to get %s regulator hdlr (%ld)\n",
 					met_use_gpu_regulator[i].name, PTR_ERR(hdlr));
 		} else {
 			met_use_gpu_regulator[i].hdlr = hdlr;
