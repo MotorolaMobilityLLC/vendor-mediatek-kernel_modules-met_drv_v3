@@ -41,7 +41,7 @@ extern void *mcupm_log_virt_addr;
 #if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC)
 extern dma_addr_t mcupm_log_phy_addr;
 #else
-extern unsigned int mcupm_log_phy_addr;
+extern phys_addr_t mcupm_log_phy_addr;
 #endif
 extern unsigned int mcupm_buffer_size;
 

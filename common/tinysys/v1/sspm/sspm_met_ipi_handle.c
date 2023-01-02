@@ -296,13 +296,10 @@ void sspm_start(void)
 
 	/* send DRAM physical address */
 	ipi_buf[0] = MET_MAIN_ID | MET_BUFFER_INFO;
-	ipi_buf[1] = (unsigned int)sspm_log_phy_addr; /* address */
-	if (ret == 0)
-		ipi_buf[2] = platform_id;
-	else
-		ipi_buf[2] = 0;
+	ipi_buf[1] = (ret == 0) ? platform_id : 0;
+	ipi_buf[2] = (unsigned int)(sspm_log_phy_addr & 0xFFFFFFFF); /* addr low */
+	ipi_buf[3] = (unsigned int)(sspm_log_phy_addr >> 32); /* addr high*/
 
-	ipi_buf[3] = 0;
 	ret = met_scmi_to_sspm_command(ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 
 	/* start ondiemet now */
