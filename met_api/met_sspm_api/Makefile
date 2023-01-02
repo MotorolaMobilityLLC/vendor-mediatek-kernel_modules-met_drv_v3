@@ -1,12 +1,14 @@
-ORIGIN_SRC := $(src)
-override src := $(src)/../..
-
-include $(src)/Makefile
-
-override src := $(ORIGIN_SRC)
-
-ifneq ("$(wildcard $(src)/../../../met_drv_secure_v3)","")
-	ccflags-y += -DMET_PLF_EXIST
+extra_symbols := $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
+ifneq (,$(wildcard ../../../met_drv_secure_v3))
+	extra_symbols += $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_secure_v3/Module.symvers)
 endif
 
-obj-$(CONFIG_MTK_MET) := met_sspm_api.o
+all: PRIVATE_SYMBOLS := $(extra_symbols)
+all:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+
+modules_install:
+	$(MAKE) M=$(M) -C $(KERNEL_SRC) modules_install
+
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
