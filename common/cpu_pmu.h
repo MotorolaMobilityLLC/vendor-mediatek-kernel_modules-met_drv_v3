@@ -9,6 +9,11 @@
 #include <linux/device.h>
 #include <linux/perf_event.h>
 
+#if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
+#include <linux/platform_device.h>
+#include <linux/perf/arm_pmu.h>
+#endif
+
 #define MODE_DISABLED	0
 #define MODE_INTERRUPT	1
 #define MODE_POLLING	2
@@ -19,6 +24,7 @@
 
 #define MXSIZE_PMU_DESC 32
 #define MXNR_CPU	NR_CPUS
+#define MX_CPU_CLUSTER 8
 
 /* max number of pmu counter for armv9 is 20+1 */
 #define	MXNR_PMU_EVENTS          22
@@ -54,6 +60,11 @@ struct cpu_pmu_hw {
 	 * between end of polling and start of cpu pm
 	 */
 	unsigned int cpu_pm_unpolled_loss[MXNR_CPU][MXNR_PMU_EVENTS];
+};
+
+struct armpmu_handle_irq {
+	cpumask_t supported_cpus;
+	irqreturn_t (*handle_irq_orig)(struct arm_pmu *pmu);
 };
 
 struct pmu_failed_desc {
