@@ -431,6 +431,8 @@ static int _mcupm_recv_thread(void *data)
 						wlen * 4, _log_done_cb, (void *)1);
 			}
 			ret = mcupm_log_stop();
+			if (ret)
+				PR_BOOTMSG("[MET] mcupm_log_stop ret=%d\n", ret);
 
 			/* continuous mode handling */
 			if (mcupm_run_mode == MCUPM_RUN_CONTINUOUS) {
