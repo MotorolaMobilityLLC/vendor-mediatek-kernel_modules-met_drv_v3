@@ -186,6 +186,9 @@ static int __init met_drv_init(void)
 	}
 
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		/* SNPRINTF(&(met_cpu_ptr->name[0]), sizeof(met_cpu_ptr->name), "met%02d", cpu); */
 		met_cpu_ptr->cpu = cpu;
