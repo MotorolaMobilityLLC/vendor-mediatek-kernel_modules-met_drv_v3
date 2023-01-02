@@ -18,6 +18,7 @@
 #include "str_util.h"
 
 /* #include "trace.h" */
+#include "mtk_typedefs.h"
 
 /*
  * IRQ_TIRGGER and CPU_IDLE_TRIGGER
@@ -139,7 +140,7 @@ MET_DEFINE_PROBE(cpu_idle, TP_PROTO(unsigned int state, unsigned int cpu_id))
 
 static ssize_t default_on_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "1\n");
+	return SNPRINTF(buf, PAGE_SIZE, "1\n");
 }
 
 static struct kobj_attribute default_on_attr = __ATTR(default_on, 0664, default_on_show, NULL);
@@ -391,7 +392,7 @@ static const char help[] =
 
 static int met_switch_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help);
+	return SNPRINTF(buf, PAGE_SIZE, help);
 }
 
 static int met_switch_print_header(char *buf, int len)
@@ -401,7 +402,7 @@ static int met_switch_print_header(char *buf, int len)
 	char *start_point = buf;
 
 	ret =
-	    snprintf(buf, PAGE_SIZE, "met-info [000] 0.0: mp_cpu_switch_base: %d\n",
+	    SNPRINTF(buf, PAGE_SIZE, "met-info [000] 0.0: mp_cpu_switch_base: %d\n",
 		     met_switch.mode);
 
 	if(ret>0){
@@ -419,10 +420,9 @@ static int met_switch_print_header(char *buf, int len)
 	}
 
 	if (met_switch.mode & MT_SWITCH_64_32BIT)
-		start_point += snprintf(start_point, PAGE_SIZE, header);
+		start_point += SNPRINTF(start_point, PAGE_SIZE, header);
 
 	return start_point-buf;
-
 }
 
 

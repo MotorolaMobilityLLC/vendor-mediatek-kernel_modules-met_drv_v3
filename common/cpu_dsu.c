@@ -10,6 +10,7 @@
 #include "trace.h"
 #include "cpu_dsu.h"
 #include "core_plf_init.h"
+#include "mtk_typedefs.h"
 
 
 struct cpu_dsu_hw *cpu_dsu;
