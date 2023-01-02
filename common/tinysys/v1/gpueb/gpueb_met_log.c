@@ -221,9 +221,9 @@ int gpueb_log_init(struct device *dev)
 		gpueb_buf_available = 0;
 	}
 #else
-	np = of_find_node_by_name(NULL, "met_res_ram_gpueb");
+	np = of_find_node_by_name(NULL, "met-res-ram-gpueb");
 	if (!np) {
-		pr_debug("unable to find met_res_ram_gpueb\n");
+		pr_debug("unable to find met-res-ram-gpueb\n");
 		return 0;
 	}
 	of_property_read_u64(np, "start", &gpueb_log_phy_addr);
