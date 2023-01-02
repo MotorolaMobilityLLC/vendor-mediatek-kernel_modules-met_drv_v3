@@ -167,10 +167,6 @@ ifeq ("$(CPUPMU_VERSION)", "V8_2")
 endif
 
 $(info ARCH = $(ARCH))
-ifeq ($(ARCH), mips)
-    met-y += $(MET_CORE)/mips_pmu_hw.o
-endif #ifeq ($(ARCH), mips)
-
 ifeq ($(ARCH), arm)
     ccflags-y += -DCONFIG_MET_ARM_32BIT
     met-y += $(MET_CORE)/cpu_pmu.o
