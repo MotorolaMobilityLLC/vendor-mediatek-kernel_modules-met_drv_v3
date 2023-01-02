@@ -26,6 +26,7 @@
 #include <linux/slab.h>
 
 #include "stat.h"
+#include "interface.h"
 #include "met_drv.h"
 #include "trace.h"
 
@@ -34,7 +35,7 @@
 #define FMTLX10		",%llx,%llx,%llx,%llx,%llx,%llx,%llx,%llx,%llx,%llx\n"
 
 
-static DEFINE_PER_CPU(int, cpu_status);
+static int __percpu *cpu_status;
 
 
 /* void ms_st(unsigned long long timestamp, unsigned char cnt, unsigned int *value) */
@@ -56,14 +57,48 @@ noinline void ms_st(unsigned long long timestamp, unsigned char cnt, u64 *value)
 	}
 }
 
+static int met_stat_create_subfs(struct kobject *parent)
+{
+	int cpu;
+	int ret = 0;
+
+	cpu_status = alloc_percpu(typeof(*cpu_status));
+	if (!cpu_status) {
+		PR_BOOTMSG("percpu cpu_status allocate fail\n");
+		pr_debug("percpu cpu_status allocate fail\n");
+		return 0;
+	} else {
+		for_each_possible_cpu(cpu) {
+			memset(per_cpu_ptr(cpu_status, cpu),
+					0,
+					sizeof (*per_cpu_ptr(cpu_status, cpu)));
+		}
+	}
+
+	return ret;
+}
+
+static void met_stat_delete_subfs(void)
+{
+	if (cpu_status) {
+		free_percpu(cpu_status);
+	}
+}
+
 static void met_stat_start(void)
 {
 	int	cpu = raw_smp_processor_id();
 
+	if (!cpu_status) {
+		MET_TRACE("percpu cpu_status allocate fail\n");
+		met_stat.mode = 0;
+		return;
+	}
+
 	if (get_ctrl_flags() & 1)
 		met_stat.mode = 0;
 
-	per_cpu(cpu_status, cpu) = MET_CPU_ONLINE;
+	*per_cpu_ptr(cpu_status, cpu) = MET_CPU_ONLINE;
 }
 
 static void met_stat_stop(void)
@@ -143,7 +178,7 @@ static void met_stat_polling(unsigned long long stamp, int cpu)
 	unsigned char count;
 	u64 value[10] = {0};
 
-	if (per_cpu(cpu_status, cpu) != MET_CPU_ONLINE)
+	if (*per_cpu_ptr(cpu_status, cpu) != MET_CPU_ONLINE)
 		return;
 
 	/* return; */
@@ -172,7 +207,10 @@ static int met_stat_print_header(char *buf, int len)
 
 static void met_stat_cpu_state_notify(long cpu, unsigned long action)
 {
-	per_cpu(cpu_status, cpu) = action;
+	if (!cpu_status)
+		return;
+
+	*per_cpu_ptr(cpu_status, cpu) = action;
 }
 
 
@@ -180,6 +218,8 @@ struct metdevice met_stat = {
 	.name = "stat",
 	.type = MET_TYPE_PMU,
 	.cpu_related = 1,
+	.create_subfs = met_stat_create_subfs,
+	.delete_subfs = met_stat_delete_subfs,
 	.start = met_stat_start,
 	.stop = met_stat_stop,
 	.polling_interval = 30,
