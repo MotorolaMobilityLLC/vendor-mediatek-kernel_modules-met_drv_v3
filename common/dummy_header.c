@@ -9,6 +9,7 @@
 
 #include "interface.h"
 #include "met_drv.h"
+#include "mtk_typedefs.h"
 
 static struct kobject *kobj_met_dummy;
 static char header_str[PAGE_SIZE];
@@ -25,7 +26,7 @@ static ssize_t dummy_str_show(struct kobject *kobj, struct kobj_attribute *attr,
 {
 	int ret;
 
-	ret = snprintf(buf, PAGE_SIZE, "%s", header_str);
+	ret = SNPRINTF(buf, PAGE_SIZE, "%s", header_str);
 
 	return ret;
 }
@@ -37,7 +38,7 @@ static ssize_t dummy_str_store(struct kobject *kobj,
 	char *ptr = header_str;
 
 	if ((header_str_len + strlen(buf)) < PAGE_SIZE) {
-		ret = snprintf(ptr + header_str_len, PAGE_SIZE - header_str_len, "%s\n", buf);
+		ret = SNPRINTF(ptr + header_str_len, PAGE_SIZE - header_str_len, "%s\n", buf);
 		header_str_len += ret;
 	}
 	met_dummy_header.mode = 1;
@@ -57,9 +58,9 @@ static int dummy_reset(void)
 static int dummy_print_header(char *buf, int len)
 {
 	if (header_str_len > 0)
-		len = snprintf(buf, PAGE_SIZE, "%s", header_str);
+		len = SNPRINTF(buf, PAGE_SIZE, "%s", header_str);
 	else
-		len = snprintf(buf, PAGE_SIZE, "# dummy header is empty\n");
+		len = SNPRINTF(buf, PAGE_SIZE, "# dummy header is empty\n");
 
 	return len;
 }

@@ -13,6 +13,7 @@
 #include "met_drv.h"
 #include "mem_stat.h"
 #include "trace.h"
+#include "mtk_typedefs.h"
 
 
 /* define MEMSTAT_DEBUG */
@@ -169,15 +170,15 @@ static int met_memstat_print_help(char *buf, int len)
 {
 	int i, l;
 
-	l = snprintf(buf, PAGE_SIZE, help);
+	l = SNPRINTF(buf, PAGE_SIZE, help);
 
 	for (i = 0; i < PHY_MEMSTAT_TABLE_SIZE; i++)
-		l += snprintf(buf + l, PAGE_SIZE - l, "  --memstat=phy_mem_stat:%s\n",
+		l += SNPRINTF(buf + l, PAGE_SIZE - l, "  --memstat=phy_mem_stat:%s\n",
 			      phy_memstat_table[i].name);
 
 #if IS_ENABLED(CONFIG_VM_EVENT_COUNTERS)
 	for (i = 0; i < VIR_MEMSTAT_TABLE_SIZE; i++)
-		l += snprintf(buf + l, PAGE_SIZE - l, "  --memstat=vir_mem_stat:%s\n",
+		l += SNPRINTF(buf + l, PAGE_SIZE - l, "  --memstat=vir_mem_stat:%s\n",
 			      vir_memstat_table[i].name);
 #endif
 
@@ -192,12 +193,12 @@ static int met_memstat_print_header(char *buf, int len)
 	int i, l;
 	int event_amount = 0;
 
-	l = snprintf(buf, PAGE_SIZE, header);
+	l = SNPRINTF(buf, PAGE_SIZE, header);
 
 	for (i = 0; i < MAX_PHY_MEMSTAT_EVENT_AMOUNT; i++) {
 		if ((phy_memstat_mask & (1 << i)) && (i < PHY_MEMSTAT_TABLE_SIZE)) {
-			l += snprintf(buf + l, PAGE_SIZE - l, phy_memstat_table[i].header_name);
-			l += snprintf(buf + l, PAGE_SIZE - l, ",");
+			l += SNPRINTF(buf + l, PAGE_SIZE - l, phy_memstat_table[i].header_name);
+			l += SNPRINTF(buf + l, PAGE_SIZE - l, ",");
 			event_amount++;
 		}
 	}
@@ -205,22 +206,22 @@ static int met_memstat_print_header(char *buf, int len)
 #if IS_ENABLED(CONFIG_VM_EVENT_COUNTERS)
 	for (i = 0; i < MAX_VIR_MEMSTAT_EVENT_AMOUNT; i++) {
 		if ((vir_memstat_mask & (1 << i)) && (i < VIR_MEMSTAT_TABLE_SIZE)) {
-			l += snprintf(buf + l, PAGE_SIZE - l, vir_memstat_table[i].header_name);
-			l += snprintf(buf + l, PAGE_SIZE - l, ",");
+			l += SNPRINTF(buf + l, PAGE_SIZE - l, vir_memstat_table[i].header_name);
+			l += SNPRINTF(buf + l, PAGE_SIZE - l, ",");
 			event_amount++;
 		}
 	}
 #endif
 
 	for (i = 0; i < event_amount; i++) {
-		l += snprintf(buf + l, PAGE_SIZE - l, "x");
-		l += snprintf(buf + l, PAGE_SIZE - l, ",");
+		l += SNPRINTF(buf + l, PAGE_SIZE - l, "x");
+		l += SNPRINTF(buf + l, PAGE_SIZE - l, ",");
 	}
 
 	phy_memstat_mask = 0;
 	vir_memstat_mask = 0;
 
-	l += snprintf(buf + l, PAGE_SIZE - l, "\n");
+	l += SNPRINTF(buf + l, PAGE_SIZE - l, "\n");
 
 	return l;
 }
