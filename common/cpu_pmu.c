@@ -6,6 +6,7 @@
 #include <linux/cpu.h>
 #include <linux/cpu_pm.h>
 #include <linux/perf_event.h>
+#include <asm/sysreg.h>
 
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
 #include <linux/platform_device.h>
@@ -117,6 +118,49 @@ static int pmu_use_alloc_bitmap = 1;
 
  * obviously, this option should always be defaulted to 0.
  */
+
+static void pmu_pmcr_read(void *data) {
+	int *cpu_pmu_num = data;
+    int core_id = smp_processor_id(); /*0~max cpu*/
+    /*u32 i = read_sysreg(pmcr_el0);*/
+    if (core_id < MXNR_CPU)
+    	*(cpu_pmu_num + core_id) = (read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK;
+    /*PR_BOOTMSG("[eric debug] core_id=%d, pmcr_el0=%d\n", core_id, i);*/
+}
+
+ssize_t pmu_count_show(struct kobject *kobj,
+				struct kobj_attribute *attr,
+				char *buf)
+{
+	int cpu;
+	int ret = 0;
+	int cpu_pmu_num[MXNR_CPU] = {0}; /*read from pmcr_el0*/
+
+	for(cpu=0; cpu<MXNR_CPU; cpu++)
+	{
+		cpu_pmu_num[cpu] = 0;
+	}
+#if 0
+	for_each_possible_cpu(cpu) /*for_each_possible_cpu is not used  */
+	{
+		cpu_pmu_num[cpu] = (read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK;
+	}
+#else
+    for_each_online_cpu(cpu) {
+    	smp_call_function_single(cpu, pmu_pmcr_read, cpu_pmu_num, 1);
+    }
+#endif
+	ret += snprintf(buf + ret, PAGE_SIZE - ret, "perf_num_counters: %d\n", perf_num_counters());
+	ret += snprintf(buf + ret, PAGE_SIZE - ret, "read from pmcr_el10\n");
+
+	for(cpu=0; cpu<MXNR_CPU; cpu++)
+	{
+		ret += snprintf(buf + ret, PAGE_SIZE - ret, "cpu_%d:%d\n",cpu,cpu_pmu_num[cpu]);
+	}
+
+	return strlen(buf);
+}
+
 static int dbg_annotate_cnt_val = 0;
 
 #define __met_perf_event_is_cyc_cnt_idx(idx) \
@@ -138,6 +182,10 @@ DECLARE_KOBJ_ATTR_INT(override_handle_irq, override_handle_irq);
 DECLARE_KOBJ_ATTR_INT(pmu_use_alloc_bitmap, pmu_use_alloc_bitmap);
 
 DECLARE_KOBJ_ATTR_INT(dbg_annotate_cnt_val, dbg_annotate_cnt_val);
+DECLARE_KOBJ_ATTR_RO(pmu_count);
+
+
+
 
 #define KOBJ_ATTR_LIST \
 	do { \
@@ -148,6 +196,7 @@ DECLARE_KOBJ_ATTR_INT(dbg_annotate_cnt_val, dbg_annotate_cnt_val);
 		KOBJ_ATTR_ITEM(override_handle_irq); \
 		KOBJ_ATTR_ITEM(pmu_use_alloc_bitmap); \
 		KOBJ_ATTR_ITEM(dbg_annotate_cnt_val); \
+		KOBJ_ATTR_ITEM(pmu_count); \
 	} while (0)
 
 #ifdef MET_TINYSYS
@@ -1365,6 +1414,7 @@ static int cpupmu_process_argument(const char *arg, int len)
 
 		nr_counters = cpu_pmu->event_count[cpu];
 		pr_debug("[MET_PMU] pmu slot count=%d\n", nr_counters);
+		PR_BOOTMSG("[MET_PMU]CPU%d pmu slot count=%d\n",cpu, nr_counters);
 
 		if (nr_counters == 0)
 			goto arg_out;
