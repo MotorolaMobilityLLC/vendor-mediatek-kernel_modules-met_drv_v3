@@ -203,8 +203,10 @@ int tinysys_log_manager_stop(void)
 #ifdef MET_SSPM
 	if ((ondiemet_module[ONDIEMET_SSPM] == 0) || (sspm_buffer_size == -1)) {
 		if (met_sspm_api_ready && met_scmi_api_ready) {
-			sspm_log_stop();
-			_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
+			if (!ondiemet_record_check[ONDIEMET_SSPM]) {
+				sspm_log_stop();
+				_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
+			}
 		}
 	}
 #endif
@@ -212,8 +214,10 @@ int tinysys_log_manager_stop(void)
 #ifdef MET_MCUPM
 	if ((ondiemet_module[ONDIEMET_MCUPM] == 0) || (mcupm_buffer_size == -1)) {
 		if (met_mcupm_api_ready && met_ipi_api_ready) {
-			mcupm_log_stop();
-			_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
+			if (!ondiemet_record_check[ONDIEMET_MCUPM]) {
+				mcupm_log_stop();
+				_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
+			}
 		}
 	}
 #endif
