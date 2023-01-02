@@ -1036,7 +1036,7 @@ static const char help[] =
 
 static int cpupmu_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help, cpu_pmu->cpu_name);
+	return SNPRINTF(buf, PAGE_SIZE, help, cpu_pmu->cpu_name);
 }
 
 #ifdef MET_TINYSYS
@@ -1139,15 +1139,15 @@ static int cpupmu_print_header(char *buf, int len)
 
 	/*append CPU PMU access method*/
 	if (met_cpu_pmu_method)
-		ret += snprintf(buf + ret, len,
+		ret += SNPRINTF(buf + ret, len,
 			"met-info [000] 0.0: CPU_PMU_method: perf APIs\n");
 	else
-		ret += snprintf(buf + ret, len,
+		ret += SNPRINTF(buf + ret, len,
 			"met-info [000] 0.0: CPU_PMU_method: MET pmu driver\n");
 
 	/*append cache line size*/
-	ret += snprintf(buf + ret, len - ret, cache_line_header, cache_line_size());
-	ret += snprintf(buf + ret, len - ret, "# mp_cpu: pmu_value1, ...\n");
+	ret += SNPRINTF(buf + ret, len - ret, cache_line_header, cache_line_size());
+	ret += SNPRINTF(buf + ret, len - ret, "# mp_cpu: pmu_value1, ...\n");
 
 	/*
 	 * print error message when user requested more pmu events than
@@ -1156,7 +1156,7 @@ static int cpupmu_print_header(char *buf, int len)
 	 */
 	for_each_possible_cpu(cpu) {
 		if (nr_ignored_arg[cpu]) {
-			ret += snprintf(buf + ret,
+			ret += SNPRINTF(buf + ret,
 					len - ret,
 					"met-info [000] 0.0: ##_PMU_INIT_FAIL: "
 					"too many events requested on CPU %d (max = %d+1), %d events ignored\n",
@@ -1183,7 +1183,7 @@ static int cpupmu_print_header(char *buf, int len)
 				continue;
 
 			if (first) {
-				ret += snprintf(buf + ret,
+				ret += SNPRINTF(buf + ret,
 						len - ret,
 						"met-info [000] 0.0: ##_PMU_INIT_FAIL: "
 						"CPU %d offline, unable to allocate following PMU event(s) 0x%x",
@@ -1192,14 +1192,14 @@ static int cpupmu_print_header(char *buf, int len)
 				continue;
 			}
 
-			ret += snprintf(buf + ret, len - ret, ",0x%x", failed_pmu_ptr->event);
+			ret += SNPRINTF(buf + ret, len - ret, ",0x%x", failed_pmu_ptr->event);
 		}
 		if (!first && per_cpu_ptr(pmu_perf_data, cpu)->init_failed_cnt >=
 		    ARRAY_SIZE(per_cpu_ptr(pmu_perf_data, cpu)->init_failed_pmus))
-			ret += snprintf(buf + ret, len - ret,
+			ret += SNPRINTF(buf + ret, len - ret,
 					"... (truncated if there's more)");
 		if (!first)
-			ret += snprintf(buf + ret, len - ret, "\n");
+			ret += SNPRINTF(buf + ret, len - ret, "\n");
 	}
 
 	/*
@@ -1219,7 +1219,7 @@ static int cpupmu_print_header(char *buf, int len)
 				continue;
 
 			if (first) {
-				ret += snprintf(buf + ret,
+				ret += SNPRINTF(buf + ret,
 						len - ret,
 						"met-info [000] 0.0: ##_PMU_INIT_FAIL: "
 						"on CPU %d, no enough PMU register slots to allocate events 0x%x",
@@ -1228,14 +1228,14 @@ static int cpupmu_print_header(char *buf, int len)
 				continue;
 			}
 
-			ret += snprintf(buf + ret, len - ret, ",0x%x", failed_pmu_ptr->event);
+			ret += SNPRINTF(buf + ret, len - ret, ",0x%x", failed_pmu_ptr->event);
 		}
 		if (!first && per_cpu_ptr(pmu_perf_data, cpu)->init_failed_cnt >=
 		    ARRAY_SIZE(per_cpu_ptr(pmu_perf_data, cpu)->init_failed_pmus))
-			ret += snprintf(buf + ret, len - ret,
+			ret += SNPRINTF(buf + ret, len - ret,
 					"... (truncated if there's more)");
 		if (!first)
-			ret += snprintf(buf + ret, len - ret, "\n");
+			ret += SNPRINTF(buf + ret, len - ret, "\n");
 	}
 
 	for_each_possible_cpu(cpu) {
@@ -1254,22 +1254,22 @@ static int cpupmu_print_header(char *buf, int len)
 					continue;
 
 				if (first) {
-					ret += snprintf(buf + ret, len - ret, header, cpu);
+					ret += SNPRINTF(buf + ret, len - ret, header, cpu);
 					first = 0;
 				}
-				ret += snprintf(buf + ret, len - ret, ",0x%x",
+				ret += SNPRINTF(buf + ret, len - ret, ",0x%x",
 						__pmu_event_on_hw_idx(cpu, i));
 			}
 			if (pmu[event_count-1].mode != MODE_DISABLED) {
 				if (first) {
-					ret += snprintf(buf + ret, len - ret, header, cpu);
+					ret += SNPRINTF(buf + ret, len - ret, header, cpu);
 					first = 0;
 				}
-				ret += snprintf(buf + ret, len - ret, ",0x%x",
+				ret += SNPRINTF(buf + ret, len - ret, ",0x%x",
 						pmu[event_count-1].event);
 			}
 			if (!first)
-				ret += snprintf(buf + ret, len - ret, "\n");
+				ret += SNPRINTF(buf + ret, len - ret, "\n");
 		}
 #else
 		pr_debug("sspm not enabled, ignore pmu_use_alloc_bitmap\n");
@@ -1283,13 +1283,13 @@ static int cpupmu_print_header(char *buf, int len)
 					continue;
 
 				if (first) {
-					ret += snprintf(buf + ret, len - ret, header, cpu);
+					ret += SNPRINTF(buf + ret, len - ret, header, cpu);
 					first = 0;
 				}
-				ret += snprintf(buf + ret, len - ret, ",0x%x", pmu[i].event);
+				ret += SNPRINTF(buf + ret, len - ret, ",0x%x", pmu[i].event);
 			}
 			if (!first)
-				ret += snprintf(buf + ret, len - ret, "\n");
+				ret += SNPRINTF(buf + ret, len - ret, "\n");
 		}
 	}
 
@@ -1903,9 +1903,9 @@ static int tinysys_pmu_print_header(char *buf, int len)
 
 	if (met_cpupmu.tinysys_type == 0)
 	{
-		ret = snprintf(buf, len, sspm_pmu_header);
+		ret = SNPRINTF(buf, len, sspm_pmu_header);
 	} else if (met_cpupmu.tinysys_type == 1)  {
-		ret = snprintf(buf, len, mcupm_pmu_header);
+		ret = SNPRINTF(buf, len, mcupm_pmu_header);
 	}
 
 	if (met_cpupmu.ondiemet_mode == 1)

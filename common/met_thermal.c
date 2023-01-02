@@ -10,6 +10,7 @@
 #include "met_drv.h"
 #include "core_plf_init.h"
 #include "core_plf_trace.h"
+#include "mtk_typedefs.h"
 
 #define TZ_NUM_MAX 50
 static struct thermal_zone_device *dts_tz_list[TZ_NUM_MAX], *ext_tz_list[TZ_NUM_MAX];
@@ -23,7 +24,7 @@ struct kobject *kobj_thermal;
 
 static ssize_t ext_tz_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-    return snprintf(buf, PAGE_SIZE, "%s\n", ext_tz_str);
+    return SNPRINTF(buf, PAGE_SIZE, "%s\n", ext_tz_str);
 }
 
 static ssize_t ext_tz_store(struct kobject *kobj,
@@ -31,7 +32,7 @@ static ssize_t ext_tz_store(struct kobject *kobj,
 {
     int ret;
 
-    ret = snprintf(ext_tz_str, FILE_NODE_STR_LEN, "%s", buf);
+    ret = SNPRINTF(ext_tz_str, FILE_NODE_STR_LEN, "%s", buf);
     if (ret < 0) {
         return -EINVAL;
     }
@@ -163,7 +164,7 @@ static void thermal_polling(unsigned long long stamp, int cpu)
 static const char help[] = "  --thermal                             monitor thermal\n";
 static int thermal_print_help(char *buf, int len)
 {
-    return snprintf(buf, PAGE_SIZE, help);
+    return SNPRINTF(buf, PAGE_SIZE, help);
 }
 
 static void clear_ext_tz(void) {
@@ -185,26 +186,26 @@ static int thermal_print_header(char *buf, int len)
     unsigned int buf_len = PAGE_SIZE;
 
     if (dts_tz_num) {
-        ret += snprintf(buf + ret, buf_len - ret, "%s ", dts_tz_header);
+        ret += SNPRINTF(buf + ret, buf_len - ret, "%s ", dts_tz_header);
         for(i=0; i<(dts_tz_num-1); i++) {
             if (dts_tz_list[i]) {
-                ret += snprintf(buf + ret, buf_len - ret, "%s, ", dts_tz_list[i]->type);
+                ret += SNPRINTF(buf + ret, buf_len - ret, "%s, ", dts_tz_list[i]->type);
             }
         }
         if (dts_tz_list[dts_tz_num-1]) {
-            ret += snprintf(buf + ret, buf_len - ret, "%s\n", dts_tz_list[dts_tz_num-1]->type);
+            ret += SNPRINTF(buf + ret, buf_len - ret, "%s\n", dts_tz_list[dts_tz_num-1]->type);
         }
     }
 
     if (ext_tz_num) {
-        ret += snprintf(buf + ret, buf_len - ret, "%s ", ext_tz_header);
+        ret += SNPRINTF(buf + ret, buf_len - ret, "%s ", ext_tz_header);
         for(i=0; i<(ext_tz_num-1); i++) {
             if (ext_tz_list[i]) {
-                ret += snprintf(buf + ret, buf_len - ret, "%s, ", ext_tz_list[i]->type);
+                ret += SNPRINTF(buf + ret, buf_len - ret, "%s, ", ext_tz_list[i]->type);
             }
         }
         if (ext_tz_list[ext_tz_num-1]) {
-            ret += snprintf(buf + ret, buf_len - ret, "%s\n", ext_tz_list[ext_tz_num-1]->type);
+            ret += SNPRINTF(buf + ret, buf_len - ret, "%s\n", ext_tz_list[ext_tz_num-1]->type);
         }
 
         clear_ext_tz();
