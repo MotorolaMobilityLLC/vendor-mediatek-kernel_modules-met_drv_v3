@@ -45,7 +45,7 @@ static unsigned int perf_device_type = 7;
 
 //collect fail to init events
 static int nr_ignored_arg=0;
-static int init_failed_cnt=0;
+static unsigned int init_failed_cnt=0;
 static struct dsu_failed_desc init_failed_dsus[MXNR_DSU_EVENT_BUFFER_SZ];
 
 static ssize_t perf_type_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
