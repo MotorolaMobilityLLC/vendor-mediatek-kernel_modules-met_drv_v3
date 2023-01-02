@@ -20,6 +20,7 @@
 #include "met_tag.h"
 #include "interface.h"
 #include "switch.h"
+#include "mtk_typedefs.h"
 
 struct bltable_t bltab;
 
@@ -429,7 +430,7 @@ static ssize_t enable_show(struct kobject *kobj, struct kobj_attribute *attr, ch
 {
 	int i;
 
-	i = snprintf(buf, PAGE_SIZE, "%d\n", (bltab.flag >> 31) ? 0 : 1);
+	i = SNPRINTF(buf, PAGE_SIZE, "%d\n", (bltab.flag >> 31) ? 0 : 1);
 	return i;
 }
 
@@ -467,7 +468,7 @@ static ssize_t dump_buffer_show(struct kobject *kobj, struct kobj_attribute *att
 	else
 		size = dump_data_size;
 
-	i = snprintf(buf, PAGE_SIZE, "Buffer Size (KB)=%d\nData Size (KB)=%d\nOverrun=%d\n",
+	i = SNPRINTF(buf, PAGE_SIZE, "Buffer Size (KB)=%d\nData Size (KB)=%d\nOverrun=%d\n",
 		     dump_buffer_size >> 10, size >> 10, dump_overrun);
 	return i;
 }

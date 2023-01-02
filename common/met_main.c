@@ -25,6 +25,7 @@
 #include "met_kernel_symbol.h"
 #include "interface.h"
 #include <linux/of.h>
+#include "mtk_typedefs.h"
 
 extern struct device_node *of_root;
 static const char *platform_name;
@@ -97,19 +98,19 @@ static void met_set_cpu_topology(int core_id, int cluster_core_num)
 				get_cpu_type_name(cptb, cpu_type);
 				if (prev_cptb == NULL)
 					/* first write:  write core_type & core_number */
-					buf_len += snprintf(met_cpu_topology + buf_len,
+					buf_len += SNPRINTF(met_cpu_topology + buf_len,
 								sizeof(met_cpu_topology) - buf_len,
 								"%s:%d", cpu_type, core_id + i);
 				else if (!strncmp(prev_cptb, cptb, strlen(prev_cptb)))
 					/* cpu type is the same with before */
 					/* write core_number */
-					buf_len += snprintf(met_cpu_topology + buf_len,
+					buf_len += SNPRINTF(met_cpu_topology + buf_len,
 								sizeof(met_cpu_topology) - buf_len,
 								",%d", core_id + i);
 				else
 					/* cpu type is different with before */
 					/* write core_type & core_number */
-					buf_len += snprintf(met_cpu_topology + buf_len,
+					buf_len += SNPRINTF(met_cpu_topology + buf_len,
 								sizeof(met_cpu_topology) - buf_len,
 								"|%s:%d", cpu_type, core_id + i);
 
@@ -136,14 +137,14 @@ static int met_create_cpu_topology(void)
 		of_node_put(node);
 
 		for (i = 0; i < cluster_num; i++) {
-			snprintf(cluster_name, sizeof(cluster_name), "cluster%d", i);
+			SNPRINTF(cluster_name, sizeof(cluster_name), "cluster%d", i);
 			node = of_find_node_by_name(NULL, cluster_name);
 			if (node) {
 
 				j = 0;
 				cluster_core_num = 0;
 				do {
-					snprintf(core_name, sizeof(core_name), "core%d", j);
+					SNPRINTF(core_name, sizeof(core_name), "core%d", j);
 					core_node = of_get_child_by_name(node, core_name);
 					if (core_node) {
 						cluster_core_num++;
@@ -156,7 +157,7 @@ static int met_create_cpu_topology(void)
 				/* "|" use to separate different cluster */
 				if (i > 0) {
 					len = strlen(met_cpu_topology);
-					snprintf(met_cpu_topology + len, sizeof(met_cpu_topology) - len, "|");
+					SNPRINTF(met_cpu_topology + len, sizeof(met_cpu_topology) - len, "|");
 				}
 
 				met_set_cpu_topology(start_core_id, cluster_core_num);
@@ -186,7 +187,7 @@ static int __init met_drv_init(void)
 
 	for_each_possible_cpu(cpu) {
 		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
-		/* snprintf(&(met_cpu_ptr->name[0]), sizeof(met_cpu_ptr->name), "met%02d", cpu); */
+		/* SNPRINTF(&(met_cpu_ptr->name[0]), sizeof(met_cpu_ptr->name), "met%02d", cpu); */
 		met_cpu_ptr->cpu = cpu;
 	}
 
