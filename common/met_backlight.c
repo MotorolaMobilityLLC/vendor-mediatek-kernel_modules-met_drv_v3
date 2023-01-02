@@ -139,7 +139,7 @@ static ssize_t bl_tag_enable_store(struct kobject *kobj,
 
 		update_uartlog_status(true, 1);
 		pr_info("%s\n", _trigger_DAQ_);
-		pr_info("trigger patern size[%d]\n", strlen(_trigger_DAQ_));
+		pr_info("trigger patern size[%zu]\n", strlen(_trigger_DAQ_));
 
 		ret = met_tag_oneshot_real(33880, "_MM_BL_", 0);
 
