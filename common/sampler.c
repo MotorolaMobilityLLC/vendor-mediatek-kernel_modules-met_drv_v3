@@ -204,7 +204,7 @@ static void __met_hrtimer_register(void *unused)
 	/* struct delayed_work *dw; */
 	/*struct metdevice *c;*/
 
-	met_cpu_ptr = this_cpu_ptr(&met_cpu);
+	met_cpu_ptr = this_cpu_ptr(met_cpu);
 #if	defined(DEBUG_CPU_NOTIFY)
 	{
 		char msg[32];
@@ -238,7 +238,7 @@ static void __met_hrtimer_stop(void *unused)
 	/* struct delayed_work *dw; */
 	struct metdevice *c;
 
-	met_cpu_ptr = this_cpu_ptr(&met_cpu);
+	met_cpu_ptr = this_cpu_ptr(met_cpu);
 #if	defined(DEBUG_CPU_NOTIFY)
 	{
 		char msg[32];
@@ -309,7 +309,7 @@ static int met_pmu_cpu_notify(enum met_action action, unsigned int cpu)
 
 	switch (action) {
 	case MET_CPU_ONLINE:
-		met_cpu_ptr = &per_cpu(met_cpu, cpu);
+		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		met_cpu_ptr->hrtimer_online_check = 1;
 		dbg_met_tag_oneshot(0, "met_online check", cpu);
 
@@ -398,7 +398,7 @@ static int met_pmu_cpu_notify(enum met_action action, unsigned int cpu)
 		smp_call_function_single(cpu,
 			__met_hrtimer_stop, NULL, 1);
 
-		met_cpu_ptr = &per_cpu(met_cpu, cpu);
+		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		dw = &met_cpu_ptr->dwork;
 		cancel_delayed_work_sync(dw);
 
@@ -442,7 +442,7 @@ int sampler_start(void)
 #endif
 
 	for_each_possible_cpu(cpu) {
-		met_cpu_ptr = &per_cpu(met_cpu, cpu);
+		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		met_cpu_ptr->work_enabled = 0;
 		met_cpu_ptr->hrtimer_online_check = 0;
 		hrtimer_init(&met_cpu_ptr->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
@@ -559,7 +559,7 @@ void sampler_stop(void)
 
 	/* for_each_online_cpu(cpu) { */
 	for_each_possible_cpu(cpu) {	/* Just for case */
-		met_cpu_ptr = &per_cpu(met_cpu, cpu);
+		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		dw = &met_cpu_ptr->dwork;
 		cancel_delayed_work_sync(dw);
 		/* sync_samples(cpu); */
