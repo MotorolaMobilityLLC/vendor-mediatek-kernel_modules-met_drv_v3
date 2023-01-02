@@ -79,6 +79,7 @@ static unsigned int _g_sspm_status;
 static unsigned int _g_mcupm_status;
 #endif
 
+struct device *tinysys_log_manager_fsdevice;
 
 /*****************************************************************************
  * external function ipmlement
@@ -105,17 +106,30 @@ int tinysys_log_manager_init(struct device *dev)
 	dev_set_drvdata(dev, procfs_met_dir);
 #endif
 
-#ifdef MET_SSPM
-	sspm_log_init(dev);
-#endif
-
-#ifdef MET_MCUPM
-	mcupm_log_init(dev);
-#endif
+	tinysys_log_manager_fsdevice = dev;
 
 	return 0;
 }
 
+#ifdef MET_SSPM
+int met_sspm_log_init(void)
+{
+	if (!(met_sspm_api_ready && met_scmi_api_ready))
+		return -1;
+	return sspm_log_init(tinysys_log_manager_fsdevice);
+}
+EXPORT_SYMBOL(met_sspm_log_init);
+#endif
+
+#ifdef MET_MCUPM
+int met_mcupm_log_init(void)
+{
+	if (!(met_mcupm_api_ready && met_ipi_api_ready))
+		return -1;
+	return mcupm_log_init(tinysys_log_manager_fsdevice);
+}
+EXPORT_SYMBOL(met_mcupm_log_init);
+#endif
 
 int tinysys_log_manager_uninit(struct device *dev)
 {
@@ -125,13 +139,7 @@ int tinysys_log_manager_uninit(struct device *dev)
 	struct proc_dir_entry *procfs_met_dir = NULL;
 #endif
 
-#ifdef MET_SSPM
-	sspm_log_uninit(dev);
-#endif
-
-#ifdef MET_MCUPM
-	mcupm_log_uninit(dev);
-#endif
+	tinysys_log_manager_fsdevice = NULL;
 
 #ifdef ONDIEMET_MOUNT_DEBUGFS
 	dbgfs_met_dir = dev_get_drvdata(dev);
@@ -150,17 +158,40 @@ int tinysys_log_manager_uninit(struct device *dev)
 	return 0;
 }
 
+#ifdef MET_SSPM
+int met_sspm_log_uninit(void)
+{
+	if (!(met_sspm_api_ready && met_scmi_api_ready))
+		return -1;
+	return sspm_log_uninit(tinysys_log_manager_fsdevice);
+}
+EXPORT_SYMBOL(met_sspm_log_uninit);
+#endif
+
+#ifdef MET_MCUPM
+int met_mcupm_log_uninit(void)
+{
+	if (!(met_mcupm_api_ready && met_ipi_api_ready))
+		return -1;
+	return mcupm_log_uninit(tinysys_log_manager_fsdevice);
+}
+EXPORT_SYMBOL(met_mcupm_log_uninit);
+#endif
 
 int tinysys_log_manager_start(void)
 {
 #ifdef MET_SSPM
-	sspm_log_start();
-	_reset(kTINYSYS_LOG_START, ONDIEMET_SSPM);
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		sspm_log_start();
+		_reset(kTINYSYS_LOG_START, ONDIEMET_SSPM);
+	}
 #endif
 
 #ifdef MET_MCUPM
-	mcupm_log_start();
-	_reset(kTINYSYS_LOG_START, ONDIEMET_MCUPM);
+	if (met_mcupm_api_ready && met_ipi_api_ready) {
+		mcupm_log_start();
+		_reset(kTINYSYS_LOG_START, ONDIEMET_MCUPM);
+	}
 #endif
 
 	return 0;
@@ -171,15 +202,19 @@ int tinysys_log_manager_stop(void)
 {
 #ifdef MET_SSPM
 	if ((ondiemet_module[ONDIEMET_SSPM] == 0) || (sspm_buffer_size == -1)) {
-		sspm_log_stop();
-		_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
+		if (met_sspm_api_ready && met_scmi_api_ready) {
+			sspm_log_stop();
+			_reset(kTINYSYS_LOG_STOP, ONDIEMET_SSPM);
+		}
 	}
 #endif
 
 #ifdef MET_MCUPM
 	if ((ondiemet_module[ONDIEMET_MCUPM] == 0) || (mcupm_buffer_size == -1)) {
-		mcupm_log_stop();
-		_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
+		if (met_mcupm_api_ready && met_ipi_api_ready) {
+			mcupm_log_stop();
+			_reset(kTINYSYS_LOG_STOP, ONDIEMET_MCUPM);
+		}
 	}
 #endif
 
