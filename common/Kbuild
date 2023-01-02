@@ -1,6 +1,13 @@
 ################################################################################
 #   MET Kernel module mode
 ################################################################################
+# Support GKI mixed build
+ifeq ($(DEVICE_MODULES_PATH),)
+DEVICE_MODULES_PATH = $(srctree)
+else
+LINUXINCLUDE := $(DEVCIE_MODULES_INCLUDE) $(LINUXINCLUDE)
+endif
+
 ifeq ("$(CONFIG_MTK_MET)","m")
 $(info ======== Build met.ko ... ========)
 else
@@ -11,11 +18,11 @@ MET_CORE := common
 
 obj-$(CONFIG_MTK_MET) := met.o
 
-ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/sync_write.h),)
+ifneq ($(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/sync_write.h),)
     ccflags-y += -DUSE_KERNEL_SYNC_WRITE_H
 endif
 
-ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/mtk_io.h),)
+ifneq ($(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/mtk_io.h),)
     ccflags-y += -DUSE_KERNEL_MTK_IO_H
 endif
 
@@ -23,11 +30,11 @@ ccflags-y += -DCONFIG_MET_MODULE
 ccflags-y += -DMET_PLF_USE
 ccflags-y += -I$(MET_COMMON_DIR)
 ccflags-y += -I$(MET_API_DIR)
-ccflags-y += -I$(srctree)/include/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/leds/
-ccflags-y += -I$(srctree)/drivers/misc/mediatek/met_drv/core/
+ccflags-y += -I$(DEVICE_MODULES_PATH)/include/
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/leds/
+ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/met_drv/core/
 
 ccflags-y += $(EXTRA_ARGS) $(EXTRA_CFLAGS)
 #ccflags-y += -DONDIEMET_MOUNT_DEBUGFS
@@ -93,18 +100,18 @@ else
 endif
 
 ifeq ($(MET_SSPM), y)
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_reservedmem.h)","")
-        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_reservedmem.h)","")
+        subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)
     else
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_reservedmem.h ========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/sspm/$(SSPM_VERSION)/sspm_reservedmem.h ========)
         $(info ======== disable MET_SSPM ========)
         MET_SSPM := n
     endif
 
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/tinysys_scmi/tinysys-scmi.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/tinysys_scmi/
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/tinysys_scmi/tinysys-scmi.h)","")
+        ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/tinysys_scmi/
     else
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/tinysys_scmi/tinysys-scmi.h ========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/tinysys_scmi/tinysys-scmi.h ========)
         $(info ======== disable MET_SSPM ========)
         MET_SSPM := n
     endif
@@ -131,18 +138,18 @@ else
 endif
 
 ifeq ($(MET_MCUPM), y)
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
-        subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/mcupm/include/
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
+        subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/
     else
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h========)
         $(info ======== disable MET_MCUPM ========)
         MET_MCUPM := n
     endif
 
-    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
-        ccflags-y += -I$(srctree)/include/linux/soc/mediatek
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
+        ccflags-y += -I$(DEVICE_MODULES_PATH)/include/linux/soc/mediatek
     else
-        $(info ======== Missing $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
         $(info ======== disable MET_MCUPM ========)
         MET_MCUPM := n
     endif
@@ -170,15 +177,15 @@ else
 endif
 
 ifeq ($(MET_GPUEB), y)
-    ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/gpueb/include/gpueb_reserved_mem.h)","")
-        subdir-ccflags-y += -I$(srctree)/drivers/gpu/mediatek/gpueb/include/
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpueb/include/gpueb_reserved_mem.h)","")
+        subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpueb/include/
     else
-        $(info ======== Missing $(srctree)/drivers/gpu/mediatek/gpueb/include/gpueb_reserved_mem.h========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/gpueb/include/gpueb_reserved_mem.h========)
         $(info ======== disable MET_GPUEB ========)
         MET_GPUEB := n
     endif
 
-    ifneq ("$(wildcard $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/include/linux/soc/mediatek/mtk_tinysys_ipi.h)","")
         ccflags-y += -I$(srctree)/include/linux/soc/mediatek
     else
         $(info ======== Missing $(srctree)/include/linux/soc/mediatek/mtk_tinysys_ipi.h ========)
@@ -266,10 +273,10 @@ ifeq ($(MET_GPU), y)
     ccflags-y += -DMET_GPU_PMU_MONITOR
 
     # for mtk_gpu_utility.h
-    ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h)","")
-        ccflags-y += -I$(srctree)/drivers/gpu/mediatek/mt-plat/
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h)","")
+        ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/mt-plat/
     else
-        $(info ======== Missing $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h ========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h ========)
         $(info ======== disable MET_GPU ========)
         MET_GPU = n
     endif
@@ -301,11 +308,11 @@ endif
 
 ifeq ($(MET_VCOREDVFS), y)
     # for dvfsrc-exp.h
-    ifneq ("$(wildcard $(srctree)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h)","")
-        ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h)","")
+        ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/
     else
         MET_VCOREDVFS = n
-        $(info ======== Missing $(srctree)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h ========)
+        $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/dvfsrc-exp.h ========)
         $(info ======== disable MET_VCOREDVFS ========)
     endif
 endif
@@ -367,11 +374,11 @@ $(info FEATURE_MET_BACKLIGHT = $(FEATURE_MET_BACKLIGHT))
 
 MET_BACKLIGHT := $(if $(filter n,$(FEATURE_MET_BACKLIGHT)),n,y)
 
-ifneq ("$(wildcard $(srctree)/include/linux/leds-mtk.h)","")
-    ccflags-y += -I$(srctree)/include/linux/
+ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/include/linux/leds-mtk.h)","")
+    ccflags-y += -I$(DEVICE_MODULES_PATH)/include/linux/
 else
     MET_BACKLIGHT = n
-    $(info ======== Missing $(srctree)/include/linux/leds-mtk.h ========)
+    $(info ======== Missing $(DEVICE_MODULES_PATH)/include/linux/leds-mtk.h ========)
     $(info ======== disable MET_BACKLIGHT ========)
 endif
 
