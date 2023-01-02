@@ -38,7 +38,8 @@ static struct kobj_attribute perf_type_attr = __ATTR(perf_type, 0664, perf_type_
 
 noinline void mp_dsu(unsigned char cnt, unsigned int *value)
 {
-	MET_GENERAL_PRINT(MET_TRACE, cnt, value);
+	// MET_GENERAL_PRINT(MET_TRACE, cnt, value);
+	MET_TRACE_FORMAT_H(cnt, value);
 }
 
 static void dummy_handler(struct perf_event *event, struct perf_sample_data *data,
