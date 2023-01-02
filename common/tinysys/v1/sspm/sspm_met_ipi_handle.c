@@ -160,7 +160,7 @@ int scmi_tinysys_to_sspm_command( u32 feature_id,
     	ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id,
                                   __buffer[0], __buffer[1], __buffer[2], __buffer[3], __buffer[4]);
 	} else {
-		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%d] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
 		return -1;
 	}
     if (ret != 0) {
@@ -171,10 +171,10 @@ int scmi_tinysys_to_sspm_command( u32 feature_id,
         wait_ret = wait_for_completion_killable_timeout(&SSPM_ACK_comp, timeout);
 
         if (wait_ret < 0) { // Interrupt occurred, ret = -ERESTARTSYS
-            PR_BOOTMSG("wait_for_completion_killable_timeout() is interrupted! (%d)\n", wait_ret);
+            PR_BOOTMSG("wait_for_completion_killable_timeout() is interrupted! (%ld)\n", wait_ret);
             ret = -1; // FAIL
         } else if (wait_ret == 0) { // 0 if timed out, positive (at least 1, or number of jiffies left till timeout) if completed.
-            PR_BOOTMSG("scmi_tinysys_common_set wait complete time out (%d)\n", wait_ret);
+            PR_BOOTMSG("scmi_tinysys_common_set wait complete time out (%ld)\n", wait_ret);
             ret = -1; // FAIL
         } else {
             MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK with retval: 0x%x, 0x%x, 0x%x, 0x%x \033[0m\n", __buffer[0],
@@ -195,7 +195,7 @@ void start_sspm_ipi_recv_thread()
 	if (get_scmi_tinysys_info_symbol) {
 		tinfo = get_scmi_tinysys_info_symbol();
 	} else {
-		PR_BOOTMSG("[MET] [%s,%s] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%d] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
     of_property_read_u32(tinfo->sdev->dev.of_node, "scmi_met", &feature_id);
@@ -203,13 +203,13 @@ void start_sspm_ipi_recv_thread()
 	if (scmi_tinysys_event_notify_symbol) {
     	scmi_tinysys_event_notify_symbol(feature_id, 1 /*1: ENABLE*/);
 	} else {
-		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_event_notify is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%d] scmi_tinysys_event_notify is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
 	if (scmi_tinysys_register_event_notifier_symbol) {
     	scmi_tinysys_register_event_notifier_symbol(feature_id, MET_handler);
 	} else {
-		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_register_event_notifier is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%d] scmi_tinysys_register_event_notifier is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
     MET_PRINTF_D(" ==> feature_id: %d \n", feature_id);
@@ -504,7 +504,7 @@ static int _sspm_recv_thread(void *data)
 		if (scmi_tinysys_common_set_symbol) {
 			ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id, (MET_MAIN_ID | MET_AP_ACK), 0, 0, 0, 0);
 		} else {
-			PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
+			PR_BOOTMSG("[MET] [%s,%d] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
 			return 1;
 		}
 	} while (!kthread_should_stop());
