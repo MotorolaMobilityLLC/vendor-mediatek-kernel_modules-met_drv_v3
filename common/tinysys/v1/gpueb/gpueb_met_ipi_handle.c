@@ -87,7 +87,7 @@ static int gpueb_run_mode = GPUEB_RUN_NORMAL;
 /*****************************************************************************
  * internal function ipmlement
  *****************************************************************************/
-void start_gpueb_ipi_recv_thread()
+void start_gpueb_ipi_recv_thread(void)
 {
 	int ret = 0;
 
@@ -171,7 +171,7 @@ void start_gpueb_ipi_recv_thread()
 }
 
 
-void stop_gpueb_ipi_recv_thread()
+void stop_gpueb_ipi_recv_thread(void)
 {
 	int ret;
 
