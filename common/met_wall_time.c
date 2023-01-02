@@ -19,6 +19,7 @@
 #include "trace.h"
 #include "interface.h"
 #include "met_kernel_symbol.h"
+#include "mtk_typedefs.h"
 
 #define MODE_CUSOM_CLKSRC       2
 struct metdevice met_wall_time;

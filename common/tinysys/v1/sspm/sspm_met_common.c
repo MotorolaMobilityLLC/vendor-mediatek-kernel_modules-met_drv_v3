@@ -12,6 +12,7 @@
 
 #include "met_drv.h"
 #include "core_plf_init.h"
+#include "mtk_typedefs.h"
 #include "tinysys_sspm.h"
 #include "tinysys_mgr.h"
 
@@ -87,7 +88,7 @@ struct metdevice met_sspm_common = {
  *****************************************************************************/
 static int ondiemet_sspm_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, sspm_help);
+	return SNPRINTF(buf, PAGE_SIZE, sspm_help);
 }
 
 
@@ -109,7 +110,7 @@ static int get_rts_header_from_dts_table(struct sspm_met_event_header* __met_eve
 	/*get string array*/
 	for (idx = 0; idx < MAX_MET_RTS_EVENT_NUM; idx++) {
 		char node_name[MXNR_NODE_NAME];
-		sprintf(node_name, "node_%d", idx);
+		SPRINTF(node_name, "node_%d", idx);
 		nr_str = of_property_read_string_array(np,
 				node_name, &rts_string[0], NR_RTS_STR_ARRAY);
 
@@ -152,7 +153,7 @@ static int ondiemet_sspm_print_header(char *buf, int len)
 	len = 0;
 	met_sspm_common.header_read_again = 0;
 	if (is_dump_header == 0) {
-		len = snprintf(buf, PAGE_SIZE, "%s", header);
+		len = SNPRINTF(buf, PAGE_SIZE, "%s", header);
 		is_dump_header = 1;
 	}
 
@@ -167,7 +168,7 @@ static int ondiemet_sspm_print_header(char *buf, int len)
 
 			write_len = strlen(met_event_header[i].chart_line_name) + strlen(met_event_header[i].key_list) + 3;
 			if ((len + write_len) < PAGE_SIZE) {
-				len += snprintf(buf+len, PAGE_SIZE-len, "%u,%s,%s;",
+				len += SNPRINTF(buf+len, PAGE_SIZE-len, "%u,%s,%s;",
 					met_event_header[i].rts_event_id,
 					met_event_header[i].chart_line_name,
 					met_event_header[i].key_list);
@@ -289,7 +290,7 @@ static int ondiemet_sspm_process_argument(const char *arg, int len)
 		/* key_list */
 		token = strsep(&line, ";\n");
 		/* met_event_header[rts_event_id].key_list = token; */
-		snprintf(met_event_header[rts_event_id].key_list, MAX_KEYLIST_LEN,
+		SNPRINTF(met_event_header[rts_event_id].key_list, MAX_KEYLIST_LEN,
 			"%s",token);
 	}
 

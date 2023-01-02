@@ -19,6 +19,7 @@
 #include "met_drv.h"
 #include "trace.h"
 #include "interface.h"
+#include "mtk_typedefs.h"
 
 #include "mtk_gpu_metmonitor.h"
 #include "core_plf_init.h"
@@ -167,7 +168,7 @@ static char help[] =
 	"  --gpu					monitor gpu status\n";
 static int gpu_status_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help);
+	return SNPRINTF(buf, PAGE_SIZE, help);
 }
 
 static char g_pComGPUStatusHeader[] =
@@ -176,18 +177,18 @@ static int gpu_status_print_header(char *buf, int len)
 {
 	int ret = 0;
 
-	ret = snprintf(buf, PAGE_SIZE, "%s", g_pComGPUStatusHeader);
+	ret = SNPRINTF(buf, PAGE_SIZE, "%s", g_pComGPUStatusHeader);
 
 	if ((1 << eMET_GPU_LOADING) & g_u4AvailableInfo)
-		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Loading,");
+		ret += SNPRINTF(buf+ret, PAGE_SIZE-ret, "%s", "Loading,");
 
 	if ((1 << eMET_GPU_BLOCK_LOADING) & g_u4AvailableInfo)
-		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Block,");
+		ret += SNPRINTF(buf+ret, PAGE_SIZE-ret, "%s", "Block,");
 
 	if ((1 << eMET_GPU_IDLE_LOADING) & g_u4AvailableInfo)
-		ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "Idle");
+		ret += SNPRINTF(buf+ret, PAGE_SIZE-ret, "%s", "Idle");
 
-	ret += snprintf(buf+ret, PAGE_SIZE-ret, "%s", "\n");
+	ret += SNPRINTF(buf+ret, PAGE_SIZE-ret, "%s", "\n");
 
 	return ret;
 }
@@ -291,7 +292,7 @@ static void gpu_dvfs_monitor_polling(unsigned long long stamp, int cpu)
 
 static int gpu_dvfs_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE,
+	return SNPRINTF(buf, PAGE_SIZE,
 			"  --gpu-dvfs				monitor gpu freq\n");
 }
 
@@ -299,11 +300,11 @@ static int gpu_dvfs_print_header(char *buf, int len)
 {
 	int ret = 0;
 
-	ret = snprintf(buf, PAGE_SIZE,
+	ret = SNPRINTF(buf, PAGE_SIZE,
 			"met-info [000] 0.0: met_gpu_dvfs_header: Freq(kHz)\n");
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
+	ret += SNPRINTF(buf+ret, PAGE_SIZE-ret,
 			"met-info [000] 0.0: met_gpu_opp_idx_header: CurIdx,FloorIdx,CeilingIdx\n");
-	ret += snprintf(buf+ret, PAGE_SIZE-ret,
+	ret += SNPRINTF(buf+ret, PAGE_SIZE-ret,
 			"met-info [000] 0.0: met_gpu_opp_limiter_header: FloorLimiter,CeilingLimiter\n");
 
 	return ret;
@@ -369,14 +370,14 @@ static char help_mem[] =
 	"  --gpu-mem				monitor gpu memory status\n";
 static int gpu_mem_status_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help_mem);
+	return SNPRINTF(buf, PAGE_SIZE, help_mem);
 }
 
 static char g_pComGPUMemHeader[] =
 	"met-info [000] 0.0: met_gpu_mem_header: Usage\n";
 static int gpu_mem_status_print_header(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, g_pComGPUMemHeader);
+	return SNPRINTF(buf, PAGE_SIZE, g_pComGPUMemHeader);
 }
 
 MET_DEFINE_DEPENDENCY_BY_NAME(met_gpumem_dependencies) = {
@@ -470,14 +471,14 @@ static char help_pwr[] =
 	"  --gpu-pwr				monitor gpu power status\n";
 static int gpu_Power_status_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, help_pwr);
+	return SNPRINTF(buf, PAGE_SIZE, help_pwr);
 }
 
 static char g_pComGPUPowerHeader[] =
 	"met-info [000] 0.0: met_gpu_power_header: Loading\n";
 static int gpu_Power_status_print_header(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, g_pComGPUPowerHeader);
+	return SNPRINTF(buf, PAGE_SIZE, g_pComGPUPowerHeader);
 }
 
 MET_DEFINE_DEPENDENCY_BY_NAME(met_gpupwr_dependencies) = {
@@ -580,9 +581,9 @@ static int create_gpu_pmu_list(void)
 		ret = mtk_get_gpu_pmu_init_symbol(pmu_list, pmu_cnt, NULL);
 
 		memset(pmu_str, 0x00, MAX_PMU_STR_LEN);
-		len = snprintf(pmu_str, MAX_PMU_STR_LEN, "%s", pmu_list[0].name);
+		len = SNPRINTF(pmu_str, MAX_PMU_STR_LEN, "%s", pmu_list[0].name);
 		for (i = 1; i < pmu_cnt; i++)
-			len += snprintf(pmu_str + len, MAX_PMU_STR_LEN - len, ",%s", pmu_list[i].name);
+			len += SNPRINTF(pmu_str + len, MAX_PMU_STR_LEN - len, ",%s", pmu_list[i].name);
 
 		/*
 		* dummy read in order to reset GPU PMU counter
@@ -671,7 +672,7 @@ static int gpu_pmu_print_help(
 	int len)
 {
 	UNUSE_ARG(len);
-	return snprintf(buf, PAGE_SIZE, "%s\n", help_pmu);
+	return SNPRINTF(buf, PAGE_SIZE, "%s\n", help_pmu);
 }
 
 static int gpu_pmu_print_header(
@@ -679,7 +680,7 @@ static int gpu_pmu_print_header(
 	int len)
 {
 	if(output_header_pmu_len == 0){
-		len = snprintf(buf, PAGE_SIZE, "%s", header_pmu);
+		len = SNPRINTF(buf, PAGE_SIZE, "%s", header_pmu);
 		met_gpu_pmu.header_read_again = 1;
 		output_header_pmu_len = len;
 	}
@@ -688,11 +689,11 @@ static int gpu_pmu_print_header(
 			char output_buf[PAGE_SIZE/4];
 
 			strncpy(output_buf, pmu_str+output_pmu_str_len, PAGE_SIZE/4);
-			len = snprintf(buf, PAGE_SIZE, "%s", output_buf);
+			len = SNPRINTF(buf, PAGE_SIZE, "%s", output_buf);
 			output_pmu_str_len += len;
 		}
 		else{
-			len = snprintf(buf, PAGE_SIZE, "%s\n", pmu_str+output_pmu_str_len);
+			len = SNPRINTF(buf, PAGE_SIZE, "%s\n", pmu_str+output_pmu_str_len);
 
 			/* reset state */
 			met_gpu_pmu.header_read_again = 0;
@@ -803,7 +804,7 @@ static char g_pComGPUStallHeader[] =
 #endif
 static int gpu_stall_print_header(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, g_pComGPUStallHeader);
+	return SNPRINTF(buf, PAGE_SIZE, g_pComGPUStallHeader);
 }
 
 struct metdevice met_gpu_stall = {
