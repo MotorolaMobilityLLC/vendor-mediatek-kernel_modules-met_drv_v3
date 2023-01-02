@@ -17,6 +17,7 @@
 #include <linux/uaccess.h>
 #include <linux/completion.h>
 #include <linux/module.h>	/* symbol_get */
+#include <linux/version.h>
 
 #include "interface.h"
 #include "core_plf_init.h"
@@ -370,9 +371,14 @@ static int _down_freezable_interruptible(struct completion *comp)
 {
 	int ret = 0;
 
+#if KERNEL_VERSION(6, 1, 0) <= LINUX_VERSION_CODE
+	wait_for_completion_state(comp,
+			TASK_INTERRUPTIBLE|TASK_FREEZABLE);
+#else
 	freezer_do_not_count();
 	ret = wait_for_completion_interruptible(comp);
 	freezer_count();
+#endif
 
 	return ret;
 }
