@@ -106,13 +106,15 @@ enum {
 	MID_PMU = 20,
 	MID_MCUPM_CPU_PMU = 21,
 	MID_MCUPM_SENSOR_NETWORK = 22,
-	MID_MCUPM_SYSTEM_PI = 23,
+	MID_MCUPM_CPU_THERMAL = 23,
 	MID_MCUPM_PTPOD = 24,
 	MID_MCUPM_CPU_DVFS = 25,
+	MID_MCUPM_SYSTEM_PI = 26,
 	MID_CPU_PMUE = 0x1D,
 	MID_SYS_PI = 0x1E,
 	MID_COMMON = 0x1F
 };
+
 
 /*****************************************************************************
  * external variable declaration
