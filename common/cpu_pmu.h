@@ -23,7 +23,6 @@
 #define PMU_INIT_FAIL_CPU_OFFLINE 2
 
 #define MXSIZE_PMU_DESC 32
-#define MXNR_CPU	NR_CPUS
 #define MX_CPU_CLUSTER 8
 
 /* max number of pmu counter for armv9 is 20+1 */
@@ -53,13 +52,13 @@ struct cpu_pmu_hw {
 			      unsigned int val, int is_cyc_cnt);
 	void (*disable_intr)(unsigned int idx);
 	void (*disable_cyc_intr)(void);
-	struct met_pmu *pmu[MXNR_CPU];
-	int event_count[MXNR_CPU];
+	struct met_pmu *pmu[NR_CPUS];
+	int event_count[NR_CPUS];
 	/*
 	 * used for compensation of pmu counter loss
 	 * between end of polling and start of cpu pm
 	 */
-	unsigned int cpu_pm_unpolled_loss[MXNR_CPU][MXNR_PMU_EVENTS];
+	unsigned int cpu_pm_unpolled_loss[NR_CPUS][MXNR_PMU_EVENTS];
 };
 
 struct armpmu_handle_irq {
