@@ -3524,6 +3524,11 @@ unsigned int get_sspm_support_feature(void)
 			ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_REQ_AP2MD ;
 
 			ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+
+			if (ret != 0) {
+				PR_BOOTMSG("met_scmi_to_sspm_command fail(%d)\n", ret);
+				rdata = 0;
+			}
 		}
 	}
 #endif
