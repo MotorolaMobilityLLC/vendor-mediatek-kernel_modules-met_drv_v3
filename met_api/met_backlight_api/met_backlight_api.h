@@ -7,3 +7,4 @@
 
 EXTERNAL_SYMBOL_FUNC(int,mtk_leds_register_notifier,struct notifier_block *nb)
 EXTERNAL_SYMBOL_FUNC(int,mtk_leds_unregister_notifier,struct notifier_block *nb)
+EXTERNAL_SYMBOL_FUNC(void,update_uartlog_status,bool new_value,int value)
