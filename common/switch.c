@@ -127,7 +127,6 @@ static struct kobject *kobj_cpu;
 
 static int met_switch_create_subfs(struct kobject *parent)
 {
-	int cpu;
 	int ret = 0;
 
 	first_log = alloc_percpu(typeof(*first_log));
@@ -135,12 +134,6 @@ static int met_switch_create_subfs(struct kobject *parent)
 		PR_BOOTMSG("percpu first_log allocate fail\n");
 		pr_debug("percpu first_log allocate fail\n");
 		return 0;
-	} else {
-		for_each_possible_cpu(cpu) {
-			memset(per_cpu_ptr(first_log, cpu),
-					0,
-					sizeof (*per_cpu_ptr(first_log, cpu)));
-		}
 	}
 
 	/* register tracepoints */
