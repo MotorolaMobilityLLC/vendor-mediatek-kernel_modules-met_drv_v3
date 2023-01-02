@@ -1037,8 +1037,12 @@ int met_register(struct metdevice *met)
 	if (met->polling_count == NULL)
 		return -EINVAL;
 
-	for_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		*(per_cpu_ptr(met->polling_count, cpu)) = 0;
+	}
 
 	if (met->polling_interval > 0) {
 		ret = ((met->polling_interval * sample_rate) - 1) / 1000;
