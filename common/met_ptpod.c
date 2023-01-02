@@ -366,7 +366,7 @@ static int get_cg_regulator_hdlr(void)
 	}
 
 	/* get gpu regulator hdlr */
-	node = of_find_compatible_node(NULL, NULL, GPU_RG_NODE);
+	node = of_find_compatible_node(NULL, NULL, gpu_rg_node);
 	met_device.this_device->of_node = node;
 
 	for (i = 0; i < met_use_gpu_rg_cnt; i++) {
