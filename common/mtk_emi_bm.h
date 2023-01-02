@@ -551,7 +551,7 @@ DECLARE_KOBJ_ATTR_INT(msel_enable, msel_enable);
 // DECLARE_KOBJ_ATTR_HEX_CHECK(emi_select, emi_select, emi_select > 0);
 
 /* KOBJ: rwtype */
-DECLARE_KOBJ_ATTR_INT_CHECK(rwtype, rwtype, rwtype >= 0 && rwtype <= BM_WRITE_ONLY);
+DECLARE_KOBJ_ATTR_INT_CHECK(rwtype, rwtype, rwtype <= BM_WRITE_ONLY);
 
 
 /* KOBJ: ttype1_16_en */
