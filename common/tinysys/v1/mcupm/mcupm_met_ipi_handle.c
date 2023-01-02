@@ -101,8 +101,13 @@ void start_mcupm_ipi_recv_thread()
 	}
 
 	// Tinysys send ipi to APSYS
-	ret = mtk_ipi_register(mcupm_ipidev_symbol, CH_IPIR_C_MET, _met_ipi_cb,
+	if (mtk_ipi_register_symbol) {
+		ret = mtk_ipi_register_symbol(mcupm_ipidev_symbol, CH_IPIR_C_MET, _met_ipi_cb,
 				NULL, (void *) &recv_buf);
+	} else {
+		PR_BOOTMSG("[MET] [%s,%s] mtk_ipi_register is not linked!\n", __FILE__, __LINE__);
+		return;
+	}
 	if (ret) {
 		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", CH_IPIR_C_MET, ret);
 	} else {
@@ -110,8 +115,13 @@ void start_mcupm_ipi_recv_thread()
 	}
 
 	// APSYS send ipi to Tinysys
-	ret = mtk_ipi_register(mcupm_ipidev_symbol, CH_IPIS_C_MET, NULL,
+	if (mtk_ipi_register_symbol) {
+		ret = mtk_ipi_register_symbol(mcupm_ipidev_symbol, CH_IPIS_C_MET, NULL,
 				NULL, (void *) &ackdata);
+	} else {
+		PR_BOOTMSG("[MET] [%s,%s] mtk_ipi_register is not linked!\n", __FILE__, __LINE__);
+		return;
+	}
 	if (ret) {
 		PR_BOOTMSG("mtk_ipi_register:%d failed:%d\n", CH_IPIS_C_MET, ret);
 	} else {
@@ -134,14 +144,25 @@ void start_mcupm_ipi_recv_thread()
 
 void stop_mcupm_ipi_recv_thread()
 {
+	int ret;
+
 	if (_mcupm_recv_task) {
 		mcupm_recv_thread_comp = 1;
 
 		if (mcupm_ipidev_symbol) {
-			// Tinysys send ipi to APSYS
-			mtk_ipi_unregister(mcupm_ipidev_symbol, CH_IPIR_C_MET);
-			// APSYS send ipi to Tinysys
-			mtk_ipi_unregister(mcupm_ipidev_symbol, CH_IPIS_C_MET);
+			
+			if (mtk_ipi_unregister_symbol) {
+				// Tinysys send ipi to APSYS
+				ret = mtk_ipi_unregister_symbol(mcupm_ipidev_symbol, CH_IPIR_C_MET);
+				if (ret)
+					PR_BOOTMSG("mtk_ipi_unregister:%d failed:%d\n", CH_IPIR_C_MET, ret);
+				// APSYS send ipi to Tinysys
+				ret = mtk_ipi_unregister_symbol(mcupm_ipidev_symbol, CH_IPIS_C_MET);
+				if (ret)
+					PR_BOOTMSG("mtk_ipi_unregister:%d failed:%d\n", CH_IPIS_C_MET, ret);
+			} else {
+				PR_BOOTMSG("[MET] [%s,%s] mtk_ipi_unregister is not linked!\n", __FILE__, __LINE__);
+			}
 		}
 
 		kthread_stop(_mcupm_recv_task);
@@ -265,8 +286,13 @@ int met_ipi_to_mcupm_command(
 		return -1;
 	}
 
-	ret = mtk_ipi_send_compl(mcupm_ipidev_symbol, CH_IPIS_C_MET,
-		IPI_SEND_WAIT, (void*)buffer, slot, 2000);
+	if (mtk_ipi_send_compl_symbol) {
+		ret = mtk_ipi_send_compl_symbol(mcupm_ipidev_symbol, CH_IPIS_C_MET,
+			IPI_SEND_WAIT, (void*)buffer, slot, 2000);
+	} else {
+		PR_BOOTMSG("[MET] [%s,%s] mtk_ipi_send_compl is not linked!\n", __FILE__, __LINE__);
+		return -1;
+	}
 	*retbuf = ackdata;
 	if (ret != 0) {
 		PR_BOOTMSG("met_ipi_to_mcupm_command error(%d)\n", ret);
@@ -288,8 +314,13 @@ int met_ipi_to_mcupm_command_async(
 	if (mcupm_ipidev_symbol == NULL) {
 		return -1;
 	}
-	ret = mtk_ipi_send(mcupm_ipidev_symbol, CH_IPIS_C_MET,
-		IPI_SEND_WAIT, (void*)buffer, slot, 2000);
+	if (mtk_ipi_send_symbol) {
+		ret = mtk_ipi_send_symbol(mcupm_ipidev_symbol, CH_IPIS_C_MET,
+			IPI_SEND_WAIT, (void*)buffer, slot, 2000);
+	} else {
+		PR_BOOTMSG("[MET] [%s,%s] mtk_ipi_send is not linked!\n", __FILE__, __LINE__);
+		return -1;
+	}
 	*retbuf = ackdata;
 
 	if (ret != 0) {
@@ -344,6 +375,11 @@ static int _mcupm_recv_thread(void *data)
 {
 	int ret = 0;
 	unsigned int ridx, widx, wlen;
+
+	if (!mtk_ipi_recv_reply_symbol) {
+		PR_BOOTMSG("[MET] [%s,%s] mtk_ipi_recv_reply is not linked!\n", __FILE__, __LINE__);
+		return -1;
+	}
 
 	do {
 		ret = mtk_ipi_recv_reply(mcupm_ipidev_symbol, CH_IPIR_C_MET,
