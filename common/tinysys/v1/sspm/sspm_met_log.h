@@ -43,7 +43,7 @@ extern void *sspm_log_virt_addr;
 #if IS_ENABLED(CONFIG_MTK_GMO_RAM_OPTIMIZE) || IS_ENABLED(CONFIG_MTK_MET_MEM_ALLOC)
 extern dma_addr_t sspm_log_phy_addr;
 #else
-extern unsigned int sspm_log_phy_addr;
+extern phys_addr_t sspm_log_phy_addr;
 #endif
 extern unsigned int sspm_buffer_size;
 
