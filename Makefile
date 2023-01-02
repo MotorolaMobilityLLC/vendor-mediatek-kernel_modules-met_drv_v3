@@ -1,43 +1,50 @@
-MET_ROOT_DIR := $(src)
-MET_COMMON_DIR := $(wildcard $(MET_ROOT_DIR)/common)
-MET_API_DIR := $(wildcard $(MET_ROOT_DIR)/met_api)
-MET_BUILD_DEFAULT := n
-
-ifeq ($(CONFIG_MODULES),y)
-
-ifeq ($(CONFIG_FTRACE),y)
-    ifeq ($(CONFIG_TRACING),y)
-        FTRACE_READY := y
-    endif
+extra_symbols := $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
+ifneq (,$(wildcard ../met_drv_secure_v3))
+	extra_symbols += $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_secure_v3/Module.symvers)
 endif
 
-ifeq ($(CONFIG_MTK_MET),m)
-    MET_BUILD_KO := y
+all: PRIVATE_SYMBOLS := $(extra_symbols)
+all:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
+ifneq (,$(wildcard ../met_drv_secure_v3))
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/../met_drv_secure_v3 modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 endif
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_gpu_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_gpu_adv_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_vcore_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_backlight_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_emi_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_sspm_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_mcupm_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_ipi_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_scmi_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 
-$(info ******** Start to build met_drv ********)
-ifneq (,$(filter $(CONFIG_MTK_MET),y m))
-    ifeq ($(FTRACE_READY),y)
-        ifeq ($(MET_BUILD_KO),y)
-            include $(MET_COMMON_DIR)/Kbuild
-        else
-            $(warning Not building met.ko due to CONFIG_MTK_MET is not set to m, build met default)
-            MET_BUILD_DEFAULT = y
-        endif
-    else
-        $(warning Not building met.ko due to CONFIG_FTRACE/CONFIG_TRACING is not set, build met default)
-        MET_BUILD_DEFAULT = y
-    endif
-else
-    $(warning not support CONFIG_MTK_MET="$(CONFIG_MTK_MET)", build met default)
-    MET_BUILD_DEFAULT = y
+modules_install:
+	$(MAKE) M=$(M) -C $(KERNEL_SRC) modules_install
+ifneq (,$(wildcard ../met_drv_secure_v3))
+	$(MAKE) M=$(M)/../met_drv_secure_v3 -C $(KERNEL_SRC) modules_install
 endif
-else #CONFIG_MODULES = n
-    $(warning Not building met.ko due to CONFIG_MODULES is not set, build met default)
-    MET_BUILD_DEFAULT := y
-endif
+	$(MAKE) M=$(M)/met_api/met_gpu_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_gpu_adv_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_vcore_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_backlight_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_emi_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_sspm_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_mcupm_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_ipi_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_scmi_api -C $(KERNEL_SRC) modules_install
 
-ifeq ($(MET_BUILD_DEFAULT),y)
-    MET_DEF_DIR := $(MET_ROOT_DIR)/default
-    include $(MET_DEF_DIR)/Kbuild
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
+ifneq (,$(wildcard ../met_drv_secure_v3))
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/../met_drv_secure_v3 clean
 endif
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_gpu_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_gpu_adv_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_vcore_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_backlight_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_emi_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_sspm_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_mcupm_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_ipi_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_scmi_api clean
