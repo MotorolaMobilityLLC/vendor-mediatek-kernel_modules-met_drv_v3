@@ -34,7 +34,10 @@
 #include <linux/of.h>
 #include <linux/device.h>
 
+#ifndef __TINYSYS_SCMI_H__
+#define __TINYSYS_SCMI_H__
 #include "tinysys-scmi.h"
+#endif
 
 /*****************************************************************************
  * define declaration
@@ -162,8 +165,13 @@ int scmi_tinysys_common_set_compl( u32 feature_id, unsigned int *buffer, int tim
 
     MET_PRINTF_D("\x1b[1;34m ==> buffer[0~4]: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x \033[0m \n",
 								buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
-    ret = scmi_tinysys_common_set(tinfo->ph, feature_id,
+	if (scmi_tinysys_common_set_symbol) {
+    	ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id,
                                   buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
+	} else {
+		MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
+		return 1;
+	}
     if (ret != 0) {
 		MET_PRINTF_D("scmi_tinysys_common_set_compl error(%d)\n", ret);
     }
@@ -180,11 +188,26 @@ void start_sspm_ipi_recv_thread()
     init_completion(&SSPM_ACK_comp);
     init_completion(&SSPM_CMD_comp);
 
-    tinfo = get_scmi_tinysys_info();
+	if (get_scmi_tinysys_info_symbol) {
+		tinfo = get_scmi_tinysys_info_symbol();
+	} else {
+		MET_PRINTF_D("[MET] [%s,%s] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
+		return;
+	}
     of_property_read_u32(tinfo->sdev->dev.of_node, "scmi_met", &feature_id);
 
-    scmi_tinysys_event_notify(feature_id, 1 /*1: ENABLE*/);
-    scmi_tinysys_register_event_notifier(feature_id, MET_handler);
+	if (scmi_tinysys_event_notify_symbol) {
+    	scmi_tinysys_event_notify_symbol(feature_id, 1 /*1: ENABLE*/);
+	} else {
+		MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_event_notify is not linked!\n", __FILE__, __LINE__);
+		return;
+	}
+	if (scmi_tinysys_register_event_notifier_symbol) {
+    	scmi_tinysys_register_event_notifier_symbol(feature_id, MET_handler);
+	} else {
+		MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_register_event_notifier is not linked!\n", __FILE__, __LINE__);
+		return;
+	}
     MET_PRINTF_D(" ==> feature_id: %d \n", feature_id);
 
 	if (sspm_ipi_thread_started != 1) {
@@ -204,8 +227,7 @@ void stop_sspm_ipi_recv_thread()
 {
 	if (_sspm_recv_task) {
 		sspm_recv_thread_comp = 1;
-
-
+		complete(&SSPM_CMD_comp);
 		kthread_stop(_sspm_recv_task);
 		_sspm_recv_task = NULL;
 		sspm_ipi_thread_started = 0;
@@ -488,7 +510,12 @@ static int _sspm_recv_thread(void *data)
 		}
 
 		MET_PRINTF_D("\x1b[1;34m ==> In while(1) AP done CMD(0x%x) ACK --> SSPM \033[0m\n", recv_buf_copy[0]);
-		ret = scmi_tinysys_common_set(tinfo->ph, feature_id, (MET_MAIN_ID | MET_AP_ACK), 0, 0, 0, 0);
+		if (scmi_tinysys_common_set_symbol) {
+			ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id, (MET_MAIN_ID | MET_AP_ACK), 0, 0, 0, 0);
+		} else {
+			MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
+			return 1;
+		}
 	} while (!kthread_should_stop());
 
 	return 0;
