@@ -1771,7 +1771,7 @@ ssize_t wsct_high_priority_enable_store(struct kobject *kobj,
 		_enable = strsep(&token, delim_coclon);
 		_level = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _enable[%s] _level[%s]\n",_id, _enable, _level);
+		/*PR_BOOTMSG("_id[%s] _enable[%s] _level[%s]\n",_id, _enable, _level);*/
 
 		if (_id == NULL || _enable == NULL || _level == NULL ) {
 			PR_BOOTMSG("err : _id[%s] _enable[%s] _level[%s], para can't be NULL\n",_id, _enable, _level);
@@ -1871,7 +1871,7 @@ ssize_t wsct_busid_store(struct kobject *kobj,
 		_busid = strsep(&token, delim_coclon);
 		_idMask = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _busid[%s] _idMask[%s]\n",_id, _busid, _idMask);
+		pr_debug("_id[%s] _busid[%s] _idMask[%s]\n",_id, _busid, _idMask);
 
 		if (_id == NULL || _busid == NULL || _idMask == NULL) {
 			PR_BOOTMSG("err: _id[%s] _busid[%s] _idMask[%s] ,parameter can't be NULL\n",_id, _busid, _idMask);
@@ -1964,7 +1964,7 @@ ssize_t wsct_chn_rank_sel_store(struct kobject *kobj,
 		_id = strsep(&token, delim_coclon); // ID
 		_chn_rank = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _chn_rank[%s]\n",_id, _chn_rank);
+		pr_debug("_id[%s] _chn_rank[%s]\n",_id, _chn_rank);
 
 		if (_id == NULL || _chn_rank == NULL) {
 			PR_BOOTMSG("err : _id[%s] _chn_rank[%s], para can't be NULL\n",_id, _chn_rank);
@@ -2053,7 +2053,7 @@ void _clear_wsct_burst_range(void) {
 		_low_bnd = strsep(&token, delim_coclon);
 		_up_bnd = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _low_bnd[%s] _up_bnd[%s]\n",_id, _low_bnd, _up_bnd);
+		pr_debug("_id[%s] _low_bnd[%s] _up_bnd[%s]\n",_id, _low_bnd, _up_bnd);
 
 		if (_id == NULL || _low_bnd == NULL || _up_bnd == NULL) {
 			PR_BOOTMSG("err : _id[%s] _low_bnd[%s] _up_bnd[%s], para can't be NULL\n",_id, _low_bnd, _up_bnd);
@@ -2147,7 +2147,7 @@ ssize_t tsct_busid_enable_store(struct kobject *kobj,
 		_enable = strsep(&token, delim_coclon);
 
 
-		PR_BOOTMSG("_id[%s] _enable[%s]\n",_id, _enable);
+		pr_debug("_id[%s] _enable[%s]\n",_id, _enable);
 
 		if (_id == NULL || _enable == NULL) {
 			PR_BOOTMSG("err : _id[%s] _enable[%s], para can't be NULL\n",_id, _enable);
@@ -2238,7 +2238,7 @@ ssize_t ttype_high_priority_ext_store(struct kobject *kobj,
 		_enable = strsep(&token, delim_coclon);
 		_level = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _enable[%s] _level[%s]\n",_id, _enable, _level);
+		pr_debug("_id[%s] _enable[%s] _level[%s]\n",_id, _enable, _level);
 
 		if (_id == NULL || _enable == NULL || _level == NULL ) {
 			PR_BOOTMSG("err : _id[%s] _enable[%s] _level[%s], para can't be NULL\n",_id, _enable, _level);
@@ -2340,7 +2340,7 @@ ssize_t ttype_busid_ext_store(struct kobject *kobj,
 		_busid = strsep(&token, delim_coclon);
 		_idMask = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _busid[%s] _idMask[%s]\n",_id, _busid, _idMask);
+		pr_debug("_id[%s] _busid[%s] _idMask[%s]\n",_id, _busid, _idMask);
 
 		if (_id == NULL || _busid == NULL || _idMask == NULL) {
 			PR_BOOTMSG("err: ttype_busid_ext _id[%s] _busid[%s] _idMask[%s] ,parameter can't be NULL\n",_id, _busid, _idMask);
@@ -2432,7 +2432,7 @@ ssize_t ttype_chn_rank_sel_store(struct kobject *kobj,
 		_id = strsep(&token, delim_coclon); // ID
 		_chn_rank = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _chn_rank[%s]\n",_id, _chn_rank);
+		pr_debug("_id[%s] _chn_rank[%s]\n",_id, _chn_rank);
 
 		if (_id == NULL || _chn_rank == NULL) {
 			PR_BOOTMSG("err (ttype_chn_rank_sel): _id[%s] _chn_rank[%s], para can't be NULL\n",_id, _chn_rank);
@@ -2525,7 +2525,7 @@ ssize_t ttype_burst_range_store(struct kobject *kobj,
 		_low_bnd = strsep(&token, delim_coclon);
 		_up_bnd = strsep(&token, delim_coclon);
 
-		PR_BOOTMSG("_id[%s] _low_bnd[%s] _up_bnd[%s]\n",_id, _low_bnd, _up_bnd);
+		pr_debug("_id[%s] _low_bnd[%s] _up_bnd[%s]\n",_id, _low_bnd, _up_bnd);
 
 		if (_id == NULL || _low_bnd == NULL || _up_bnd == NULL) {
 			PR_BOOTMSG("err (ttype_burst_range): _id[%s] _low_bnd[%s] _up_bnd[%s], para can't be NULL\n",
@@ -2624,7 +2624,7 @@ ssize_t wmask_msel_store(struct kobject *kobj,
 		_id = strsep(&token, delim_coclon); // ID
 		_master_group = strsep(&token, delim_coclon);
 
-		/*PR_BOOTMSG("wmask_msel: _id[%s] _master_group[%s]\n",_id,_master_group);*/
+		pr_debug("wmask_msel: _id[%s] _master_group[%s]\n",_id,_master_group);
 
 		if (_id == NULL || _master_group == NULL) {
 			PR_BOOTMSG("wmask_msel err: _id[%s] _master_group[%s], para can't be NULL\n",_id,_master_group);
@@ -2714,7 +2714,7 @@ ssize_t ageexp_msel_rw_store(struct kobject *kobj,
 		_master_group = strsep(&token, delim_coclon);
 		_rw_type = strsep(&token, delim_coclon);
 
-		// PR_BOOTMSG("ageexp_msel_rw: _id[%s] _master_group[%s] rwtype[%s]\n",_id,_master_group,_rw_type);
+		pr_debug("ageexp_msel_rw: _id[%s] _master_group[%s] rwtype[%s]\n",_id,_master_group,_rw_type);
 
 		if (_id == NULL || _master_group == NULL || _rw_type==NULL) {
 			PR_BOOTMSG("ageexp_msel_rw err: _id[%s] _master_group[%s] rwtype[%s], para can't be NULL\n",_id,_master_group,_rw_type);
@@ -2815,7 +2815,7 @@ ssize_t slc_pmu_cnt_setting_enable_store(struct kobject *kobj,
 		_enable = strsep(&token, delim_coclon);
 
 
-		PR_BOOTMSG("_id[%s] _enable[%s]\n",_id, _enable);
+		pr_debug("_id[%s] _enable[%s]\n",_id, _enable);
 
 		if (_id == NULL || _enable == NULL) {
 			PR_BOOTMSG("err : _id[%s] _enable[%s], para can't be NULL\n",_id, _enable);
@@ -2909,7 +2909,7 @@ ssize_t slc_pmu_cnt_filter0_store(struct kobject *kobj,
 		_id = strsep(&token, delim_coclon); // ID
 		_setting = strsep(&token, delim_coclon);
 
-		// PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting);
+		/* PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting); */
 
 		if (_id == NULL || _setting == NULL) {
 			PR_BOOTMSG("err: _id[%s] _setting[%s], para can't be NULL\n",_id,_setting);
@@ -2998,7 +2998,7 @@ ssize_t slc_pmu_cnt_filter1_store(struct kobject *kobj,
 		_id = strsep(&token, delim_coclon); // ID
 		_setting = strsep(&token, delim_coclon);
 
-		// PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting);
+		/* PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting); */
 
 		if (_id == NULL || _setting == NULL) {
 			PR_BOOTMSG("err: _id[%s] _setting[%s], para can't be NULL\n",_id,_setting);
@@ -3087,7 +3087,7 @@ ssize_t slc_pmu_cnt_bw_lat_sel_store(struct kobject *kobj,
 		_id = strsep(&token, delim_coclon); // ID
 		_setting = strsep(&token, delim_coclon);
 
-		// PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting);
+		/*PR_BOOTMSG("_id[%s] _setting[%s]\n",_id,_setting); */
 
 		if (_id == NULL || _setting == NULL) {
 			PR_BOOTMSG("err: _id[%s] _setting[%s], para can't be NULL\n",_id,_setting);
@@ -3705,7 +3705,7 @@ int emi_create_header(char *buf, int buf_len)
 			msel_group_ext_val_[emi_no][5] & BM_MASTER_ALL);
 
 		/*Ttype RW type header*/
-		PR_BOOTMSG("rwtype=%d\n",rwtype);
+		pr_debug("rwtype=%d\n",rwtype);
 		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_emi_rw_cfg: %d,",emi_no);
 		if (rwtype == BM_READ_ONLY)
 			ret += snprintf(buf + ret, buf_len - ret, "R");

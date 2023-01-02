@@ -114,6 +114,7 @@ extern long met_sspm_api_ready;
 
 #include "mtk_tinysys_ipi.h"
 #include "mcupm_driver.h"
+#include "mcupm_ipi_id.h"
 
 #include "met_mcupm_api/met_mcupm_api.h"
 

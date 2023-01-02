@@ -65,7 +65,7 @@ FEATURE_SMI := y
 FEATURE_MET_BACKLIGHT := y
 FEATURE_EVENT_POWER := y
 FEATURE_SSPM := y
-FEATURE_MCUPM := n
+FEATURE_MCUPM := y
 FEATURE_PTPOD := y
 
 ################################################################################
