@@ -15,6 +15,7 @@
 #include <linux/syscore_ops.h>
 #include <linux/of.h>
 #include <linux/tracepoint.h>
+#include <trace/hooks/epoch.h>
 #include "interface.h"
 #include "sampler.h"
 #include "util.h"
@@ -1302,13 +1303,6 @@ void force_sample(void *unused)
 	}
 }
 
-#define MET_SUSPEND_HAND
-#ifdef MET_SUSPEND_HAND
-static struct syscore_ops met_hrtimer_ops = {
-	.suspend = met_hrtimer_suspend,
-	.resume = met_hrtimer_resume,
-};
-#endif
 
 int fs_reg(int met_minor)
 {
@@ -1317,10 +1311,18 @@ int fs_reg(int met_minor)
 	ctrl_flags = 0;
 	met_mode = 0;
 
-#ifdef MET_SUSPEND_HAND
 	/* suspend/resume function handle register */
-	register_syscore_ops(&met_hrtimer_ops);
-#endif
+	ret = register_trace_android_vh_show_suspend_epoch_val(met_hrtimer_suspend, NULL);
+	if (ret != 0) {
+		pr_debug("register_trace_android_vh_show_suspend_epoch_val failed, ret = %d \n", ret);
+		return ret;
+	}
+
+	ret = register_trace_android_vh_show_resume_epoch_val(met_hrtimer_resume, NULL);
+	if (ret != 0) {
+		pr_debug("register_trace_android_vh_show_resume_epoch_val failed, ret = %d \n", ret);
+		return ret;
+	}
 
 	calc_timer_value(sample_rate);
 
@@ -1566,10 +1568,9 @@ void fs_unreg(void)
 #endif
 
 	misc_deregister(&met_device);
-#ifdef MET_SUSPEND_HAND
 	/* suspend/resume function handle register */
-	unregister_syscore_ops(&met_hrtimer_ops);
-#endif
+	unregister_trace_android_vh_show_suspend_epoch_val(met_hrtimer_suspend, NULL);
+	unregister_trace_android_vh_show_resume_epoch_val(met_hrtimer_resume, NULL);
 }
 
 static unsigned int met_reg_tracepoint_size;
