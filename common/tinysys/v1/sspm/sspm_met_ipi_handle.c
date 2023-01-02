@@ -81,7 +81,6 @@ EXPORT_SYMBOL(sspm_buf_available);
 /*****************************************************************************
  * internal variable declaration
  *****************************************************************************/
-static unsigned int ridx, widx, wlen;
 static unsigned int recv_buf[4], recv_buf_copy[4];
 static unsigned int log_size;
 static struct task_struct *_sspm_recv_task;
@@ -98,7 +97,6 @@ static int sspm_run_mode = SSPM_RUN_NORMAL;
 void MET_handler(u32 r_feature_id, scmi_tinysys_report* report)
 {
     u32 cmd = 0;
-	int ret = 0;
 
     MET_PRINTF_D("\x1b[1;33m ==> p1: 0x%x \033[0m\n", report->p1);
     MET_PRINTF_D("\x1b[1;33m ==> p2: 0x%x \033[0m\n", report->p2);
@@ -114,31 +112,6 @@ void MET_handler(u32 r_feature_id, scmi_tinysys_report* report)
     cmd = report->p1 & MET_SUB_ID_MASK;
 	MET_PRINTF_D("\x1b[1;33m ==> cmd: 0x%x \033[0m\n", cmd);
 	switch (cmd) {
-	case MET_DUMP_BUFFER:	/* mbox 1: start index; 2: size */
-		sspm_buffer_dumping = 1;
-		ridx = report->p2;
-		widx = report->p3;
-		log_size = report->p4;
-		break;
-
-	case MET_CLOSE_FILE:	/* no argument */
-		/* do close file */
-		ridx = report->p2;
-		widx = report->p3;
-		if (widx < ridx) {	/* wrapping occurs */
-			wlen = log_size - ridx;
-			sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
-					wlen * 4, _log_done_cb, (void *)1);
-			sspm_log_req_enq((char *)(sspm_log_virt_addr),
-					widx * 4, _log_done_cb, (void *)1);
-		} else {
-			wlen = widx - ridx;
-			sspm_log_req_enq((char *)(sspm_log_virt_addr) + (ridx << 2),
-					wlen * 4, _log_done_cb, (void *)1);
-		}
-		ret = sspm_log_stop();
-		break;
-
 	case MET_RESP_MD2AP:
 	    sspm_buffer_dumping = 0;
 		break;
@@ -153,7 +126,6 @@ void MET_handler(u32 r_feature_id, scmi_tinysys_report* report)
 
 	MET_PRINTF_D("\x1b[1;33m ==> MET_handler done, while(1) wake up \033[0m\n");
 	complete(&SSPM_CMD_comp);
-
 }
 
 int scmi_tinysys_to_sspm_command( u32 feature_id,
