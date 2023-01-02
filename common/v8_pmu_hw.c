@@ -141,44 +141,6 @@ static void armv8_pmu_hw_reset_all(int generic_counters)
 /***********************************
  *      MET ARM v8 operations      *
  ***********************************/
-enum ARM_TYPE {
-	CORTEX_A53 = 0xD03,
-	CORTEX_A35 = 0xD04,
-	CORTEX_A55 = 0xD05,
-	CORTEX_A57 = 0xD07,
-	CORTEX_A72 = 0xD08,
-	CORTEX_A73 = 0xD09,
-	CORTEX_A75 = 0xD0A,
-	CORTEX_A76 = 0xD0B,
-	CORTEX_A77 = 0xD0D,
-	CORTEX_A78 = 0xD41,
-	KLEIN = 0xD46,
-	MATTERHORN = 0xD47,
-	MATTERHORN_B = 0xD48,
-	CHIP_UNKNOWN = 0xFFF
-};
-
-struct chip_pmu {
-	enum ARM_TYPE	type;
-	unsigned int	event_count;
-};
-
-static struct chip_pmu	chips[] = {
-	{CORTEX_A35, 6+1},
-	{CORTEX_A53, 6+1},
-	{CORTEX_A55, 6+1},
-	{CORTEX_A57, 6+1},
-	{CORTEX_A72, 6+1},
-	{CORTEX_A73, 6+1},
-	{CORTEX_A75, 6+1},
-	{CORTEX_A76, 6+1},
-	{CORTEX_A77, 6+1},
-	{CORTEX_A78, 6+1},
-	{KLEIN, 6+1},
-	{MATTERHORN, 20+1},
-	{MATTERHORN_B, 20+1},
-};
-
 static int armv8_pmu_hw_check_event(struct met_pmu *pmu, int idx, int event)
 {
 	int i;
@@ -266,21 +228,10 @@ struct cpu_pmu_hw armv8_pmu = {
 
 static void set_pmu_event_count(void *info)
 {
-	int i;
-	int cpu;
-	struct cpuinfo_arm64 cpuinfo;
+	unsigned int cpu;
 
 	cpu = smp_processor_id();
-	cpuinfo.reg_midr = read_cpuid_id();
-
-	/* PR_BOOTMSG("CPU[%d]: reg_midr = %x\n", cpu, cpuinfo.reg_midr); */
-	/* PR_BOOTMSG("CPU[%d]: MIDR_PARTNUM = %x\n", cpu, MIDR_PARTNUM(cpuinfo.reg_midr)); */
-	for (i = 0; i < ARRAY_SIZE(chips); i++) {
-		if (chips[i].type == MIDR_PARTNUM(cpuinfo.reg_midr)) {
-			armv8_pmu.event_count[cpu] = chips[i].event_count;
-			break;
-		}
-	}
+	armv8_pmu.event_count[cpu] = ((read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK) + 1;
 }
 
 static void init_pmus(void)
