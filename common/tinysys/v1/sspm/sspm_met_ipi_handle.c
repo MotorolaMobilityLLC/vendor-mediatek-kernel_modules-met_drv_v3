@@ -382,6 +382,25 @@ int met_scmi_to_sspm_command_async(
 EXPORT_SYMBOL(met_scmi_to_sspm_command_async);
 
 
+unsigned int met_scmi_to_sspm_resrc_request(unsigned int on){
+
+	unsigned int ipi_buf[2] = {0, 0};
+	unsigned int rdata = 0;
+	unsigned int res = 0;
+
+	if (sspm_buffer_size == 0)
+		return 0;
+
+	if (met_config_list & (1<<RESOURCE_CTRL)) {
+		ipi_buf[0] = MET_MAIN_ID | MET_RESRC_REQ_AP2MD ;
+		ipi_buf[1] = on;
+		res = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+		return rdata;
+	}
+	return res;
+}
+EXPORT_SYMBOL(met_scmi_to_sspm_resrc_request);
+
 /*****************************************************************************
  * internal function ipmlement
  *****************************************************************************/
