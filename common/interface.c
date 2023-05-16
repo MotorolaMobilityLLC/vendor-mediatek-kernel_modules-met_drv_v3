@@ -63,6 +63,9 @@ unsigned int ctrl_flags;
 int met_mode;
 EXPORT_SYMBOL(met_mode);
 
+int met_config_list = 0;
+EXPORT_SYMBOL(met_config_list);
+
 struct met_strbuf_t __percpu *p_met_strbuf;
 EXPORT_PER_CPU_SYMBOL(p_met_strbuf);
 
@@ -1246,6 +1249,30 @@ unsigned int met_get_chipid_from_atag(void)
 	}
 
 	return chip_id->hw_code;
+}
+
+void met_get_config_list(void)
+{
+	struct device_node *node = NULL;
+	char metcfg_desc[] = "mediatek,met_config";
+	int ret;
+
+	node = of_find_compatible_node(NULL, NULL, metcfg_desc);
+	if (!node) {
+		PR_BOOTMSG("of_find_compatible_node unable to find met_config device node\n");
+		return;
+	}
+	ret = of_property_read_u32_index(node, /* device node */
+									"met-config-list",  /*device name */
+									0, /* offset */
+									&met_config_list);
+	if (ret) {
+		PR_BOOTMSG("Cannot get met-config-list index from dts, set to 0\n");
+		met_config_list = 0;
+		return;
+	}
+
+	PR_BOOTMSG("get met-config-list=%d index from dts\n", met_config_list);
 }
 
 int met_set_topology(const char *topology_name, int flag)
