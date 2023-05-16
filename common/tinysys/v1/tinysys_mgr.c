@@ -65,7 +65,8 @@ static ssize_t sspm_record_check_show(struct device *dev, struct device_attribut
 static ssize_t sspm_record_check_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t sspm_recording_show(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t sspm_recording_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
-
+static ssize_t sspm_resrc_request_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t sspm_resrc_request_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 static int _create_sspm_node(struct device *dev);
 static void _remove_sspm_node(struct device *dev);
 #endif
@@ -257,6 +258,7 @@ static int _sspm_log_mode;
 static int _sspm_run_mode;
 static int _sspm_log_size;
 static int _sspm_log_discard;
+static unsigned int _sspm_resrc_req_res = 0;
 
 static DEVICE_ATTR(sspm_ipi_supported, 0444, sspm_ipi_supported_show, NULL);
 static DEVICE_ATTR(sspm_buffer_size, 0444, sspm_buffer_size_show, NULL);
@@ -269,6 +271,7 @@ static DEVICE_ATTR(sspm_modules, 0664, sspm_modules_show, sspm_modules_store);
 static DEVICE_ATTR(sspm_op_ctrl, 0220, NULL, sspm_op_ctrl_store);
 static DEVICE_ATTR(sspm_record_check, 0664, sspm_record_check_show, sspm_record_check_store);
 static DEVICE_ATTR(sspm_recording, 0664, sspm_recording_show, sspm_recording_store);
+static DEVICE_ATTR(sspm_resrc_request, 0664, sspm_resrc_request_show, sspm_resrc_request_store);
 #endif
 
 #ifdef MET_MCUPM
@@ -857,6 +860,41 @@ static ssize_t sspm_recording_store(
 	return count;
 }
 
+static ssize_t sspm_resrc_request_show(
+	struct device *dev,
+	struct device_attribute *attr,
+	char *buf)
+{
+
+	int i = 0;
+
+	i = snprintf(buf, PAGE_SIZE, "%d\n", _sspm_resrc_req_res);
+	if (i < 0)
+		return 0;
+
+	return i;
+}
+
+static ssize_t sspm_resrc_request_store(
+	struct device *dev,
+	struct device_attribute *attr,
+	const char *buf,
+	size_t count)
+{
+	int cmd;
+
+	if (kstrtoint(buf, 0, &cmd) != 0)
+		return -EINVAL;
+
+	if (cmd < 0 || cmd > 2){
+		return -EINVAL;
+	}
+
+	_sspm_resrc_req_res = met_scmi_to_sspm_resrc_request(cmd);
+
+	return count;
+}
+
 static int _create_sspm_node(struct device *dev)
 {
 	int ret = 0;
@@ -927,6 +965,12 @@ static int _create_sspm_node(struct device *dev)
 		return ret;
 	}
 
+	ret = device_create_file(dev, &dev_attr_sspm_resrc_request);
+	if (ret != 0) {
+		pr_debug("can not create device file: sspm_resrc_request\n");
+		return ret;
+	}
+
 	return ret;
 }
 
@@ -944,6 +988,7 @@ static void _remove_sspm_node(struct device *dev)
 	device_remove_file(dev, &dev_attr_sspm_op_ctrl);
 	device_remove_file(dev, &dev_attr_sspm_record_check);
 	device_remove_file(dev, &dev_attr_sspm_recording);
+	device_remove_file(dev, &dev_attr_sspm_resrc_request);
 }
 #endif
 
