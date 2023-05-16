@@ -25,8 +25,8 @@
 #define MXSIZE_PMU_DESC 32
 #define MX_CPU_CLUSTER 8
 
-/* max number of pmu counter for armv9 is 20+1 */
-#define	MXNR_PMU_EVENTS          22
+/* max number of pmu counter for armv9 is 31+1 */
+#define	MXNR_PMU_EVENTS          33
 /* a roughly large enough size for pmu events buffers,       */
 /* if an input length is rediculously too many, we drop them */
 #define MXNR_PMU_EVENT_BUFFER_SZ ((MXNR_PMU_EVENTS) + 16)
