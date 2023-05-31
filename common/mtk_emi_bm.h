@@ -166,6 +166,7 @@ enum  {
 	DRAMC_DCM_CTRL_SUPPORT = 2, // for on/off the dramc dcm control
 	CHN_EMI_LOWEFF_SUPPORT = 3, // not support now
 	SLC_PMU_SUPPORT_IDX = 4,
+	DRAMC_BUS_MON_TRIGGER = 5,
 };
 
 #define	EMI_OFF			0x0000
