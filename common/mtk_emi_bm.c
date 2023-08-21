@@ -4596,7 +4596,9 @@ void met_emi_resume_basic(void)
 	if (!do_emi())
 		return;
 
-	emi_init();
+	if ( !(MET_EMI_support_list & (1<<EMI_RESUME_DISABLE)) ){
+		emi_init();
+	}
 }
 
 int emi_print_header_basic(char *buf, int len)
