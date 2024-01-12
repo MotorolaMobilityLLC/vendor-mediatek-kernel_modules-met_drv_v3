@@ -12,7 +12,7 @@
 #include "core_plf_trace.h"
 #include "mtk_typedefs.h"
 
-#define TZ_NUM_MAX 50
+#define TZ_NUM_MAX 128
 static struct thermal_zone_device *dts_tz_list[TZ_NUM_MAX], *ext_tz_list[TZ_NUM_MAX];
 static unsigned int dts_tz_num, ext_tz_num;
 static bool dts_tz_updated;
