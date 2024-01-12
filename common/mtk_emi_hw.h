@@ -20,6 +20,7 @@
 /*read from dts*/
 extern int EMI_NUM;
 extern int DRAM_CH_NUM_PER_EMI;
+extern int SLC_PMU_CH_NUM;
 extern int MET_EMI_support_list;
 extern int ddrphy_ao_misc_cg_ctrl0;
 extern int ddrphy_ao_misc_cg_ctrl2;
