@@ -97,8 +97,8 @@ int DRAM_FREQ_DEFAULT;
 int DDR_RATIO_DEFAULT;
 int DRAM_TYPE_DEFAULT;
 int MET_EMI_support_list = 0x0; /*read from dts*/
-int ddrphy_ao_misc_cg_ctrl0;
-int ddrphy_ao_misc_cg_ctrl2;
+int ddrphy_ao_misc_cg_ctrl0 = 0x0; /*default set 0, mean disable*/
+int ddrphy_ao_misc_cg_ctrl2 = 0x0;
 
 
 
@@ -432,19 +432,24 @@ int MET_BM_Init(void)
 		return -1;
 	}
 
-	ret = of_property_read_u32_index(node, // device node
-									"ddrphy-ao-misc-cg-ctrl0",  //device name
-									0, //offset
-									&ddrphy_ao_misc_cg_ctrl0);
-	if (ret) {
-		PR_BOOTMSG("Cannot get ddrphy_ao_misc_cg_ctrl0 index from dts\n");
-		return -1;
+	if (MET_EMI_support_list & (1<<DRAMC_DCM_CTRL_SUPPORT))
+	{
+		PR_BOOTMSG("DCM_CTRL step1: read dts get offset");
+		ret = of_property_read_u32_index(node, // device node
+										"ddrphy-ao-misc-cg-ctrl0",  //device name
+										0, //offset
+										&ddrphy_ao_misc_cg_ctrl0);
+		if (ret) {
+			PR_BOOTMSG("Cannot get ddrphy_ao_misc_cg_ctrl0 index from dts\n");
+			return -1;
+		}
 	}
 
 	ret = of_property_read_u32_index(node, // device node
 									"ddrphy-ao-misc-cg-ctrl2",  //device name
 									0, //offset
 									&ddrphy_ao_misc_cg_ctrl2);
+
 	if (ret) {
 		PR_BOOTMSG("Cannot get ddrphy_ao_misc_cg_ctrl2 index from dts\n");
 		return -1;
@@ -595,7 +600,6 @@ int MET_BM_Init(void)
 	met_emi_default_val[e_MET_DRAM_TYPE] = DRAM_TYPE_DEFAULT;
 	met_emi_default_val[e_MET_DDR_RATIO] = DDR_RATIO_DEFAULT;
 
-
 	return 0;
 }
 
@@ -622,8 +626,10 @@ void MET_BM_SaveCfg(void)
 			emi_config_val[emi_no][i] = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + emi_config[i]));
 
 		/*only ch0 have CHN_EMI_LOWEFF_CTL0 now*/
-		for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++) {
-			emi_chn_config_val[emi_no][0][i] = emi_readl(IOMEM(BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]));
+		if (MET_EMI_support_list & (1<<CHN_EMI_LOWEFF_SUPPORT)) {
+			for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++) {
+				emi_chn_config_val[emi_no][0][i] = emi_readl(IOMEM(BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]));
+			}
 		}
 
 		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
@@ -642,8 +648,11 @@ void MET_BM_RestoreCfg(void)
 	for(emi_no=0; emi_no<EMI_NUM ;emi_no++){
 		for (i = 0; i < EMI_CONFIG_MX_NR; i++)
 			emi_reg_sync_writel(emi_config_val[emi_no][i], (unsigned long)BaseAddrEMI[emi_no] + emi_config[i]);
-		for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++)
-			emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
+
+		if (MET_EMI_support_list & (1<<CHN_EMI_LOWEFF_SUPPORT)) {
+			for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++)
+				emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
+		}
 
 		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
 			for (i = 0; i < SLC_CONFIG_MX_NR; i++)
@@ -3502,11 +3511,18 @@ void MET_BM_IPI_configs(void)
 	int ret;
 	unsigned int rdata;
 	unsigned int ipi_buf[3] = {0, 0, 0};
+	unsigned int ipi_buf_2[3] = {0, 0, 0};
 
 	if (sspm_buf_available == 1) {
 		ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_ARGU | SET_EBM_CONFIGS1;
 		ipi_buf[2] = EMI_VER_MAJOR << 24 | EMI_VER_MINOR << 16 | DRAMC_VER << 8 | 0;
+		ipi_buf[1] = ddrphy_ao_misc_cg_ctrl0 << 16 | ddrphy_ao_misc_cg_ctrl2 ;
 		ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+
+		ipi_buf_2[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_ARGU | SET_EBM_CONFIGS2;
+		ipi_buf_2[1] = met_emi_default_val[e_MET_DRAM_FREQ] << 16 | met_emi_default_val[e_MET_DDR_RATIO];
+		ret = met_scmi_to_sspm_command((void *)ipi_buf_2, sizeof(ipi_buf_2)/sizeof(unsigned int), &rdata, 1);
+
 	}
 }
 #endif
