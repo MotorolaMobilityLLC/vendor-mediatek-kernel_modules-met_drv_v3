@@ -234,6 +234,11 @@ static void set_pmu_event_count(void *info)
 	armv8_pmu.event_count[cpu] = ((read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK) + 1;
 }
 
+void update_pmu_event_count(unsigned int cpu)
+{
+	smp_call_function_single(cpu, set_pmu_event_count, NULL, 1);
+}
+
 static void init_pmus(void)
 {
 	int	cpu;
@@ -242,7 +247,7 @@ static void init_pmus(void)
 		if (cpu<0 || cpu>=NR_CPUS)
 			continue;
 
-		smp_call_function_single(cpu, set_pmu_event_count, NULL, 1);
+		update_pmu_event_count(cpu);
 	}
 }
 
