@@ -5,7 +5,6 @@
 
 #include <linux/cpufreq.h>
 
-#define CREATE_TRACE_POINTS
 #include <trace/events/power.h>
 
 #include "power.h"
@@ -14,7 +13,7 @@
 
 noinline void cpu_frequency(unsigned int frequency, unsigned int cpu_id)
 {
-	MET_TRACE("state=%u cpu_id=%u\n", frequency, cpu_id);
+	trace_cpu_frequency(frequency, cpu_id);
 }
 
 void force_power_log(int cpu)
