@@ -154,7 +154,10 @@ void MET_handler(u32 r_feature_id, scmi_tinysys_report* report)
 
 }
 
-int scmi_tinysys_common_set_compl( u32 feature_id, unsigned int *buffer, int timeout)
+int scmi_tinysys_to_sspm_command( u32 feature_id,
+                                              unsigned int *buffer,
+                                              unsigned int *retbuf,
+                                              int timeout)
 {
     int ret = 0;
     if (tinfo == NULL)
@@ -173,12 +176,16 @@ int scmi_tinysys_common_set_compl( u32 feature_id, unsigned int *buffer, int tim
 		return 1;
 	}
     if (ret != 0) {
-		MET_PRINTF_D("scmi_tinysys_common_set_compl error(%d)\n", ret);
+		MET_PRINTF_D("scmi_tinysys_common_set error(%d)\n", ret);
     }
 
     MET_PRINTF_D("\x1b[1;34m ==> wait for (0x%x) completion \033[0m \n", buffer[0]);
     ret = wait_for_completion_killable_timeout(&SSPM_ACK_comp, timeout);
-    MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK \033[0m\n", buffer[0]);
+
+	memcpy(retbuf, recv_buf, sizeof(unsigned int) * 4);
+    MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK with retval: 0x%x, 0x%x, 0x%x, 0x%x \033[0m\n", buffer[0],
+                                                                retbuf[0], retbuf[1], retbuf[2], retbuf[3]);
+
 
     return ret;
 }
@@ -361,7 +368,7 @@ int met_ipi_to_sspm_command(
 {
 	int ret = 0;
 
-	ret = scmi_tinysys_common_set_compl(feature_id, buffer, 500 /*unit:jiffies (2s time out)*/);
+	ret = scmi_tinysys_to_sspm_command(feature_id, buffer, retbuf, 500 /*unit:jiffies (2s time out)*/);
 
 	if (ret != 0) {
 		PR_BOOTMSG("%s 0x%X, 0x%X, 0x%X, 0x%X\n", __FUNCTION__,
