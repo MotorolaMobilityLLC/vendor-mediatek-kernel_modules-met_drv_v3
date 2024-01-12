@@ -34,6 +34,7 @@
 #include "met_kernel_symbol.h"
 #include "met_power.h"
 #include "version.h"
+#include "met_workqueue.h"
 
 extern int enable_met_backlight_tag(void);
 extern int output_met_backlight_tag(int level);
@@ -1470,6 +1471,7 @@ int fs_reg(int met_minor)
 	met_register(&met_cpupmu);
 	met_register(&met_memstat);
 	met_register(&met_switch);
+	met_register(&met_workqueue);
 #ifdef MET_EVENT_POWER
 	met_register(&met_trace_event);
 #endif
@@ -1577,6 +1579,8 @@ struct tracepoints_table met_reg_tracepoint[] = {
     {.name = "gpu_job_enqueue"},
     {.name = "pm_qos_update_request"},
     {.name = "pm_qos_update_target"},
+    {.name = "workqueue_execute_start"},
+    {.name = "workqueue_execute_end"},
 };
 
 #define FOR_EACH_INTEREST(i) \
@@ -1623,6 +1627,36 @@ int met_tracepoint_probe_reg(char *reg_tp, void *probe_func)
 	if (!found) {
 		ret = -ENODEV;
 		PR_BOOTMSG("can not register callback of %s\n", reg_tp);
+	}
+
+	return ret;
+}
+
+int met_tracepoint_probe_unreg(char *reg_tp, void *probe_func)
+{
+	int ret = 0;
+	int found = 0;
+	int i;
+
+	FOR_EACH_INTEREST(i) {
+		if (strcmp(reg_tp, met_reg_tracepoint[i].name) == 0 &&
+			met_reg_tracepoint[i].init &&
+			met_reg_tracepoint[i].func == probe_func) {
+
+			tracepoint_probe_unregister(met_reg_tracepoint[i].value,
+									    met_reg_tracepoint[i].func,
+									    NULL);
+			met_reg_tracepoint[i].init = 0;
+			PR_BOOTMSG("unregister callback of %s\n", reg_tp);
+
+			found = 1;
+			break;
+		}
+	}
+
+	if (!found) {
+		ret = -ENODEV;
+		PR_BOOTMSG("can not unregister callback of %s\n", reg_tp);
 	}
 
 	return ret;

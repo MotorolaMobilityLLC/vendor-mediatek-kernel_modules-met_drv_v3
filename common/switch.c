@@ -15,6 +15,8 @@
 #include "switch.h"
 #include "sampler.h"
 #include "met_kernel_symbol.h"
+#include "str_util.h"
+
 /* #include "trace.h" */
 
 /*
@@ -24,11 +26,26 @@
 /* #define CPU_IDLE_TRIGGER */
 
 static unsigned int __percpu *first_log;
+static int __percpu *per_cpu_last_need_polling_pid;
+
+#define SWITCH_MODE_LENGTH 5
+#define KWORKER_STR_LENGTH 7
+
+
+static int met_switch_get_switch_mode_arg(const char *input_str, const char *delim_ptr, char *switch_mode_arg);
+static void met_switch_get_process_filter_arg(const char *input_str);
+static int check_if_need_polling(struct task_struct *prev, struct task_struct *next);
+
 
 #ifdef __aarch64__
 /* #include <asm/compat.h> */
 #include <linux/compat.h>
 #endif
+
+struct met_str_array *process_filter_list;
+static const char kworker_str[]="kworker";
+int process_filter_is_empty =1;
+
 
 noinline void mt_switch(struct task_struct *prev, struct task_struct *next)
 {
@@ -87,8 +104,12 @@ void met_sched_switch(void *data, bool preempt, struct task_struct *prev, struct
 		mt_switch(prev, next);
 
 	/* met_perf_cpupmu_status: 0: stop, others: polling */
-	if ((met_switch.mode & MT_SWITCH_SCHEDSWITCH) && met_perf_cpupmu_status)
-		met_perf_cpupmu_polling(0, smp_processor_id());
+	if ((met_switch.mode & MT_SWITCH_SCHEDSWITCH) && met_perf_cpupmu_status){
+		if(process_filter_is_empty || check_if_need_polling(prev, next)){
+			met_perf_cpupmu_polling(0, smp_processor_id());
+		}
+	}
+
 }
 
 #ifdef IRQ_TRIGGER
@@ -136,6 +157,13 @@ static int met_switch_create_subfs(struct kobject *parent)
 		return 0;
 	}
 
+	per_cpu_last_need_polling_pid = alloc_percpu(typeof(*per_cpu_last_need_polling_pid));
+	if (!per_cpu_last_need_polling_pid) {
+		PR_BOOTMSG("percpu per_cpu_last_need_polling_pid allocate fail\n");
+		pr_debug("percpu per_cpu_last_need_polling_pid allocate fail\n");
+		return 0;
+	}
+
 	/* register tracepoints */
 	ret = met_tracepoint_probe_reg("sched_switch", met_sched_switch);
 
@@ -175,6 +203,10 @@ static void met_switch_delete_subfs(void)
 		free_percpu(first_log);
 	}
 
+	if(per_cpu_last_need_polling_pid) {
+		free_percpu(per_cpu_last_need_polling_pid);
+	}
+
 #ifdef MET_ANYTIME
 	if (kobj_cpu != NULL) {
 		sysfs_remove_file(kobj_cpu, &default_on_attr.attr);
@@ -203,6 +235,12 @@ static void met_switch_start(void)
 		return;
 	}
 
+	if(!per_cpu_last_need_polling_pid){
+		MET_TRACE("percpu per_cpu_last_need_polling_pid allocate fail\n");
+		met_switch.mode = 0;
+		return;
+	}
+
 	if (met_switch.mode & MT_SWITCH_SCHEDSWITCH) {
 		cpu_timed_polling = met_cpupmu.timed_polling;
 		/* cpu_tagged_polling = met_cpupmu.tagged_polling; */
@@ -212,6 +250,7 @@ static void met_switch_start(void)
 
 	for_each_possible_cpu(cpu) {
 		*per_cpu_ptr(first_log, cpu) = 1;
+		*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu)=-1;
 	}
 
 }
@@ -227,6 +266,7 @@ static void met_switch_stop(void)
 
 	for_each_possible_cpu(cpu) {
 		*per_cpu_ptr(first_log, cpu) = 0;
+		*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu)=-1;
 	}
 
 }
@@ -236,9 +276,36 @@ static int met_switch_process_argument(const char *arg, int len)
 	unsigned int value;
 	/*ex: mxitem is 0x0005, max value should be (5-1) + (5-2) = 0x100 + 0x11 = 7 */
 	unsigned int max_value = ((MT_SWITCH_MX_ITEM * 2) - 3);
+	char switch_mode_arg[SWITCH_MODE_LENGTH+1];
+	char *delim_ptr = NULL;
+
+	pr_info("[met_switch_process_argument]arg=%s, len=%d\n", arg, len);
+
+	/*reset variable*/
+	met_util_str_array_clean(process_filter_list);
+	process_filter_list = NULL;
+	process_filter_is_empty = 1;
 
 	if (!first_log)
 		return 0;
+	/*
+		input argu may have following types:
+		1. --switch=3 (original)
+		2. --switch=17:mali-cmar-backe,mali-utility-wo,mali-mem-purge
+		3. --switch=17
+	*/
+	delim_ptr = strchr(arg, ':');
+
+	if(delim_ptr != NULL){
+		/*get [switch mode] part from arg*/
+		if(met_switch_get_switch_mode_arg(arg, delim_ptr, switch_mode_arg)<=0){
+			goto arg_switch_exit;
+		}
+		arg =  switch_mode_arg;
+
+		/*get [process_filter] part from arg*/
+		met_switch_get_process_filter_arg(delim_ptr+1);
+	}
 
 	if (met_parse_num(arg, &value, len) < 0)
 		goto arg_switch_exit;
@@ -247,6 +314,11 @@ static int met_switch_process_argument(const char *arg, int len)
 		goto arg_switch_exit;
 
 	met_switch.mode = value;
+
+	if((met_switch.mode & MT_SWITCH_GPU_DDK_OVERHEAD) && process_filter_is_empty){
+		process_filter_is_empty = 0;
+	}
+		
 	return 0;
 
 arg_switch_exit:
@@ -254,15 +326,68 @@ arg_switch_exit:
 	return -EINVAL;
 }
 
+static int met_switch_get_switch_mode_arg(const char *input_str, const char *delim_ptr, char *switch_mode_arg){
+
+	int switch_mode_arg_length = delim_ptr - input_str;
+
+	if(switch_mode_arg_length > SWITCH_MODE_LENGTH){
+		pr_info("[met_switch_get_switch_mode_arg]Error: invalid switch mode number=%s\n", input_str);
+		return -1;
+	}
+
+	strncpy(switch_mode_arg, input_str, switch_mode_arg_length);
+	*(switch_mode_arg+switch_mode_arg_length) ='\0';
+	pr_info("[met_switch_get_switch_mode_arg]switch_mode_arg=%s\n", switch_mode_arg);
+
+	return switch_mode_arg_length;
+}
+
+
+static void met_switch_get_process_filter_arg(const char *input_str){
+
+	/*use str array*/
+	process_filter_list = met_util_str_split(input_str, ',');
+	if(process_filter_list==NULL){
+		process_filter_is_empty=1;
+	}else{
+		process_filter_is_empty = process_filter_list->str_ptr_array_length==0?1:0;
+	}
+}
+
+
+static int check_if_need_polling(struct task_struct *prev, struct task_struct *next){
+
+	int prev_is_need =0;
+	int next_is_need = 0;
+
+	int cpu = smp_processor_id();
+
+	if(*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu) == prev->pid ){
+		prev_is_need = 1;
+	}
+
+	next_is_need = (strncmp(next->comm, kworker_str, KWORKER_STR_LENGTH)==0) || met_util_in_str_array(next->comm, 0, process_filter_list);
+	if(next_is_need){
+		*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu) =  next->pid;
+	}else{
+		*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu)  =  -1;
+	}
+
+	return (prev_is_need || next_is_need);
+}
+
+
 static const char header[] =
 	"met-info [000] 0.0: met_switch_header: prev_pid,prev_state,next_pid,next_state\n";
 
 static const char help[] =
-"  --switch=mode                         mode:0x1 - output CPUPMU whenever sched_switch\n"
-"                                        mode:0x2 - output Aarch 32/64 state whenever state changed (no CPUPMU)\n"
-"                                        mode:0x4 - force output count at tag_start/tag_end\n"
-"                                        mode:0x8 - task switch timer\n"
-"                                        mode:0xF - mode 0x1 + 0x2 + 04 + 08\n";
+"  --switch=mode                         mode:0x1  - output CPUPMU whenever sched_switch\n"
+"                                        mode:0x2  - output Aarch 32/64 state whenever state changed (no CPUPMU)\n"
+"                                        mode:0x4  - force output count at tag_start/tag_end\n"
+"                                        mode:0x8  - task switch timer\n"
+"                                        mode:0xF  - mode 0x1 + 0x2 + 04 + 08\n"
+"                                        mode:0x10 - enable filter mechanism, only specific process will dump CPUPMU\n";
+
 
 static int met_switch_print_help(char *buf, int len)
 {
@@ -272,14 +397,32 @@ static int met_switch_print_help(char *buf, int len)
 static int met_switch_print_header(char *buf, int len)
 {
 	int ret = 0;
+	int i =0;
+	char *start_point = buf;
 
 	ret =
 	    snprintf(buf, PAGE_SIZE, "met-info [000] 0.0: mp_cpu_switch_base: %d\n",
 		     met_switch.mode);
-	if (met_switch.mode & MT_SWITCH_64_32BIT)
-		ret += snprintf(buf + ret, PAGE_SIZE, header);
 
-	return ret;
+	if(ret>0){
+		start_point = buf+ret;
+	}
+
+	/*use str array*/
+	if(process_filter_list !=NULL && process_filter_list->str_ptr_array_length>0){
+		i = process_filter_list->str_ptr_array_length-1;
+		for(; i>=0; i--){
+			int n = snprintf(start_point, PAGE_SIZE, "met-info [000] 0.0: switch_filter: %s\n", process_filter_list->str_ptr_array[i]);
+			pr_info("[met_switch_print_header] n=%d\n", n);
+			start_point += n;
+		}
+	}
+
+	if (met_switch.mode & MT_SWITCH_64_32BIT)
+		start_point += snprintf(start_point, PAGE_SIZE, header);
+
+	return start_point-buf;
+
 }
 
 
