@@ -1749,7 +1749,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 			}
 #endif
 #ifdef MET_MCUPM
-			if (met_cpupmu.tinysys_type == 0) {
+			if (met_cpupmu.tinysys_type == 1) {
 				if (mcupm_buf_available == 1) {
 					ret = met_ipi_to_mcupm_command((void *) ipi_buf, 0, &rdata, 1);
 				}
