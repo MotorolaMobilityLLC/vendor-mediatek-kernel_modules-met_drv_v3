@@ -59,7 +59,6 @@ noinline void ms_st(unsigned long long timestamp, unsigned char cnt, u64 *value)
 
 static int met_stat_create_subfs(struct kobject *parent)
 {
-	int cpu;
 	int ret = 0;
 
 	cpu_status = alloc_percpu(typeof(*cpu_status));
@@ -67,12 +66,6 @@ static int met_stat_create_subfs(struct kobject *parent)
 		PR_BOOTMSG("percpu cpu_status allocate fail\n");
 		pr_debug("percpu cpu_status allocate fail\n");
 		return 0;
-	} else {
-		for_each_possible_cpu(cpu) {
-			memset(per_cpu_ptr(cpu_status, cpu),
-					0,
-					sizeof (*per_cpu_ptr(cpu_status, cpu)));
-		}
 	}
 
 	return ret;

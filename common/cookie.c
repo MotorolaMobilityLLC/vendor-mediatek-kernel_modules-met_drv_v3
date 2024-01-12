@@ -90,7 +90,6 @@ static void kernel_backtrace(struct pt_regs *const regs, struct cookie_info *pin
 
 static int met_cookie_create_subfs(struct kobject *parent)
 {
-	int cpu;
 	int ret = 0;
 
 	info = alloc_percpu(typeof(*info));
@@ -98,12 +97,6 @@ static int met_cookie_create_subfs(struct kobject *parent)
 		PR_BOOTMSG("percpu info allocate fail\n");
 		pr_debug("percpu info allocate fail\n");
 		return 0;
-	} else {
-		for_each_possible_cpu(cpu) {
-			memset(per_cpu_ptr(info, cpu),
-					0,
-					sizeof (*per_cpu_ptr(info, cpu)));
-		}
 	}
 
 	cpu_status = alloc_percpu(typeof(*cpu_status));
@@ -111,12 +104,6 @@ static int met_cookie_create_subfs(struct kobject *parent)
 		PR_BOOTMSG("percpu cpu_status allocate fail\n");
 		pr_debug("percpu cpu_status allocate fail\n");
 		return 0;
-	} else {
-		for_each_possible_cpu(cpu) {
-			memset(per_cpu_ptr(cpu_status, cpu),
-					0,
-					sizeof (*per_cpu_ptr(cpu_status, cpu)));
-		}
 	}
 
 	return ret;

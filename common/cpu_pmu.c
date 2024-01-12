@@ -639,7 +639,6 @@ static void met_perf_cpupmu_stop(int cpu)
 
 static int cpupmu_create_subfs(struct kobject *parent)
 {
-	int cpu;
 	int ret = 0;
 
 	cpu_pmu = cpu_pmu_hw_init();
@@ -666,24 +665,12 @@ static int cpupmu_create_subfs(struct kobject *parent)
 		PR_BOOTMSG("[MET_PMU] percpu pmu_perf_data allocate fail\n");
 		pr_debug("[MET_PMU] percpu pmu_perf_data allocate fail\n");
 		/* don't return fail here, we don't break mounting process */
-	} else {
-		for_each_possible_cpu(cpu) {
-			memset(per_cpu_ptr(pmu_perf_data, cpu),
-			       0,
-			       sizeof (*per_cpu_ptr(pmu_perf_data, cpu)));
-		}
 	}
 
 	cpu_status = alloc_percpu(typeof(*cpu_status));
 	if (!cpu_status) {
 		PR_BOOTMSG("percpu cpu_status allocate fail\n");
 		pr_debug("percpu cpu_status allocate fail\n");
-	} else {
-		for_each_possible_cpu(cpu) {
-			memset(per_cpu_ptr(cpu_status, cpu),
-					0,
-					sizeof (*per_cpu_ptr(cpu_status, cpu)));
-		}
 	}
 
 	return 0;
