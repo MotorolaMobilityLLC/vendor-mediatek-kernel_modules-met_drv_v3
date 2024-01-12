@@ -81,15 +81,28 @@ static inline void __emi_reg_sync_writel(unsigned int data, void __iomem *padr)
 #define STORE_EMI_PARA(name,emi_no) \
 	name##_[emi_no] = name;
 
+u32 CEN_EMI_PHY_ADDR[MET_MAX_EMI_NUM];
 void __iomem *BaseAddrEMI[MET_MAX_EMI_NUM];
+
+u32 CHN_EMI_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrCHN_EMI[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 
+u32 DRAMC_NAO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrDRAMC[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
+
+u32 DRAMC_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrDRAMC_AO[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
+
+u32 DDRPHY_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrDDRPHY_AO[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
+
 // void __iomem *BaseAddrDRAMC0_AO[EMI_NUM][MET_MAX_DRAM_CH_NUM]; //phase out,not use anymore
 void __iomem *BaseAddrAPMIXEDSYS;
+
+u32 SLC_PMU_PHY_ADDR[MET_MAX_EMI_NUM];
 void __iomem *BaseAddrSLC_PMU[MET_MAX_EMI_NUM];
+
+u32 SLC_PMU_2ND_PHY_ADDR[MET_MAX_EMI_NUM];
 void __iomem *BaseAddrSLC_PMU_2ND[MET_MAX_EMI_NUM];
 
 /*read from dts*/
@@ -360,13 +373,6 @@ int MET_BM_Init(void)
 	char metemi_desc[] = "mediatek,met_emi";
 	int ret = 0;
 
-	u32 DRAMC_NAO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
-	u32 DRAMC_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
-	u32 DDRPHY_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
-	u32 CHN_EMI_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
-	u32 CEN_EMI_PHY_ADDR[MET_MAX_EMI_NUM];
-	u32 SLC_PMU_PHY_ADDR[MET_MAX_EMI_NUM];
-	u32 SLC_PMU_2ND_PHY_ADDR[MET_MAX_EMI_NUM];
 	u32 APMIXEDSYS_ADDR = 0;
 
 	unsigned int cen_emi_reg_size = 0x1000;
@@ -758,22 +764,43 @@ void MET_BM_RestoreCfg(void)
 {
 	int i,emi_no;
 
-	/* emi central */
-	for(emi_no=0; emi_no<EMI_NUM ;emi_no++){
-		for (i = 0; i < EMI_CONFIG_MX_NR; i++)
-			emi_reg_sync_writel(emi_config_val[emi_no][i], (unsigned long)BaseAddrEMI[emi_no] + emi_config[i]);
+	/* sspm reg write */
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		for(emi_no=0; emi_no<EMI_NUM ;emi_no++){
+			for (i = 0; i < EMI_CONFIG_MX_NR; i++)
+				emi_sspm_reg_write(emi_config_val[emi_no][i], CEN_EMI_PHY_ADDR[emi_no] + emi_config[i]);
 
-		if (MET_EMI_support_list & (1<<CHN_EMI_LOWEFF_SUPPORT)) {
-			for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++)
-				emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
+			if (MET_EMI_support_list & (1<<CHN_EMI_LOWEFF_SUPPORT)) {
+				for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++)
+					emi_sspm_reg_write(emi_chn_config_val[emi_no][0][i], CHN_EMI_PHY_ADDR[emi_no][0] + emi_chn_config[i]);
+			}
+
+			if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+				for (i = 0; i < SLC_CONFIG_MX_NR; i++)
+					emi_sspm_reg_write(slc_config_val[emi_no][i], SLC_PMU_PHY_ADDR[emi_no] + slc_config[i]);
+				if(SLC_VER == 3){
+					for (i = 0; i < SLC_2ND_CONFIG_MX_NR; i++)
+						emi_sspm_reg_write(slc_2nd_config_val[emi_no][i], SLC_PMU_2ND_PHY_ADDR[emi_no] + slc_2nd_config[i]);
+				}
+			}
 		}
+	} else {/* ap reg write */
+		for(emi_no=0; emi_no<EMI_NUM ;emi_no++){
+			for (i = 0; i < EMI_CONFIG_MX_NR; i++)
+				emi_reg_sync_writel(emi_config_val[emi_no][i], (unsigned long)BaseAddrEMI[emi_no] + emi_config[i]);
 
-		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
-			for (i = 0; i < SLC_CONFIG_MX_NR; i++)
-				emi_reg_sync_writel(slc_config_val[emi_no][i], (unsigned long)BaseAddrSLC_PMU[emi_no] + slc_config[i]);
-			if(SLC_VER == 3){
-				for (i = 0; i < SLC_2ND_CONFIG_MX_NR; i++)
-					emi_reg_sync_writel(slc_2nd_config_val[emi_no][i], (unsigned long)BaseAddrSLC_PMU_2ND[emi_no] + slc_2nd_config[i]);
+			if (MET_EMI_support_list & (1<<CHN_EMI_LOWEFF_SUPPORT)) {
+				for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++)
+					emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
+			}
+
+			if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
+				for (i = 0; i < SLC_CONFIG_MX_NR; i++)
+					emi_reg_sync_writel(slc_config_val[emi_no][i], (unsigned long)BaseAddrSLC_PMU[emi_no] + slc_config[i]);
+				if(SLC_VER == 3){
+					for (i = 0; i < SLC_2ND_CONFIG_MX_NR; i++)
+						emi_reg_sync_writel(slc_2nd_config_val[emi_no][i], (unsigned long)BaseAddrSLC_PMU_2ND[emi_no] + slc_2nd_config[i]);
+				}
 			}
 		}
 	}
@@ -787,7 +814,12 @@ void MET_BM_SetReadWriteType(const unsigned int ReadWriteType, unsigned int emi_
 	for(emi_no=0; emi_no<EMI_NUM ;emi_no++)
 	{
 		value = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN));
-		emi_reg_sync_writel((value & 0xFFFFFFCF) | (rwtype << 4), (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN);
+
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write((value & 0xFFFFFFCF) | (rwtype << 4), CEN_EMI_PHY_ADDR[emi_no] + EMI_BMEN);
+		} else {
+			emi_reg_sync_writel((value & 0xFFFFFFCF) | (rwtype << 4), (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN);
+		}
 	}
 }
 
@@ -816,7 +848,11 @@ int MET_BM_SetMonitorCounter(const unsigned int counter_num,
 			  (master & MASK_MASTER)) << ((counter_num % 2) * 16);
 	}
 
-	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+	} else {
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+	}
 
 	return BM_REQ_OK;
 }
@@ -829,7 +865,12 @@ int MET_BM_SetTtypeCounterRW(unsigned int bmrw0_val, unsigned int bmrw1_val, uns
 	value_origin = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMRW0));
 	MET_TRACE("[MET_EMI_settype1] value_origin: %x\n", value_origin);
 	if (value_origin != bmrw0_val) {
-		emi_reg_sync_writel(bmrw0_val, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMRW0);
+
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(bmrw0_val, CEN_EMI_PHY_ADDR[emi_no] + EMI_BMRW0);
+		} else {
+			emi_reg_sync_writel(bmrw0_val, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMRW0);
+		}
 		MET_TRACE("[MET_EMI_settype1] bmrw0_val: %x, value_origin: %x\n", bmrw0_val,
 			   value_origin);
 	}
@@ -837,7 +878,12 @@ int MET_BM_SetTtypeCounterRW(unsigned int bmrw0_val, unsigned int bmrw1_val, uns
 	value_origin = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMRW1));
 	MET_TRACE("[MET_EMI_settype2] value_origin: %x\n", value_origin);
 	if (value_origin != bmrw1_val) {
-		emi_reg_sync_writel(bmrw1_val, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMRW1);
+
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(bmrw1_val, CEN_EMI_PHY_ADDR[emi_no] + EMI_BMRW1);
+		} else {
+			emi_reg_sync_writel(bmrw1_val, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMRW1);
+		}
 		MET_TRACE("[MET_EMI_settype2] bmrw0_val: %x, value_origin: %x\n", bmrw1_val,
 			   value_origin);
 	}
@@ -857,8 +903,12 @@ int MET_BM_Set_WsctTsct_id_sel(unsigned int counter_num, unsigned int enable, un
 	value =
 	    ((emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2)) & (~(1 << (28 + counter_num)))) |
 	     (enable << (28 + counter_num)));
-	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
 
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + EMI_BMEN2);
+	} else {
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
+	}
 	return BM_REQ_OK;
 }
 
@@ -909,8 +959,12 @@ int MET_BM_SetbusID_En(const unsigned int counter_num,
 		value = (emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2))
 			 | (1 << (counter_num - 1)));
 	}
-	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
 
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + EMI_BMEN2);
+	} else {
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
+	}
 	return BM_REQ_OK;
 }
 
@@ -933,8 +987,11 @@ int MET_BM_SetbusID(const unsigned int counter_num,
 	if (id <= 0xffff)       /*bigger then 0xff_ff : no select busid in master, reset busid as 0*/
 		value |= id << shift_num;
 
-	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
-
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+	} else {
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+	}
 	return BM_REQ_OK;
 }
 
@@ -951,7 +1008,11 @@ int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int
 		 & ~(1 << (counter_num - 1)))
 		| (enable << (counter_num - 1));
 
-	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN1);
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + EMI_BMEN1);
+	} else {
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN1);
+	}
 
 	return BM_REQ_OK;
 }
@@ -971,7 +1032,11 @@ int MET_BM_SetLatencyCounter(unsigned int enable, unsigned int emi_no)
 	if (enable == 1)
 		value |= (0x2 << 24);
 
-	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + EMI_BMEN2);
+	} else {
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
+	}
 
 	return BM_REQ_OK;
 }
@@ -1073,7 +1138,11 @@ int MET_BM_SetLOWEFF_master_rw(unsigned int chan, unsigned int *wmask_msel , uns
 		/* age rw */
 		value = (value & ~(Mask_rw << offset_rw)) | ((*(ageexp_rw + chan) & Mask_rw) << offset_rw);
 
-		emi_reg_sync_writel(value, BaseAddrCHN_EMI[emi_no][chan] + CHN_EMI_LOWEFF_CTL0);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CHN_EMI_PHY_ADDR[emi_no][chan] + CHN_EMI_LOWEFF_CTL0);
+		} else {
+			emi_reg_sync_writel(value, BaseAddrCHN_EMI[emi_no][chan] + CHN_EMI_LOWEFF_CTL0);
+		}
 	} else {
 		return -1;
 	}
@@ -1104,8 +1173,11 @@ int MET_BM_SetWSCT_master_rw(unsigned int *master , unsigned int *rw, unsigned i
 		value = (value & ~(Mask_master << offset_master)) | ((*(master+i) & Mask_master) << offset_master);
 		value = (value & ~(Mask_rw << offset_rw)) | ((*(rw+i) & Mask_rw) << offset_rw);
 
-
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1126,13 +1198,23 @@ int MET_BM_SetWSCT_high_priority(unsigned int *disable, unsigned int *select, un
 		addr = EMI_DBWA + i*4;
 		value = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + addr));
 		value = (value & ~(Mask_disable << offset_disable)) | ((*(disable+i) & Mask_disable) << offset_disable);
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 
 		/* ultra level setting */
 		addr = EMI_DBWA_2ND + i*4;
 		value = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + addr));
 		value = (value & ~(Mask_select << offset_select)) | ((*(select+i) & Mask_select) << offset_select);
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1178,7 +1260,11 @@ int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask, unsig
 		value = (value & ~(Mask_busid << offset_busid)) | (busid_tmp << offset_busid);
 		value = (value & ~(Mask_enable << offset_enable)) | (enable_tmp << offset_enable);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 
 		/*SEL_ID_MSK*/
 		addr = EMI_DBWI + (i/2)*4;
@@ -1190,7 +1276,11 @@ int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask, unsig
 		else
 			value = (value & ~(Mask_idMask << offset_idMask_odd)) | (idmask_tmp << offset_idMask_odd);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1211,7 +1301,11 @@ int MET_BM_SetWSCT_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int emi_no)
 
 		value = (value & ~(Mask << offset)) | ((*(chn_rank_sel+i) & Mask) << offset);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1233,8 +1327,11 @@ int MET_BM_SetWSCT_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, uns
 
 		value = (value & ~(Mask_dis << offset_dis)) | ((*(bnd_dis+i) & Mask_dis) << offset_dis);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
-
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 
 		addr = EMI_DBWA_2ND + i*4;
 		value = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + addr));
@@ -1242,7 +1339,11 @@ int MET_BM_SetWSCT_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, uns
 		value = (value & ~(Mask_low_bnd << offset_low_bnd)) | ((*(low_bnd+i) & Mask_low_bnd) << offset_low_bnd);
 		value = (value & ~(Mask_up_bnd << offset_up_bnd)) | ((*(up_bnd+i) & Mask_up_bnd) << offset_up_bnd);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1287,7 +1388,11 @@ int MET_BM_SetTtype_high_priority_sel(unsigned int _high_priority_filter, unsign
 
 		value = (value & ~(Mask_sel << offset_sel)) | ((*(select+i) & Mask_sel) << offset_sel);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 
 	}
 
@@ -1331,7 +1436,11 @@ int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int 
 
 		value = (value & ~(Mask_idMask << offset_idMask)) | ((*(idMask+i-1) & Mask_idMask) << offset_idMask);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 
 	}
 
@@ -1353,7 +1462,11 @@ int MET_BM_SetTtype_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int emi_no
 
 		value = (value & ~(Mask << offset)) | ((*(chn_rank_sel+i) & Mask) << offset);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1376,8 +1489,11 @@ int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, un
 
 		value = (value & ~(Mask_dis << offset_dis)) | ((*(bnd_dis+i) & Mask_dis) << offset_dis);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
-
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 
 		addr = EMI_TTYPE1_CONB + i*8;
 		value = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + addr));
@@ -1385,7 +1501,11 @@ int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, un
 		value = (value & ~(Mask_low_bnd << offset_low_bnd)) | ((*(low_bnd+i) & Mask_low_bnd) << offset_low_bnd);
 		value = (value & ~(Mask_up_bnd << offset_up_bnd)) | ((*(up_bnd+i) & Mask_up_bnd) << offset_up_bnd);
 
-		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+			emi_sspm_reg_write(value, CEN_EMI_PHY_ADDR[emi_no] + addr);
+		} else {
+			emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
+		}
 	}
 
 	return BM_REQ_OK;
@@ -1393,14 +1513,24 @@ int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, un
 
 int MET_BM_SetSLC_pmu_reg(unsigned int counter_num, unsigned int offset, unsigned int filter_setting, unsigned int emi_no)
 {
-	emi_reg_sync_writel(filter_setting, (unsigned long)BaseAddrSLC_PMU[emi_no] + offset + (counter_num << 4));
+
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(filter_setting, SLC_PMU_PHY_ADDR[emi_no] + offset + (counter_num << 4));
+	} else {
+		emi_reg_sync_writel(filter_setting, (unsigned long)BaseAddrSLC_PMU[emi_no] + offset + (counter_num << 4));
+	}
 
 	return BM_REQ_OK;
 }
 
 int MET_BM_SetSLC_pmu_2nd_reg(unsigned int counter_num, unsigned int offset, unsigned int filter_setting, unsigned int emi_no)
 {
-	emi_reg_sync_writel(filter_setting, (unsigned long)BaseAddrSLC_PMU_2ND[emi_no] + offset + (counter_num << 2));
+
+	if ( emi_use_ondiemet && (MET_EMI_support_list & (1<<SSPM_REG_WRITE)) ){
+		emi_sspm_reg_write(filter_setting, SLC_PMU_2ND_PHY_ADDR[emi_no] + offset + (counter_num << 2));
+	} else {
+		emi_reg_sync_writel(filter_setting, (unsigned long)BaseAddrSLC_PMU_2ND[emi_no] + offset + (counter_num << 2));
+	}
 
 	return BM_REQ_OK;
 }
@@ -1430,11 +1560,9 @@ int MET_BM_SetDRAMC_bus_mon_trigger(unsigned int emi_no, unsigned int on)
 {
 	int i;
 	volatile unsigned int value;
-	unsigned long addr;
 
 	for (i=0;i<dram_chann_num;i++) {
-		addr = (unsigned long)BaseAddrDRAMC_AO[emi_no][i] + dramc_ao_bus_mon1;
-		value = emi_readl(IOMEM(addr));
+		value = emi_readl(IOMEM((unsigned long)BaseAddrDRAMC_AO[emi_no][i] + dramc_ao_bus_mon1));
 
 		if(on){
 			value = (value | 0x10); /* bit 4 : DRAMC trigger by emi */
@@ -1442,7 +1570,8 @@ int MET_BM_SetDRAMC_bus_mon_trigger(unsigned int emi_no, unsigned int on)
 			value = (value & ~(0x10));
 		}
 
-		emi_reg_sync_writel(value, addr);
+		/* SSPM no permission for DRAMC reg */
+		emi_reg_sync_writel(value, (unsigned long)BaseAddrDRAMC_AO[emi_no][i] + dramc_ao_bus_mon1);
 	}
 
 	return BM_REQ_OK;
@@ -3824,6 +3953,29 @@ unsigned int get_sspm_support_feature(void)
 				PR_BOOTMSG("met_scmi_to_sspm_command fail(%d)\n", ret);
 				rdata = 0;
 			}
+		}
+	}
+#endif
+
+	return rdata;
+}
+
+unsigned int emi_sspm_reg_write(unsigned int data, unsigned int addr){
+
+	unsigned int rdata = 0;
+
+#ifdef MET_SSPM
+	unsigned int ipi_buf[3] = {0, 0, 0};
+	int ret;
+
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		if (sspm_buf_available == 1) {
+
+			ipi_buf[0] = MET_MAIN_ID | MET_REG_WRITE_AP2MD ;
+			ipi_buf[1] = data;
+			ipi_buf[2] = addr;
+			ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+
 		}
 	}
 #endif

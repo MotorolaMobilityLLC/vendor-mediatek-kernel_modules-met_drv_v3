@@ -167,6 +167,7 @@ enum  {
 	CHN_EMI_LOWEFF_SUPPORT = 3, // not support now
 	SLC_PMU_SUPPORT_IDX = 4,
 	DRAMC_BUS_MON_TRIGGER = 5,
+	SSPM_REG_WRITE = 6,
 };
 
 #define	EMI_OFF			0x0000
@@ -1093,6 +1094,7 @@ extern unsigned int get_slc_enable_list(void);
 extern void MET_BM_IPI_configs(void);
 extern void MET_BM_IPI_REGISTER_CB(void);
 
+extern unsigned int emi_sspm_reg_write(unsigned int data, unsigned int addr);
 
 extern unsigned int get_sspm_support_feature(void);
 extern unsigned check_sspm_support(unsigned int module_id);
