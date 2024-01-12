@@ -22,6 +22,7 @@ endif
 ccflags-y += -DCONFIG_MET_MODULE
 ccflags-y += -DMET_PLF_USE
 ccflags-y += -I$(MET_COMMON_DIR)
+ccflags-y += -I$(MET_API_DIR)
 ccflags-y += -I$(srctree)/include/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/

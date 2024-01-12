@@ -14,4 +14,6 @@ LOCAL_STRIP_MODULE := true
 
 include $(MTK_KERNEL_MODULE)
 
+include $(LOCAL_PATH)/met_api/Android.mk
+
 endif # Kernel version >= 4.19

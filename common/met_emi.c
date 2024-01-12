@@ -72,6 +72,12 @@ static void ondiemet_emi_stop(void)
 }
 #endif
 
+MET_DEFINE_DEPENDENCY_BY_NAME(dependencies) = {
+	{.symbol=(void**)&met_scmi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_sspm_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_emi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+};
+
 struct metdevice met_sspm_emi = {
 	.name			= "emi",
 	.owner			= THIS_MODULE,
@@ -87,5 +93,6 @@ struct metdevice met_sspm_emi = {
 	.ondiemet_print_header	= ondiemet_emi_print_header,
 #endif
 	.ondiemet_mode		= 1,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(dependencies)
 };
 EXPORT_SYMBOL(met_sspm_emi);

@@ -192,6 +192,10 @@ static int gpu_status_print_header(char *buf, int len)
 	return ret;
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(met_gpu_dependencies) = {
+	{.symbol=(void**)&met_gpu_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=0},
+};
+
 struct metdevice met_gpu = {
 	.name			= "gpu",
 	.owner			= THIS_MODULE,
@@ -208,6 +212,7 @@ struct metdevice met_gpu = {
 #endif
 	.print_help		= gpu_status_print_help,
 	.print_header		= gpu_status_print_header,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(met_gpu_dependencies)
 };
 #endif
 
@@ -304,6 +309,10 @@ static int gpu_dvfs_print_header(char *buf, int len)
 	return ret;
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(met_gpudvfs_dependencies) = {
+	{.symbol=(void**)&met_gpu_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=0},
+};
+
 struct metdevice met_gpudvfs = {
 	.name			= "gpu-dvfs",
 	.owner			= THIS_MODULE,
@@ -316,6 +325,7 @@ struct metdevice met_gpudvfs = {
 	.print_help		= gpu_dvfs_print_help,
 	.print_header		= gpu_dvfs_print_header,
 	.ondiemet_mode		= 0,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(met_gpudvfs_dependencies)
 };
 #endif
 
@@ -369,6 +379,10 @@ static int gpu_mem_status_print_header(char *buf, int len)
 	return snprintf(buf, PAGE_SIZE, g_pComGPUMemHeader);
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(met_gpumem_dependencies) = {
+	{.symbol=(void**)&met_gpu_adv_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=0},
+};
+
 struct metdevice met_gpumem = {
 	.name			= "gpu-mem",
 	.owner			= THIS_MODULE,
@@ -381,6 +395,7 @@ struct metdevice met_gpumem = {
 	.timed_polling		= GPU_MEM,
 	.print_help		= gpu_mem_status_print_help,
 	.print_header		= gpu_mem_status_print_header,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(met_gpumem_dependencies)
 };
 #endif
 
@@ -465,6 +480,10 @@ static int gpu_Power_status_print_header(char *buf, int len)
 	return snprintf(buf, PAGE_SIZE, g_pComGPUPowerHeader);
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(met_gpupwr_dependencies) = {
+	{.symbol=(void**)&met_gpu_adv_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=0},
+};
+
 struct metdevice met_gpupwr = {
 	.name			= "gpu-pwr",
 	.owner			= THIS_MODULE,
@@ -481,6 +500,7 @@ struct metdevice met_gpupwr = {
 #endif
 	.print_help		= gpu_Power_status_print_help,
 	.print_header		= gpu_Power_status_print_header,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(met_gpupwr_dependencies)
 };
 #endif
 
@@ -684,6 +704,10 @@ static int gpu_pmu_print_header(
 	return len;
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(met_gpu_pmu_dependencies) = {
+	{.symbol=(void**)&met_gpu_adv_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=0},
+};
+
 struct metdevice met_gpu_pmu = {
 	.name			= "gpu-pmu",
 	.owner			= THIS_MODULE,
@@ -700,6 +724,7 @@ struct metdevice met_gpu_pmu = {
 #endif
 	.print_help		= gpu_pmu_print_help,
 	.print_header		= gpu_pmu_print_header,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(met_gpu_pmu_dependencies)
 };
 #endif
 

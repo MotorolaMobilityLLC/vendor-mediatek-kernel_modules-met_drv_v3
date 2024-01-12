@@ -553,6 +553,11 @@ static int smi_process_argument(const char *__restrict__ arg, int len)
 	return 0;
 }
 
+MET_DEFINE_DEPENDENCY_BY_NAME(dependencies) = {
+	{.symbol=(void**)&met_scmi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_sspm_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+};
+
 struct metdevice met_sspm_smi = {
 	.name				= "smi",
 	.owner				= THIS_MODULE,
@@ -565,5 +570,6 @@ struct metdevice met_sspm_smi = {
 	.ondiemet_stop			= met_smi_stop,
 	.ondiemet_process_argument 	= smi_process_argument,
 	.ondiemet_print_help		= smi_print_help,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(dependencies)
 };
 EXPORT_SYMBOL(met_sspm_smi);

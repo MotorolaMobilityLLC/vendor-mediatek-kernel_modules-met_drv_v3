@@ -856,19 +856,21 @@ static ssize_t header_show(struct kobject *kobj, struct kobj_attribute *attr, ch
 		return -ENOENT;
 
 	if (c->ondiemet_mode == 0) {
-		if ((c->mode) && (c->print_header))
+		if ((c->mode) && (c->print_header) && metdevice_check_dependency(c, 0))
 			return c->print_header(buf, PAGE_SIZE);
 	} else if (c->ondiemet_mode == 1) {
-		if ((c->mode) && (c->ondiemet_print_header))
+		if ((c->mode) && (c->ondiemet_print_header) && metdevice_check_dependency(c, 0))
 			return c->ondiemet_print_header(buf, PAGE_SIZE);
 	} else if (c->ondiemet_mode == 2) {
-		if ((c->mode) && (c->print_header))
-			count = c->print_header(buf, PAGE_SIZE);
-		if (count < PAGE_SIZE) {
-			if ((c->mode) && (c->ondiemet_print_header))
-				count += c->ondiemet_print_header(buf+count, PAGE_SIZE - count);
+		if (metdevice_check_dependency(c, 0)) {
+			if ((c->mode) && (c->print_header))
+				count = c->print_header(buf, PAGE_SIZE);
+			if (count < PAGE_SIZE) {
+				if ((c->mode) && (c->ondiemet_print_header))
+					count += c->ondiemet_print_header(buf+count, PAGE_SIZE - count);
+			}
+			return count;
 		}
-		return count;
 	}
 
 	return 0;
@@ -926,16 +928,18 @@ static ssize_t argu_store(struct kobject *kobj, struct kobj_attribute *attr, con
 		return -ENOENT;
 
 	if (c->ondiemet_mode == 0) {
-		if (c->process_argument)
+		if (c->process_argument && metdevice_check_dependency(c, 0))
 			ret = c->process_argument(buf, (int)n);
 	} else if (c->ondiemet_mode == 1) {
-		if (c->ondiemet_process_argument)
+		if (c->ondiemet_process_argument && metdevice_check_dependency(c, 0))
 			ret = c->ondiemet_process_argument(buf, (int)n);
 	} else if (c->ondiemet_mode == 2) {
-		if (c->process_argument)
-			ret = c->process_argument(buf, (int)n);
-		if (c->ondiemet_process_argument)
-			ret = c->ondiemet_process_argument(buf, (int)n);
+		if (metdevice_check_dependency(c, 0)) {
+			if (c->process_argument && metdevice_check_dependency(c, 0))
+				ret = c->process_argument(buf, (int)n);
+			if (c->ondiemet_process_argument && metdevice_check_dependency(c, 0))
+				ret = c->ondiemet_process_argument(buf, (int)n);
+		}
 	}
 
 	if (ret != 0)
@@ -968,20 +972,22 @@ static ssize_t reset_store(struct kobject *kobj,
 		return -ENOENT;
 
 	if (c->ondiemet_mode == 0) {
-		if (c->reset)
+		if (c->reset && metdevice_check_dependency(c, 0))
 			ret = c->reset();
 		else
 			c->mode = 0;
 	} else if (c->ondiemet_mode == 1) {
-		if (c->ondiemet_reset)
+		if (c->ondiemet_reset && metdevice_check_dependency(c, 0))
 			ret = c->ondiemet_reset();
 	} else if (c->ondiemet_mode == 2) {
-		if (c->reset)
-			ret = c->reset();
-		else
-			c->mode = 0;
-		if (c->ondiemet_reset)
-			ret = c->ondiemet_reset();
+		if (metdevice_check_dependency(c, 0)) {
+			if (c->reset && metdevice_check_dependency(c, 0))
+				ret = c->reset();
+			else
+				c->mode = 0;
+			if (c->ondiemet_reset && metdevice_check_dependency(c, 0))
+				ret = c->ondiemet_reset();
+		}
 	}
 
 	if (ret != 0)
@@ -1279,16 +1285,18 @@ void force_sample(void *unused)
 
 	list_for_each_entry(c, &met_list, list) {
 		if (c->ondiemet_mode == 0) {
-			if ((c->mode != 0) && (c->tagged_polling != NULL))
+			if ((c->mode != 0) && (c->tagged_polling != NULL) && metdevice_check_dependency(c, 0))
 				c->tagged_polling(stamp, 0);
 		} else if (c->ondiemet_mode == 1) {
-			if ((c->mode != 0) && (c->ondiemet_tagged_polling != NULL))
+			if ((c->mode != 0) && (c->ondiemet_tagged_polling != NULL) && metdevice_check_dependency(c, 0))
 				c->ondiemet_tagged_polling(stamp, 0);
 		} else if (c->ondiemet_mode == 2) {
-			if ((c->mode != 0) && (c->tagged_polling != NULL))
-				c->tagged_polling(stamp, 0);
-			if ((c->mode != 0) && (c->ondiemet_tagged_polling != NULL))
-				c->ondiemet_tagged_polling(stamp, 0);
+			if (metdevice_check_dependency(c, 0)) {
+				if ((c->mode != 0) && (c->tagged_polling != NULL) && metdevice_check_dependency(c, 0))
+					c->tagged_polling(stamp, 0);
+				if ((c->mode != 0) && (c->ondiemet_tagged_polling != NULL) && metdevice_check_dependency(c, 0))
+					c->ondiemet_tagged_polling(stamp, 0);
+			}
 		}
 	}
 }
@@ -1643,4 +1651,42 @@ int tracepoint_unreg(void)
 unsigned int get_ctrl_flags(void)
 {
 	return ctrl_flags;
+}
+
+int metdevice_check_dependency(struct metdevice *c, int init_once)
+{
+	unsigned int i = 0;
+	for (; i < c->dependency_list_length; ++i) {
+		if (init_once) {
+			if (1 == c->dependency_list[i].init_once && !*(c->dependency_list[i].symbol)) {
+				return 0;
+			}
+		} else {
+			if (               0    == c->dependency_list[i].init_once
+				&& c->cpu_related   == c->dependency_list[i].cpu_related) {
+				if (c->ondiemet_mode == 2) {
+					if (0 == c->dependency_list[i].ondiemet_mode) {
+						if (!*(c->dependency_list[i].symbol)) {
+							return 0;
+						}
+					} else if (1 == c->dependency_list[i].ondiemet_mode) {
+						if (c->tinysys_type == c->dependency_list[i].tinysys_type
+							&& !*(c->dependency_list[i].symbol)) {
+							return 0;
+						}
+					}
+				} else if (c->ondiemet_mode == c->dependency_list[i].ondiemet_mode) {
+					if (c->ondiemet_mode == 1) {
+						if (c->tinysys_type == c->dependency_list[i].tinysys_type
+							&& !*(c->dependency_list[i].symbol)) {
+							return 0;
+						}
+					} else if (!*(c->dependency_list[i].symbol)) {
+						return 0;
+					}
+				}
+			}
+		}
+	}
+	return 1;
 }

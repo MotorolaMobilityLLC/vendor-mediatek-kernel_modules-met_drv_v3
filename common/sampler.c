@@ -109,14 +109,14 @@ static enum hrtimer_restart met_hrtimer_notify(struct hrtimer *hrtimer)
 
 	list_for_each_entry(c, &met_list, list) {
 		if (c->ondiemet_mode == 0) {
-			if ((c->mode == 0) || (c->timed_polling == NULL))
+			if ((c->mode == 0) || (c->timed_polling == NULL) || (!metdevice_check_dependency(c, 0)))
 				continue;
 		} else if (c->ondiemet_mode == 1) {
-			if ((c->mode == 0) || (c->ondiemet_timed_polling == NULL))
+			if ((c->mode == 0) || (c->ondiemet_timed_polling == NULL) || (!metdevice_check_dependency(c, 0)))
 				continue;
 		} else if (c->ondiemet_mode == 2) {
-			if ((c->mode == 0) || ((c->timed_polling == NULL)
-					       && (c->ondiemet_timed_polling == NULL)))
+			if ((c->mode == 0) || ((c->timed_polling == NULL) && (c->ondiemet_timed_polling == NULL))
+				|| (!metdevice_check_dependency(c, 0)))
 				continue;
 		}
 
@@ -132,27 +132,31 @@ static enum hrtimer_restart met_hrtimer_notify(struct hrtimer *hrtimer)
 
 		if (c->cpu_related == 0) {
 			if (cpu == curr_polling_cpu) {
-				if (c->ondiemet_mode == 0) {
+				if (c->ondiemet_mode == 0 && metdevice_check_dependency(c, 0)) {
 					c->timed_polling(stamp, 0);
-				} else if (c->ondiemet_mode == 1) {
+				} else if (c->ondiemet_mode == 1 && metdevice_check_dependency(c, 0)) {
 					c->ondiemet_timed_polling(stamp, 0);
 				} else if (c->ondiemet_mode == 2) {
+					if (metdevice_check_dependency(c, 0)) {
+						if (c->timed_polling)
+							c->timed_polling(stamp, 0);
+						if (c->ondiemet_timed_polling)
+							c->ondiemet_timed_polling(stamp, 0);
+					}
+				}
+			}
+		} else {
+			if (c->ondiemet_mode == 0 && metdevice_check_dependency(c, 0)) {
+				c->timed_polling(stamp, cpu);
+			} else if (c->ondiemet_mode == 1 && metdevice_check_dependency(c, 0)) {
+				c->ondiemet_timed_polling(stamp, cpu);
+			} else if (c->ondiemet_mode == 2) {
+				if (metdevice_check_dependency(c, 0)) {
 					if (c->timed_polling)
 						c->timed_polling(stamp, 0);
 					if (c->ondiemet_timed_polling)
 						c->ondiemet_timed_polling(stamp, 0);
 				}
-			}
-		} else {
-			if (c->ondiemet_mode == 0) {
-				c->timed_polling(stamp, cpu);
-			} else if (c->ondiemet_mode == 1) {
-				c->ondiemet_timed_polling(stamp, cpu);
-			} else if (c->ondiemet_mode == 2) {
-				if (c->timed_polling)
-					c->timed_polling(stamp, 0);
-				if (c->ondiemet_timed_polling)
-					c->ondiemet_timed_polling(stamp, 0);
 			}
 		}
 	}
@@ -183,16 +187,18 @@ static void __met_init_cpu_related_device(void *unused)
 	list_for_each_entry(c, &met_list, list) {
 		*(this_cpu_ptr(c->polling_count)) = 0;
 		if (c->ondiemet_mode == 0) {
-			if ((c->cpu_related) && (c->mode) && (c->start))
+			if ((c->cpu_related) && (c->mode) && (c->start) && metdevice_check_dependency(c, 0))
 				c->start();
 		} else if (c->ondiemet_mode == 1) {
-			if (((c->cpu_related)) && (c->mode) && (c->ondiemet_start))
+			if (((c->cpu_related)) && (c->mode) && (c->ondiemet_start) && metdevice_check_dependency(c, 0))
 				c->ondiemet_start();
 		} else if (c->ondiemet_mode == 2) {
-			if ((c->cpu_related) && (c->mode) && (c->start))
-				c->start();
-			if (((c->cpu_related)) && (c->mode) && (c->ondiemet_start))
-				c->ondiemet_start();
+			if (metdevice_check_dependency(c, 0)) {
+				if ((c->cpu_related) && (c->mode) && (c->start))
+					c->start();
+				if (((c->cpu_related)) && (c->mode) && (c->ondiemet_start))
+					c->ondiemet_start();
+			}
 		}
 	}
 }
@@ -261,16 +267,18 @@ static void __met_hrtimer_stop(void *unused)
 	}
 	list_for_each_entry(c, &met_list, list) {
 		if (c->ondiemet_mode == 0) {
-			if ((c->cpu_related) && (c->mode) && (c->stop))
+			if ((c->cpu_related) && (c->mode) && (c->stop) && metdevice_check_dependency(c, 0))
 				c->stop();
 		} else if (c->ondiemet_mode == 1) {
-			if ((c->cpu_related) && (c->mode) && (c->ondiemet_stop))
+			if ((c->cpu_related) && (c->mode) && (c->ondiemet_stop) && metdevice_check_dependency(c, 0))
 				c->ondiemet_stop();
 		} else if (c->ondiemet_mode == 2) {
-			if ((c->cpu_related) && (c->mode) && (c->stop))
-				c->stop();
-			if ((c->cpu_related) && (c->mode) && (c->ondiemet_stop))
-				c->ondiemet_stop();
+			if (metdevice_check_dependency(c, 0)) {
+				if ((c->cpu_related) && (c->mode) && (c->stop))
+					c->stop();
+				if ((c->cpu_related) && (c->mode) && (c->ondiemet_stop))
+					c->ondiemet_stop();
+			}
 		}
 		*(this_cpu_ptr(c->polling_count)) = 0;
 	}
@@ -465,37 +473,39 @@ int sampler_start(void)
 			cpu_related_cnt = 1;
 
 			if (c->ondiemet_mode == 0) {
-				if (c->timed_polling)
+				if (c->timed_polling && metdevice_check_dependency(c, 0))
 					cpu_related_polling_hdlr_cnt = 1;
 			} else if (c->ondiemet_mode == 1) {
-				if (c->ondiemet_timed_polling)
+				if (c->ondiemet_timed_polling && metdevice_check_dependency(c, 0))
 					cpu_related_polling_hdlr_cnt = 1;
 			} else if (c->ondiemet_mode == 2) {
-				if (c->timed_polling || c->ondiemet_timed_polling)
+				if ((c->timed_polling || c->ondiemet_timed_polling) && metdevice_check_dependency(c,0))
 					cpu_related_polling_hdlr_cnt = 1;
 			}
 		}
 
 		if (c->ondiemet_mode == 0) {
-			if ((!(c->cpu_related)) && (c->mode) && (c->start))
+			if ((!(c->cpu_related)) && (c->mode) && (c->start) && metdevice_check_dependency(c, 0))
 				c->start();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_start))
+			else if ((c->cpu_related) && (c->mode) && (c->uniq_start) && metdevice_check_dependency(c, 0))
 				c->uniq_start();
 		} else if (c->ondiemet_mode == 1) {
-			if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_start))
+			if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_start) && metdevice_check_dependency(c, 0))
 				c->ondiemet_start();
-			if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_start))
+			if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_start) && metdevice_check_dependency(c, 0))
 				c->uniq_ondiemet_start();
 		} else if (c->ondiemet_mode == 2) {
-			if ((!(c->cpu_related)) && (c->mode) && (c->start))
-				c->start();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_start))
-				c->uniq_start();
+			if (metdevice_check_dependency(c, 0)) {
+				if ((!(c->cpu_related)) && (c->mode) && (c->start))
+					c->start();
+				else if ((c->cpu_related) && (c->mode) && (c->uniq_start))
+					c->uniq_start();
 
-			if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_start))
-				c->ondiemet_start();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_start))
-				c->uniq_ondiemet_start();
+				if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_start))
+					c->ondiemet_start();
+				else if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_start))
+					c->uniq_ondiemet_start();
+			}
 		}
 	}
 
@@ -571,25 +581,27 @@ void sampler_stop(void)
 
 	list_for_each_entry(c, &met_list, list) {
 		if (c->ondiemet_mode == 0) {
-			if ((!(c->cpu_related)) && (c->mode) && (c->stop))
+			if ((!(c->cpu_related)) && (c->mode) && (c->stop) && metdevice_check_dependency(c, 0))
 				c->stop();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_stop))
+			else if ((c->cpu_related) && (c->mode) && (c->uniq_stop) && metdevice_check_dependency(c, 0))
 				c->uniq_stop();
 		} else if (c->ondiemet_mode == 1) {
-			if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_stop))
+			if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_stop) && metdevice_check_dependency(c, 0))
 				c->ondiemet_stop();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_stop))
+			else if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_stop) && metdevice_check_dependency(c, 0))
 				c->uniq_ondiemet_stop();
 		} else if (c->ondiemet_mode == 2) {
-			if ((!(c->cpu_related)) && (c->mode) && (c->stop))
-				c->stop();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_stop))
-				c->uniq_stop();
+			if (metdevice_check_dependency(c, 0)) {
+				if ((!(c->cpu_related)) && (c->mode) && (c->stop))
+					c->stop();
+				else if ((c->cpu_related) && (c->mode) && (c->uniq_stop))
+					c->uniq_stop();
 
-			if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_stop))
-				c->ondiemet_stop();
-			else if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_stop))
-				c->uniq_ondiemet_stop();
+				if ((!(c->cpu_related)) && (c->mode) && (c->ondiemet_stop))
+					c->ondiemet_stop();
+				else if ((c->cpu_related) && (c->mode) && (c->uniq_ondiemet_stop))
+					c->uniq_ondiemet_stop();
+			}
 		}
 		module_put(c->owner);
 	}
@@ -695,7 +707,7 @@ void met_event_timer_notify(void)
 		spin_unlock(&(c->my_lock));
 		/* Critical Section End */
 
-		if ((c->mode == 0) || (c->timed_polling == NULL))
+		if ((c->mode == 0) || (c->timed_polling == NULL) || (!metdevice_check_dependency(c, 0)))
 			continue;
 
 		stamp = local_clock();

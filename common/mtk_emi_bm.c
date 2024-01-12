@@ -3525,12 +3525,14 @@ unsigned int get_sspm_support_feature(void)
 	int ret, i;
 	unsigned int ipi_buf[4];
 
-	for (i = 0; i < 4; i++)
-		ipi_buf[i] = 0;
+	if (met_sspm_api_ready && met_scmi_api_ready) {
+		for (i = 0; i < 4; i++)
+			ipi_buf[i] = 0;
 
-	if (sspm_buf_available == 1) {
-		ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_REQ_AP2MD ;
-		ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+		if (sspm_buf_available == 1) {
+			ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_REQ_AP2MD ;
+			ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+		}
 	}
 #endif
 	return rdata;

@@ -11,6 +11,7 @@
 #include <linux/of.h>
 
 #include "met_drv.h"
+#include "core_plf_init.h"
 #include "tinysys_sspm.h"
 #include "tinysys_mgr.h"
 
@@ -58,6 +59,11 @@ static char header[] = 	"met-info [000] 0.0: sspm_common_header: ";
 static bool met_event_header_updated = false;
 static int nr_dts_header = 0;
 
+MET_DEFINE_DEPENDENCY_BY_NAME(dependencies) = {
+	{.symbol=(void**)&met_scmi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_sspm_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+};
+
 struct metdevice met_sspm_common = {
 	.name = "sspm_common",
 	.owner = THIS_MODULE,
@@ -69,6 +75,7 @@ struct metdevice met_sspm_common = {
 	.ondiemet_process_argument = ondiemet_sspm_process_argument,
 	.ondiemet_print_help = ondiemet_sspm_print_help,
 	.ondiemet_print_header = ondiemet_sspm_print_header,
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(dependencies)
 };
 
 

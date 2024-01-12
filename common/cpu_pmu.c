@@ -22,6 +22,7 @@
 #include "trace.h"
 #include "cpu_pmu.h"
 #include "mtk_typedefs.h"
+#include "core_plf_init.h"
 
 #ifdef MET_TINYSYS
 #include "tinysys_mgr.h" /* for ondiemet_module */
@@ -1884,6 +1885,17 @@ static int tinysys_pmu_process_argument(const char *arg, int len)
 }
 #endif /* end of #ifdef MET_TINYSYS */
 
+MET_DEFINE_DEPENDENCY_BY_NAME(dependencies) = {
+	{.symbol=(void**)&met_scmi_api_ready, .init_once=0, .cpu_related=1, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_sspm_api_ready, .init_once=0, .cpu_related=1, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_ipi_api_ready, .init_once=0, .cpu_related=1, .ondiemet_mode=1, .tinysys_type=1},
+	{.symbol=(void**)&met_mcupm_api_ready, .init_once=0, .cpu_related=1, .ondiemet_mode=1, .tinysys_type=1},
+	{.symbol=(void**)&met_scmi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_sspm_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=0},
+	{.symbol=(void**)&met_ipi_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=1},
+	{.symbol=(void**)&met_mcupm_api_ready, .init_once=0, .cpu_related=0, .ondiemet_mode=1, .tinysys_type=1},
+};
+
 struct metdevice met_cpupmu = {
 	.name = "cpu",
 	.type = MET_TYPE_PMU,
@@ -1908,6 +1920,7 @@ struct metdevice met_cpupmu = {
 	.uniq_ondiemet_stop = tinysys_pmu_unique_stop,
 	.ondiemet_stop = tinysys_pmu_stop,
 	.ondiemet_print_header = tinysys_pmu_print_header,
-	.ondiemet_process_argument = tinysys_pmu_process_argument
+	.ondiemet_process_argument = tinysys_pmu_process_argument,
 #endif
+	MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(dependencies)
 };

@@ -144,6 +144,21 @@ enum met_action {
 	NR_MET_ACTION,
 };
 
+struct metdevice_dependency_entry {
+	void **symbol;
+	int init_once; /* dependency check for procedure during insmod/rmmod */
+	int cpu_related; /* dependency check for cpu_related. don't care when init_once == 1 */
+	int ondiemet_mode; /* dependency check for ondiemet_mode. don't care when init_once == 1 */
+	int tinysys_type; /* dependency check for tinysys_type. don't care when init_once == 1 or ondiemet_mode == 0 */
+};
+
+#define MET_DEFINE_DEPENDENCY_BY_NAME(name) \
+	static const struct metdevice_dependency_entry name[]
+
+#define MET_DEFINE_METDEVICE_DEPENDENCY_BY_NAME(name) \
+	.dependency_list = name, \
+	.dependency_list_length = sizeof(name)/sizeof(*name),
+
 struct metdevice {
 	struct list_head list;
 	int type;
@@ -191,6 +206,9 @@ struct metdevice {
 	unsigned long long prev_stamp;
 	spinlock_t my_lock;
 	void *reversed1;
+
+	const struct metdevice_dependency_entry * const dependency_list;
+	unsigned int dependency_list_length;
 };
 
 int met_register(struct metdevice *met);
