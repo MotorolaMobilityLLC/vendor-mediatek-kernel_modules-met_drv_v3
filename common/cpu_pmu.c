@@ -330,7 +330,8 @@ int cpu_pmu_debug_uninit(void)
 
 noinline void mp_cpu(unsigned char cnt, unsigned int *value)
 {
-	MET_GENERAL_PRINT(MET_TRACE, cnt, value);
+	// MET_GENERAL_PRINT(MET_TRACE, cnt, value);
+	MET_TRACE_FORMAT_H(cnt, value);
 }
 
 static void dummy_handler(struct perf_event *event, struct perf_sample_data *data,
