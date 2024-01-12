@@ -16,6 +16,7 @@ endif
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_emi_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_sspm_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_mcupm_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_gpueb_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_ipi_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_scmi_api modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 
@@ -31,6 +32,7 @@ endif
 	$(MAKE) M=$(M)/met_api/met_emi_api -C $(KERNEL_SRC) modules_install
 	$(MAKE) M=$(M)/met_api/met_sspm_api -C $(KERNEL_SRC) modules_install
 	$(MAKE) M=$(M)/met_api/met_mcupm_api -C $(KERNEL_SRC) modules_install
+	$(MAKE) M=$(M)/met_api/met_gpueb_api -C $(KERNEL_SRC) modules_install
 	$(MAKE) M=$(M)/met_api/met_ipi_api -C $(KERNEL_SRC) modules_install
 	$(MAKE) M=$(M)/met_api/met_scmi_api -C $(KERNEL_SRC) modules_install
 
@@ -46,5 +48,6 @@ endif
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_emi_api clean
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_sspm_api clean
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_mcupm_api clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_gpueb_api clean
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_ipi_api clean
 	$(MAKE) -C $(KERNEL_SRC) M=$(M)/met_api/met_scmi_api clean

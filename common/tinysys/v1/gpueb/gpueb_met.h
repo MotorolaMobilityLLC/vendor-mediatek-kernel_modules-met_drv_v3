@@ -2,12 +2,12 @@
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
-#ifndef __TINYSYS_MGR_H__
-#define __TINYSYS_MGR_H__
+#ifndef __GPUEB_MET_H__
+#define __GPUEB_MET_H__
 /*****************************************************************************
  * headers
  *****************************************************************************/
-#include <linux/device.h>
+#include "met_drv.h"  /* for metdevice */
 
 
 /*****************************************************************************
@@ -18,36 +18,20 @@
 /*****************************************************************************
  * struct & enum declaration
  *****************************************************************************/
-enum {
-    ONDIEMET_SSPM,
-    ONDIEMET_MCUPM,
-    ONDIEMET_GPUEB,
-    ONDIEMET_TINYSYS_NUM,
-};
 
 
 /*****************************************************************************
  * external function declaration
  *****************************************************************************/
-int ondiemet_attr_init(struct device *dev);
-int ondiemet_attr_uninit(struct device *dev);
-
-int ondiemet_log_manager_init(struct device *dev);
-int ondiemet_log_manager_uninit(struct device *dev);
-void ondiemet_log_manager_start(void);
-void ondiemet_log_manager_stop(void);
-
-void ondiemet_start(void);
-void ondiemet_stop(void);
-void ondiemet_extract(void);
-
+void register_gpueb_process_argument(void (*fn)(const char *arg));
+void register_gpueb_print_header(int (*fn)(char *buf, int len, int cnt));
+void deregister_gpueb_process_argument(void);
+void deregister_gpueb_print_header(void);
 
 /*****************************************************************************
  * external variable declaration
  *****************************************************************************/
-extern unsigned int ondiemet_module[ONDIEMET_TINYSYS_NUM];
-extern unsigned int ondiemet_record_check[ONDIEMET_TINYSYS_NUM];
-extern unsigned int ondiemet_recording[ONDIEMET_TINYSYS_NUM];
+extern struct metdevice met_gpueb;
 
 
-#endif /* __TINYSYS_MGR_H__ */
+#endif /* __GPUEB_MET_H__ */
