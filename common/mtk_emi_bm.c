@@ -766,7 +766,7 @@ int MET_BM_SetMaster(const unsigned int counter_num, const unsigned int master)
 #endif
 
 int MET_BM_SetbusID_En(const unsigned int counter_num,
-		       const unsigned int enable)
+		       const unsigned int enable, unsigned int emi_no)
 {
 	unsigned int value;
 
@@ -775,21 +775,21 @@ int MET_BM_SetbusID_En(const unsigned int counter_num,
 
 	if (enable == 0) {
 		/* clear  EMI ID selection Enabling   SEL_ID_EN */
-		value = (emi_readl(IOMEM(ADDR_EMI + EMI_BMEN2))
+		value = (emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2))
 			 & ~(1 << (counter_num - 1)));
 	} else {
 		/* enable  EMI ID selection Enabling   SEL_ID_EN */
-		value = (emi_readl(IOMEM(ADDR_EMI + EMI_BMEN2))
+		value = (emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2))
 			 | (1 << (counter_num - 1)));
 	}
-	emi_reg_sync_writel(value, ADDR_EMI + EMI_BMEN2);
+	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN2);
 
 	return BM_REQ_OK;
 }
 
 
 int MET_BM_SetbusID(const unsigned int counter_num,
-		    const unsigned int id)
+		    const unsigned int id, unsigned int emi_no)
 {
 	unsigned int value, addr, shift_num;
 
@@ -800,19 +800,19 @@ int MET_BM_SetbusID(const unsigned int counter_num,
 	addr = EMI_BMID0 + (counter_num - 1) / 2 * 4;
 	shift_num = ((counter_num - 1) % 2) * 16;
 	/* clear SELx_ID field */
-	value = emi_readl(IOMEM(ADDR_EMI + addr)) & ~(EMI_BMID_MASK << shift_num);
+	value = emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + addr)) & ~(EMI_BMID_MASK << shift_num);
 
 	/* set SELx_ID field */
 	if (id <= 0xffff)       /*bigger then 0xff_ff : no select busid in master, reset busid as 0*/
 		value |= id << shift_num;
 
-	emi_reg_sync_writel(value, ADDR_EMI + addr);
+	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 
 	return BM_REQ_OK;
 }
 
 
-int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int enable)
+int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int enable, unsigned int emi_no)
 {
 	unsigned int value;
 
@@ -820,11 +820,11 @@ int MET_BM_SetUltraHighFilter(const unsigned int counter_num, const unsigned int
 		return BM_ERR_WRONG_REQ;
 
 
-	value = (emi_readl(IOMEM(ADDR_EMI + EMI_BMEN1))
+	value = (emi_readl(IOMEM((unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN1))
 		 & ~(1 << (counter_num - 1)))
 		| (enable << (counter_num - 1));
 
-	emi_reg_sync_writel(value, ADDR_EMI + EMI_BMEN1);
+	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + EMI_BMEN1);
 
 	return BM_REQ_OK;
 }
@@ -1152,7 +1152,7 @@ int MET_BM_SetTtype_high_priority_sel(unsigned int _high_priority_filter, unsign
 			enable = 1;
 		}
 
-		MET_BM_SetUltraHighFilter(i + 1, enable);
+		MET_BM_SetUltraHighFilter(i + 1, enable, emi_no);
 
 		/* ultra level select */
 		addr = EMI_TTYPE1_CONA + i*8;
@@ -1195,8 +1195,8 @@ int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int 
 	}
 
 	for (i = 1; i <= BM_COUNTER_MAX; i++) {
-		MET_BM_SetbusID(i, *(busid + i - 1));
-		MET_BM_SetbusID_En(i, ( *(busid + i - 1) > 0xffff) ? 0 : 1);
+		MET_BM_SetbusID(i, *(busid + i - 1), emi_no);
+		MET_BM_SetbusID_En(i, ( *(busid + i - 1) > 0xffff) ? 0 : 1, emi_no);
 
 		/* set idMask */
 		addr = EMI_TTYPE1_CONA + (i-1)*8;
