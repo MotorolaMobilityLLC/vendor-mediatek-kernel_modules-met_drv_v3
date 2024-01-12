@@ -168,6 +168,7 @@ enum  {
 	SLC_PMU_SUPPORT_IDX = 4,
 	DRAMC_BUS_MON_TRIGGER = 5,
 	SSPM_REG_WRITE = 6,
+	EMI_RESUME_DISABLE = 7,
 };
 
 #define	EMI_OFF			0x0000
@@ -681,6 +682,8 @@ DECLARE_KOBJ_ATTR_INT(dramc_pdir_enable, dramc_pdir_enable);
 
 DECLARE_KOBJ_ATTR_HEX(high_priority_filter, high_priority_filter);
 
+DECLARE_KOBJ_ATTR_HEX(MET_EMI_support_list, MET_EMI_support_list);
+
 #define DECLARE_KOBJ_TTYPE_MASTER(nr) \
 	DECLARE_KOBJ_ATTR_STR_LIST(ttype ## nr ## _master, ttype_master_val[nr - 1], ttype_master)
 
@@ -860,6 +863,7 @@ DECLARE_KOBJ_TTYPE_BUSID_VAL(21);
 #define KOBJ_ATTR_LIST \
 	do { \
 		KOBJ_ATTR_ITEM(high_priority_filter); \
+		KOBJ_ATTR_ITEM(MET_EMI_support_list); \
 		KOBJ_ATTR_ITEM(emi_TP_busfiltr_enable); \
 		KOBJ_ATTR_ITEM(msel_enable); \
 		KOBJ_ATTR_ITEM(rwtype); \
