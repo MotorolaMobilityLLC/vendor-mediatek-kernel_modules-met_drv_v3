@@ -156,7 +156,9 @@ int core_plf_init(void)
 #endif
 
 #ifdef MET_EMI
+#ifdef MET_SSPM
 	met_register(&met_sspm_emi);
+#endif
 #endif
 
 #ifdef MET_SMI

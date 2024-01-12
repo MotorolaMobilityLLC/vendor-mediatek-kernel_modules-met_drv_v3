@@ -22,14 +22,10 @@
 /*default not support , usage is low*/
 // #define EMI_LOWEFF_SUPPORT
 
-
-
-
 #define FILE_NODE_DATA_LEN 512 
 #define WSCT_AMOUNT 6
 #define TSCT_AMOUNT 3
 
-#define SLC_PMU_CNT_AMOUNT 32
 
 #define DRAM_EMI_BASECLOCK_RATE_LP4     4
 #define DRAM_EMI_BASECLOCK_RATE_LP3     2
@@ -160,6 +156,7 @@ enum BM_EMI_IPI_Type {
 	SET_EBM_CONFIGS1 = 0x7,
 	SET_EBM_CONFIGS2 = 0x8,
 	SET_REGISTER_CB = 0x9,
+	SET_SLC_ENABLE_LIST = 0xA,
 };
 #endif
 
@@ -391,11 +388,44 @@ enum  {
 #define SLC_PMU_CNT31_FILTER1    (0x2F4 - SLC_OFF)
 #define SLC_PMU_CNT31_BW_LAT_SEL (0x2F8 - SLC_OFF)
 
+/* slc pmu 2nd cnt filter */
+#define SLC_PMU_CNT0_GID_FILTER    (0x0)
+#define SLC_PMU_CNT1_GID_FILTER    (0x4)
+#define SLC_PMU_CNT2_GID_FILTER    (0x8)
+#define SLC_PMU_CNT3_GID_FILTER    (0xC)
+#define SLC_PMU_CNT4_GID_FILTER    (0x10)
+#define SLC_PMU_CNT5_GID_FILTER    (0x14)
+#define SLC_PMU_CNT6_GID_FILTER    (0x18)
+#define SLC_PMU_CNT7_GID_FILTER    (0x1C)
+#define SLC_PMU_CNT8_GID_FILTER    (0x20)
+#define SLC_PMU_CNT9_GID_FILTER    (0x24)
+#define SLC_PMU_CNT10_GID_FILTER    (0x28)
+#define SLC_PMU_CNT11_GID_FILTER    (0x2C)
+#define SLC_PMU_CNT12_GID_FILTER    (0x30)
+#define SLC_PMU_CNT13_GID_FILTER    (0x34)
+#define SLC_PMU_CNT14_GID_FILTER    (0x38)
+#define SLC_PMU_CNT15_GID_FILTER    (0x3C)
+#define SLC_PMU_CNT16_GID_FILTER    (0x40)
+#define SLC_PMU_CNT17_GID_FILTER    (0x44)
+#define SLC_PMU_CNT18_GID_FILTER    (0x48)
+#define SLC_PMU_CNT19_GID_FILTER    (0x4C)
+#define SLC_PMU_CNT20_GID_FILTER    (0x50)
+#define SLC_PMU_CNT21_GID_FILTER    (0x54)
+#define SLC_PMU_CNT22_GID_FILTER    (0x58)
+#define SLC_PMU_CNT23_GID_FILTER    (0x5C)
+#define SLC_PMU_CNT24_GID_FILTER    (0x60)
+#define SLC_PMU_CNT25_GID_FILTER    (0x64)
+#define SLC_PMU_CNT26_GID_FILTER    (0x68)
+#define SLC_PMU_CNT27_GID_FILTER    (0x6C)
+#define SLC_PMU_CNT28_GID_FILTER    (0x70)
+#define SLC_PMU_CNT29_GID_FILTER    (0x74)
+#define SLC_PMU_CNT30_GID_FILTER    (0x78)
+#define SLC_PMU_CNT31_GID_FILTER    (0x7C)
+/* met_drv define  & global var */
+#define CNT_COUNTDOWN   (0)
+
 /*for get emi_freq, APMIXEDSYS 0x1000C000  */
 #define EMIPLL_CON1 0x3B4
-
-/* met_drv define  & global var */
-#define CNT_COUNTDOWN   (0)    
 
 /* extern struct metdevice met_sspm_emi; */
 
@@ -500,6 +530,8 @@ extern unsigned int slc_pmu_cnt_filter1_val[SLC_PMU_CNT_AMOUNT];
 extern char slc_pmu_cnt_filter1[FILE_NODE_DATA_LEN];
 extern unsigned int slc_pmu_cnt_bw_lat_sel_val[SLC_PMU_CNT_AMOUNT];
 extern char slc_pmu_cnt_bw_lat_sel[FILE_NODE_DATA_LEN];
+extern unsigned int slc_pmu_cnt_gid_filter_val[SLC_PMU_CNT_AMOUNT];
+extern char slc_pmu_cnt_gid_filter[FILE_NODE_DATA_LEN];
 
 extern struct kobj_attribute clear_setting_attr;
 extern struct kobj_attribute msel_group_ext_attr;
@@ -518,7 +550,7 @@ extern struct kobj_attribute slc_pmu_cnt_setting_enable_attr;
 extern struct kobj_attribute slc_pmu_cnt_filter0_attr;
 extern struct kobj_attribute slc_pmu_cnt_filter1_attr;
 extern struct kobj_attribute slc_pmu_cnt_bw_lat_sel_attr;
-
+extern struct kobj_attribute slc_pmu_cnt_gid_filter_attr;
 
 /* for header print*/
 #define MAX_HEADER_LEN (1024 * 10)
@@ -876,6 +908,7 @@ DECLARE_KOBJ_TTYPE_BUSID_VAL(21);
 		KOBJ_ATTR_ITEM(slc_pmu_cnt_filter0); \
 		KOBJ_ATTR_ITEM(slc_pmu_cnt_filter1); \
 		KOBJ_ATTR_ITEM(slc_pmu_cnt_bw_lat_sel); \
+		KOBJ_ATTR_ITEM(slc_pmu_cnt_gid_filter); \
 	} while (0)
 
 
@@ -928,7 +961,7 @@ extern unsigned int MET_EMI_Get_BaseClock_Rate(void);
 extern int MET_BM_SetSLC_pmu_cnt_filter0(unsigned int *setting, unsigned int emi_no);
 extern int MET_BM_SetSLC_pmu_cnt_filter1(unsigned int *setting, unsigned int emi_no);
 extern int MET_BM_SetSLC_pmu_cnt_bw_lat_sel(unsigned int *setting, unsigned int emi_no);
-
+extern int MET_BM_SetSLC_pmu_cnt_gid_filter(unsigned int *setting, unsigned int emi_no);
 
 /* file node controll */
 extern void _clear_msel_group_ext(void);
@@ -1038,6 +1071,13 @@ extern ssize_t slc_pmu_cnt_bw_lat_sel_store(struct kobject *kobj,
 		size_t n);
 extern ssize_t slc_pmu_cnt_bw_lat_sel_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
 
+extern void _clear_slc_pmu_cnt_gid_filter(void);
+extern ssize_t slc_pmu_cnt_gid_filter_store(struct kobject *kobj,
+		struct kobj_attribute *attr,
+		const char *buf,
+		size_t n);
+extern ssize_t slc_pmu_cnt_gid_filter_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf);
+
 extern void _clear_setting(void);
 extern ssize_t clear_setting_store(struct kobject *kobj,
 			struct kobj_attribute *attr,
@@ -1046,6 +1086,8 @@ extern ssize_t clear_setting_store(struct kobject *kobj,
 
 extern void emi_init(void);
 extern void emi_uninit(void);
+
+extern unsigned int get_slc_enable_list(void);
 
 extern void MET_BM_IPI_configs(void);
 extern void MET_BM_IPI_REGISTER_CB(void);
