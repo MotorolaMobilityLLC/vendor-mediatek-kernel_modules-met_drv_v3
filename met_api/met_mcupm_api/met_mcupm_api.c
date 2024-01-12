@@ -11,6 +11,7 @@
 extern long met_mcupm_api_ready;
 
 #include "mcupm_driver.h"
+#include "mcupm_ipi_id.h"
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_LINK
 #include "met_mcupm_api/met_mcupm_api.h"

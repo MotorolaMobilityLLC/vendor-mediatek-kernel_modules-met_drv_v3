@@ -23,7 +23,7 @@
 
 #include "mtk_tinysys_ipi.h"  /* for mtk_ipi_device */
 #include "mcupm_ipi_id.h"  /* for mcupm_ipidev */
-#include "mcupm_ipi_table.h"
+/* #include "mcupm_ipi_table.h" */
 
 #include "mcupm_met_log.h"
 #include "mcupm_met_ipi_handle.h"
@@ -49,7 +49,6 @@
  *****************************************************************************/
 extern unsigned int met_get_chip_id(void);
 extern char *met_get_platform(void);
-
 
 /*****************************************************************************
  * internal function declaration
@@ -92,11 +91,16 @@ void start_mcupm_ipi_recv_thread()
 	int ret = 0;
 
 	if (mcupm_ipidev_symbol == NULL) {
-		_MET_SYMBOL_GET(mcupm_ipidev);
+		mcupm_ipidev_symbol = get_mcupm_ipidev_symbol();
 	}
 
 	if (mcupm_ipidev_symbol == NULL) {
-		PR_BOOTMSG("mcupm_ipidev_symbol is NULL\n", __FUNCTION__);
+		PR_BOOTMSG("mcupm_ipidev_symbol is NULL,get symbol fail\n", __FUNCTION__);
+		return;
+	}
+
+	if (!mcupm_ipidev_symbol->ipi_inited) {
+		PR_BOOTMSG("mcupm_ipidev_symbol ipi_inited is 0\n", __FUNCTION__);
 		return;
 	}
 
@@ -382,7 +386,7 @@ static int _mcupm_recv_thread(void *data)
 	}
 
 	do {
-		ret = mtk_ipi_recv_reply(mcupm_ipidev_symbol, CH_IPIR_C_MET,
+		ret = mtk_ipi_recv_reply_symbol(mcupm_ipidev_symbol, CH_IPIR_C_MET,
 				(void *)&reply_data, 1);
 		if (ret) {
 			// skip cmd handling if receive fail
