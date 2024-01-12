@@ -43,7 +43,6 @@ static void met_emi_resume(void)
 	met_emi_resume_basic();
 }
 
-
 static int emi_print_header(char *buf, int len)
 {
 	len = emi_print_header_basic(buf,len);
@@ -63,12 +62,20 @@ static int ondiemet_emi_print_header(char *buf, int len)
 
 static void ondiemet_emi_start(void)
 {
+	met_scmi_to_sspm_resrc_request(1);
+
 	ondiemet_emi_start_basic();
+
+	met_scmi_to_sspm_resrc_request(0);
 }
 
 static void ondiemet_emi_stop(void)
 {
+	met_scmi_to_sspm_resrc_request(1);
+
 	ondiemet_emi_stop_basic();
+
+	met_scmi_to_sspm_resrc_request(0);
 }
 #endif
 

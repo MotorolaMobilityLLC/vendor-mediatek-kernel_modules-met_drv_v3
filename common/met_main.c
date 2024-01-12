@@ -251,6 +251,8 @@ static int __init met_drv_init(void)
 	if (cpu_topology_len)
 		met_set_topology(met_cpu_topology, 1);
 
+	met_get_config_list();
+
 #ifdef MET_PLF_USE
 	core_plf_init();
 #endif
