@@ -122,10 +122,6 @@ static void probe_workqueue_execute_start(void *data, struct work_struct *work){
 
 			current_cpu = get_cpu();
 			
-			if(current_cpu<0){
-				return;
-			}
-
 			fun_name_len = snprintf(per_cpu_ptr(per_cpu_workqueue_func_node, current_cpu)->name, MAX_FUNC_LENGTH, "%ps", work->func);
 			if(fun_name_len>0){
 				if(met_workqueue_is_valid_func_name(per_cpu_ptr(per_cpu_workqueue_func_node, current_cpu)->name)){

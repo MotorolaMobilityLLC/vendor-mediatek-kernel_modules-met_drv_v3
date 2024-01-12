@@ -313,7 +313,7 @@ static int met_pmu_cpu_notify(enum met_action action, unsigned int cpu)
 	}
 #endif
 
-	if (cpu < 0 || cpu >= NR_CPUS)
+	if (cpu >= NR_CPUS)
 		return NOTIFY_OK;
 
 	switch (action) {
