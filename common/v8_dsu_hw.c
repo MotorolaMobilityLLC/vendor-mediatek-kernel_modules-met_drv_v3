@@ -2,10 +2,20 @@
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
-
 #include <asm/cpu.h>
 #include "met_kernel_symbol.h"
 #include "cpu_dsu.h"
+
+#if 1
+#define DBG(__fmt__, ...)
+#else
+#undef TAG
+#define TAG "[MET_DSU]"
+#define DBG(__fmt__, ...) \
+	do{\
+		pr_debug(TAG"[%s][%d]" __fmt__, __func__, __LINE__, ##__VA_ARGS__); \
+	}while(0)
+#endif
 
 //dsu support 6 event
 #define DSU_EVENT_MAX_CNT 6
@@ -13,7 +23,6 @@
 static int armv8_dsu_hw_check_event(struct met_dsu *pmu, int idx, int event)
 {
 	int i;
-
 	/* Check if event is duplicate */
 	for (i = 0; i < idx; i++) {
 		if (pmu[i].event == event)
@@ -25,7 +34,6 @@ static int armv8_dsu_hw_check_event(struct met_dsu *pmu, int idx, int event)
 	}
 	return 0;
 }
-
 
 static struct met_dsu	pmus[MXNR_DSU_EVENTS];
 
@@ -44,5 +52,6 @@ struct cpu_dsu_hw *cpu_dsu_hw_init(void)
 
 	init_dsu();
 	armv8_dsu.pmu = pmus;
+	DBG("name=%s\n", armv8_dsu.name);
 	return &armv8_dsu;
 }

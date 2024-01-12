@@ -13,6 +13,16 @@
 #define MODE_POLLING	2
 
 #define	MXNR_DSU_EVENTS	8	/* max number of pmu counter for armv8 is 6+1 */
+#define MXNR_DSU_EVENT_BUFFER_SZ ((MXNR_DSU_EVENTS) + 0)
+
+#define DSU_INIT_SUCC             0
+#define DSU_INIT_FAIL_OCCUPIED    1
+
+struct dsu_failed_desc {
+	unsigned int event;
+	unsigned char init_failed;
+};
+
 struct met_dsu {
 	unsigned char mode;
 	unsigned short event;
