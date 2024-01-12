@@ -85,6 +85,7 @@ void __iomem *BaseAddrEMI[MET_MAX_EMI_NUM];
 void __iomem *BaseAddrCHN_EMI[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 
 void __iomem *BaseAddrDRAMC[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
+void __iomem *BaseAddrDRAMC_AO[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 void __iomem *BaseAddrDDRPHY_AO[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 // void __iomem *BaseAddrDRAMC0_AO[EMI_NUM][MET_MAX_DRAM_CH_NUM]; //phase out,not use anymore
 void __iomem *BaseAddrAPMIXEDSYS;
@@ -100,6 +101,7 @@ int DRAM_TYPE_DEFAULT;
 int MET_EMI_support_list = 0x0; /*read from dts*/
 int ddrphy_ao_misc_cg_ctrl0 = 0x0; /*default set 0, mean disable*/
 int ddrphy_ao_misc_cg_ctrl2 = 0x0;
+int dramc_ao_bus_mon1 = 0x0;
 int SLC_VER = 1;
 
 // #define CH0_MISC_CG_CTRL0 (((unsigned long) BaseAddrDDRPHY_AO[0]) + 0x284)
@@ -359,6 +361,7 @@ int MET_BM_Init(void)
 	int ret = 0;
 
 	u32 DRAMC_NAO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
+	u32 DRAMC_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 	u32 DDRPHY_AO_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 	u32 CHN_EMI_PHY_ADDR[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM];
 	u32 CEN_EMI_PHY_ADDR[MET_MAX_EMI_NUM];
@@ -369,6 +372,7 @@ int MET_BM_Init(void)
 	unsigned int cen_emi_reg_size = 0x1000;
 	unsigned int chn_emi_reg_size = 0xA90;
 	unsigned int dramc_nao_reg_size = 0x76C;
+	unsigned int dramc_ao_reg_size = 0x2000;
 	unsigned int ddrphy_ao_reg_size = 0x1650;
 	unsigned int slc_pmu_reg_size = 0x1000;
 	unsigned int slc_pmu_2nd_reg_size = 0x1000;
@@ -462,6 +466,14 @@ int MET_BM_Init(void)
 		PR_BOOTMSG("Cannot get dramc_nao_reg_size index from dts\n");
 		return -1;
 	}
+	ret = of_property_read_u32_index(node,
+									"dramc-ao-reg-size",
+									0,
+									&dramc_ao_reg_size);
+	if (ret) {
+		PR_BOOTMSG("Cannot get dramc_ao_reg_size index from dts\n");
+		return -1;
+	}
 	ret = of_property_read_u32_index(node, // device node
 									"ddrphy-ao-reg-size",  //device name
 									0, //offset
@@ -543,6 +555,17 @@ int MET_BM_Init(void)
 		}
 	}
 
+	if (MET_EMI_support_list & (1<<DRAMC_BUS_MON_TRIGGER)) {
+		ret = of_property_read_u32_index(node,
+										"dramc-ao-bus-mon1",
+										0,
+										&dramc_ao_bus_mon1);
+		if (ret) {
+			PR_BOOTMSG("Cannot get dramc_ao_bus_mon1 index from dts\n");
+			return -1;
+		}
+	}
+
 	/* emi channel number*/
 	// DRAM_CH_NUM_PER_EMI = dram_chann_num = MET_EMI_GetDramChannNum(0);
 
@@ -573,7 +596,7 @@ int MET_BM_Init(void)
 		{
 			ret = of_property_read_u32_index(node, // device node
 										"chn-emi-reg-base",  //device name
-										emi_no,
+										emi_no+i,
 										CHN_EMI_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get chn_emi_reg_base index from dts\n");
@@ -582,16 +605,25 @@ int MET_BM_Init(void)
 
 			ret = of_property_read_u32_index(node, // device node
 										"dramc-nao-reg-base",  //device name
-										emi_no,
+										emi_no+i,
 										DRAMC_NAO_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get dramc_nao_reg_base index from dts\n");
 				return -1;
 			}
 
+			ret = of_property_read_u32_index(node,
+										"dramc-ao-reg-base",
+										emi_no+i,
+										DRAMC_AO_PHY_ADDR[emi_no] + i);
+			if (ret) {
+				PR_BOOTMSG("Cannot get dramc-ao-reg-base index from dts\n");
+				return -1;
+			}
+
 			ret = of_property_read_u32_index(node, // device node
 										"ddrphy-ao-reg-base",  //device name
-										emi_no,
+										emi_no+i,
 										DDRPHY_AO_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get ddrphy_ao_reg_base index from dts\n");
@@ -624,6 +656,12 @@ int MET_BM_Init(void)
 			if (BaseAddrDRAMC[emi_no][i]==NULL)
 			{
 				PR_BOOTMSG("DRAMC_NAO_%d at cen_emi_%d ioremap fail\n",i,emi_no);
+				return -1;
+			}
+			BaseAddrDRAMC_AO[emi_no][i] = ioremap(DRAMC_AO_PHY_ADDR[emi_no][i], dramc_ao_reg_size);
+			if (BaseAddrDRAMC_AO[emi_no][i]==NULL)
+			{
+				PR_BOOTMSG("DRAMC_AO_%d at cen_emi_%d ioremap fail\n",i,emi_no);
 				return -1;
 			}
 			BaseAddrDDRPHY_AO[emi_no][i] = ioremap(DDRPHY_AO_PHY_ADDR[emi_no][i], ddrphy_ao_reg_size);
@@ -1383,6 +1421,28 @@ int MET_BM_SetSLC_pmu_cnt_filter(unsigned int *enable, unsigned int *filter0, un
 			}
 		}
 
+	}
+
+	return BM_REQ_OK;
+}
+
+int MET_BM_SetDRAMC_bus_mon_trigger(unsigned int emi_no, unsigned int on)
+{
+	int i;
+	volatile unsigned int value;
+	unsigned long addr;
+
+	for (i=0;i<dram_chann_num;i++) {
+		addr = (unsigned long)BaseAddrDRAMC_AO[emi_no][i] + dramc_ao_bus_mon1;
+		value = emi_readl(IOMEM(addr));
+
+		if(on){
+			value = (value | 0x10); /* bit 4 : DRAMC trigger by emi */
+		}else{
+			value = (value & ~(0x10));
+		}
+
+		emi_reg_sync_writel(value, addr);
 	}
 
 	return BM_REQ_OK;
@@ -3651,6 +3711,11 @@ void emi_init(void)
 											slc_pmu_cnt_filter1_val_[emi_no], slc_pmu_cnt_bw_lat_sel_val_[emi_no], 
 											slc_pmu_cnt_gid_filter_val_[emi_no], emi_no);
 		}
+
+		if (MET_EMI_support_list & (1<<DRAMC_BUS_MON_TRIGGER)) {
+			MET_BM_SetDRAMC_bus_mon_trigger(emi_no, 1);
+		}
+
 #ifdef EMI_LOWEFF_SUPPORT
 		MET_BM_SetLOWEFF_master_rw(0, wmask_msel_val_[emi_no], ageexp_msel_val_[emi_no],
 										ageexp_rw_val_[emi_no],emi_no);
@@ -3673,7 +3738,16 @@ void emi_init(void)
 /*restore the emi origin setting , prevent infect other module*/
 void emi_uninit(void)
 {
+	unsigned int emi_no;
+	for( emi_no=0;emi_no<EMI_NUM;emi_no++ )
+	{
+		if (MET_EMI_support_list & (1<<DRAMC_BUS_MON_TRIGGER)) {
+			MET_BM_SetDRAMC_bus_mon_trigger(emi_no, 0);
+		}
+	}
+
 	MET_BM_RestoreCfg();
+
 }
 
 #ifdef MET_SSPM
