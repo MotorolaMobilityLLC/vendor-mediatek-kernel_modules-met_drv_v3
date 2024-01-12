@@ -1602,7 +1602,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 
 	int ret, cpu, ii, cnt_num;
 	unsigned int rdata;
-	unsigned int ipi_buf[4];
+	unsigned int ipi_buf[4] = {0, 0, 0, 0};
 	struct hw_perf_event *hwc;
 	unsigned int base_offset;
 
@@ -1636,7 +1636,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
-					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 				} else {
 					MET_TRACE("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d\n",
 						  sspm_buf_available);
@@ -1677,7 +1677,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
-					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 				} else {
 					MET_TRACE("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d\n",
 						  sspm_buf_available);
@@ -1717,7 +1717,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
-					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 				}
 			}
 #endif
@@ -1744,7 +1744,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
-					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 				}
 			}
 #endif

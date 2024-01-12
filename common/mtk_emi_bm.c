@@ -77,7 +77,7 @@ static inline void __emi_reg_sync_writel(unsigned int data, void __iomem *padr)
 
 #define STORE_EMI_PARA_ARRAY(name,emi_no,type,size) \
 	memcpy(name##_[emi_no],name,sizeof(type)*size)
-	
+
 #define STORE_EMI_PARA(name,emi_no) \
 	name##_[emi_no] = name;
 
@@ -199,8 +199,8 @@ const unsigned int emi_chn_config[] = {
 static unsigned int emi_chn_config_val[MET_MAX_EMI_NUM][MET_MAX_DRAM_CH_NUM][EMI_CHN_CONFIG_MX_NR];
 
 const unsigned int slc_config[] = {
-	SLC_PMU_CNT0_FILTER0, 
-	SLC_PMU_CNT0_FILTER1, 
+	SLC_PMU_CNT0_FILTER0,
+	SLC_PMU_CNT0_FILTER1,
 	SLC_PMU_CNT0_BW_LAT_SEL,
 	SLC_PMU_CNT1_FILTER0,
 	SLC_PMU_CNT1_FILTER1,
@@ -208,26 +208,26 @@ const unsigned int slc_config[] = {
 	SLC_PMU_CNT2_FILTER0,
 	SLC_PMU_CNT2_FILTER1,
 	SLC_PMU_CNT2_BW_LAT_SEL,
-	SLC_PMU_CNT3_FILTER0, 
-	SLC_PMU_CNT3_FILTER1, 
+	SLC_PMU_CNT3_FILTER0,
+	SLC_PMU_CNT3_FILTER1,
 	SLC_PMU_CNT3_BW_LAT_SEL,
-	SLC_PMU_CNT4_FILTER0, 
-	SLC_PMU_CNT4_FILTER1, 
+	SLC_PMU_CNT4_FILTER0,
+	SLC_PMU_CNT4_FILTER1,
 	SLC_PMU_CNT4_BW_LAT_SEL,
-	SLC_PMU_CNT5_FILTER0, 
-	SLC_PMU_CNT5_FILTER1, 
+	SLC_PMU_CNT5_FILTER0,
+	SLC_PMU_CNT5_FILTER1,
 	SLC_PMU_CNT5_BW_LAT_SEL,
-	SLC_PMU_CNT6_FILTER0, 
-	SLC_PMU_CNT6_FILTER1, 
+	SLC_PMU_CNT6_FILTER0,
+	SLC_PMU_CNT6_FILTER1,
 	SLC_PMU_CNT6_BW_LAT_SEL,
-	SLC_PMU_CNT7_FILTER0, 
-	SLC_PMU_CNT7_FILTER1, 
+	SLC_PMU_CNT7_FILTER0,
+	SLC_PMU_CNT7_FILTER1,
 	SLC_PMU_CNT7_BW_LAT_SEL,
-	SLC_PMU_CNT8_FILTER0, 
-	SLC_PMU_CNT8_FILTER1, 
+	SLC_PMU_CNT8_FILTER0,
+	SLC_PMU_CNT8_FILTER1,
 	SLC_PMU_CNT8_BW_LAT_SEL,
-	SLC_PMU_CNT9_FILTER0, 
-	SLC_PMU_CNT9_FILTER1, 
+	SLC_PMU_CNT9_FILTER0,
+	SLC_PMU_CNT9_FILTER1,
 	SLC_PMU_CNT9_BW_LAT_SEL,
 	SLC_PMU_CNT10_FILTER0,
 	SLC_PMU_CNT10_FILTER1,
@@ -346,7 +346,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"emi_num",  //device name 
+									"emi_num",  //device name
 									0, //offset
 									&EMI_NUM);
 	if (ret) {
@@ -354,7 +354,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"dram_num",  //device name 
+									"dram_num",  //device name
 									0, //offset
 									&dram_chann_num);
 	if (ret) {
@@ -364,7 +364,7 @@ int MET_BM_Init(void)
 	DRAM_CH_NUM_PER_EMI = dram_chann_num;
 
 	ret = of_property_read_u32_index(node, // device node
-									"dram_freq_default",  //device name 
+									"dram_freq_default",  //device name
 									0, //offset
 									&DRAM_FREQ_DEFAULT);
 	if (ret) {
@@ -373,7 +373,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"ddr_ratio_default",  //device name 
+									"ddr_ratio_default",  //device name
 									0, //offset
 									&DDR_RATIO_DEFAULT);
 	if (ret) {
@@ -382,7 +382,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"dram_type_default",  //device name 
+									"dram_type_default",  //device name
 									0, //offset
 									&DRAM_TYPE_DEFAULT);
 	if (ret) {
@@ -391,7 +391,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"met_emi_support_list",  //device name 
+									"met_emi_support_list",  //device name
 									0, //offset
 									&MET_EMI_support_list);
 	if (ret) {
@@ -400,7 +400,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"cen_emi_reg_size",  //device name 
+									"cen_emi_reg_size",  //device name
 									0, //offset
 									&cen_emi_reg_size);
 	if (ret) {
@@ -408,7 +408,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"chn_emi_reg_size",  //device name 
+									"chn_emi_reg_size",  //device name
 									0, //offset
 									&chn_emi_reg_size);
 	if (ret) {
@@ -416,7 +416,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"dramc_nao_reg_size",  //device name 
+									"dramc_nao_reg_size",  //device name
 									0, //offset
 									&dramc_nao_reg_size);
 	if (ret) {
@@ -424,7 +424,7 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
-									"ddrphy_ao_reg_size",  //device name 
+									"ddrphy_ao_reg_size",  //device name
 									0, //offset
 									&ddrphy_ao_reg_size);
 	if (ret) {
@@ -433,7 +433,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"ddrphy_ao_misc_cg_ctrl0",  //device name 
+									"ddrphy_ao_misc_cg_ctrl0",  //device name
 									0, //offset
 									&ddrphy_ao_misc_cg_ctrl0);
 	if (ret) {
@@ -442,7 +442,7 @@ int MET_BM_Init(void)
 	}
 
 	ret = of_property_read_u32_index(node, // device node
-									"ddrphy_ao_misc_cg_ctrl2",  //device name 
+									"ddrphy_ao_misc_cg_ctrl2",  //device name
 									0, //offset
 									&ddrphy_ao_misc_cg_ctrl2);
 	if (ret) {
@@ -453,7 +453,7 @@ int MET_BM_Init(void)
 	if (MET_EMI_support_list & (1<<EMI_FREQ_SUPPORT))
 	{
 		ret = of_property_read_u32_index(node, // device node
-										"apmixedsys_reg_size",  //device name 
+										"apmixedsys_reg_size",  //device name
 										0, //offset
 										&apmixedsys_reg_size);
 		if (ret) {
@@ -463,7 +463,7 @@ int MET_BM_Init(void)
 
 		/*get the emi freq*/
 		ret = of_property_read_u32_index(node, // device node
-										"apmixedsys_reg_base",  //device name 
+										"apmixedsys_reg_base",  //device name
 										0, //offset
 										&APMIXEDSYS_ADDR);
 		if (ret) {
@@ -474,7 +474,7 @@ int MET_BM_Init(void)
 
 	if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
 		ret = of_property_read_u32_index(node, // device node
-										"slc_pmu_reg_size",  //device name 
+										"slc_pmu_reg_size",  //device name
 										0, //offset
 										&slc_pmu_reg_size);
 		if (ret) {
@@ -489,14 +489,14 @@ int MET_BM_Init(void)
 	for (emi_no = 0; emi_no < EMI_NUM; emi_no++)
 	{
 		ret = of_property_read_u32_index(node, // device node
-										"cen_emi_reg_base",  //device name 
+										"cen_emi_reg_base",  //device name
 										emi_no,
 										CEN_EMI_PHY_ADDR + emi_no);
 		if (ret)
 			PR_BOOTMSG("Cannot get cen_emi_reg_base index from dts\n");
 
 		ret = of_property_read_u32_index(node, // device node
-										"slc_pmu_reg_base",  //device name 
+										"slc_pmu_reg_base",  //device name
 										emi_no,
 										SLC_PMU_PHY_ADDR + emi_no);
 		if (ret)
@@ -506,7 +506,7 @@ int MET_BM_Init(void)
 		for (i=0; i<dram_chann_num; i++)
 		{
 			ret = of_property_read_u32_index(node, // device node
-										"chn_emi_reg_base",  //device name 
+										"chn_emi_reg_base",  //device name
 										emi_no,
 										CHN_EMI_PHY_ADDR[emi_no] + i);
 			if (ret) {
@@ -515,7 +515,7 @@ int MET_BM_Init(void)
 			}
 
 			ret = of_property_read_u32_index(node, // device node
-										"dramc_nao_reg_base",  //device name 
+										"dramc_nao_reg_base",  //device name
 										emi_no,
 										DRAMC_NAO_PHY_ADDR[emi_no] + i);
 			if (ret) {
@@ -524,7 +524,7 @@ int MET_BM_Init(void)
 			}
 
 			ret = of_property_read_u32_index(node, // device node
-										"ddrphy_ao_reg_base",  //device name 
+										"ddrphy_ao_reg_base",  //device name
 										emi_no,
 										DDRPHY_AO_PHY_ADDR[emi_no] + i);
 			if (ret) {
@@ -642,7 +642,7 @@ void MET_BM_RestoreCfg(void)
 	for(emi_no=0; emi_no<EMI_NUM ;emi_no++){
 		for (i = 0; i < EMI_CONFIG_MX_NR; i++)
 			emi_reg_sync_writel(emi_config_val[emi_no][i], (unsigned long)BaseAddrEMI[emi_no] + emi_config[i]);
-		for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++) 
+		for (i = 0; i < EMI_CHN_CONFIG_MX_NR; i++)
 			emi_reg_sync_writel(emi_chn_config_val[emi_no][0][i], BaseAddrCHN_EMI[emi_no][0] + emi_chn_config[i]);
 
 		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
@@ -690,7 +690,7 @@ int MET_BM_SetMonitorCounter(const unsigned int counter_num,
 	}
 
 	emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
-	
+
 	return BM_REQ_OK;
 }
 
@@ -980,7 +980,7 @@ int MET_BM_SetWSCT_master_rw(unsigned int *master , unsigned int *rw, unsigned i
 
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 	}
-	
+
 	return BM_REQ_OK;
 }
 
@@ -1007,7 +1007,7 @@ int MET_BM_SetWSCT_high_priority(unsigned int *disable, unsigned int *select, un
 		value = (value & ~(Mask_select << offset_select)) | ((*(select+i) & Mask_select) << offset_select);
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 	}
-	
+
 	return BM_REQ_OK;
 }
 
@@ -1017,7 +1017,7 @@ int MET_BM_SetWSCT_high_priority(unsigned int *disable, unsigned int *select, un
 int MET_BM_SetWSCT_busid_idmask(unsigned int *busid, unsigned int *idMask, unsigned int emi_no)
 {
 	volatile unsigned int value, addr;
-	volatile unsigned int enable_tmp, busid_tmp, idmask_tmp; 
+	volatile unsigned int enable_tmp, busid_tmp, idmask_tmp;
 	int i;
 
 	const unsigned int Mask_busid = 0x1FFF;
@@ -1117,7 +1117,7 @@ int MET_BM_SetWSCT_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, uns
 
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 	}
-	
+
 	return BM_REQ_OK;
 
 }
@@ -1163,14 +1163,14 @@ int MET_BM_SetTtype_high_priority_sel(unsigned int _high_priority_filter, unsign
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 
 	}
-	
+
 	return BM_REQ_OK;
 }
 
 
 //always call this API to init the reg
 //related API, MET_BM_SetbusID, MET_BM_SetbusID_En
-int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int _ttype1_16_en, 
+int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int _ttype1_16_en,
 								int _ttype17_21_en, unsigned int emi_no)
 {
 	int i;
@@ -1207,7 +1207,7 @@ int MET_BM_SetTtype_busid_idmask(unsigned int *busid, unsigned int *idMask, int 
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 
 	}
-	
+
 	return BM_REQ_OK;
 }
 
@@ -1216,7 +1216,7 @@ int MET_BM_SetTtype_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int emi_no
 {
 	volatile unsigned int value, addr;
 	int i;
-	
+
 	const unsigned int Mask = 0xF;
 	const unsigned int offset  = 16;
 
@@ -1228,7 +1228,7 @@ int MET_BM_SetTtype_chn_rank_sel(unsigned int *chn_rank_sel, unsigned int emi_no
 
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 	}
-	
+
 	return BM_REQ_OK;
 }
 
@@ -1260,7 +1260,7 @@ int MET_BM_SetTtype_burst_range(unsigned int *bnd_dis, unsigned int *low_bnd, un
 
 		emi_reg_sync_writel(value, (unsigned long)BaseAddrEMI[emi_no] + addr);
 	}
-	
+
 	return BM_REQ_OK;
 }
 
@@ -1280,7 +1280,7 @@ int MET_BM_SetSLC_pmu_reg(unsigned int counter_num, unsigned int offset, unsigne
 int MET_BM_SetSLC_pmu_cnt_filter(unsigned int *enable, unsigned int *filter0, unsigned int *filter1, unsigned int *bw_lat_sel, unsigned int emi_no)
 {
 	int i;
-	
+
 	for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {
 		if(*(enable+i)){
 			MET_BM_SetSLC_pmu_reg(i, SLC_PMU_CNT0_FILTER0, *(filter0+i), emi_no);
@@ -3359,7 +3359,7 @@ void emi_init(void)
 			store_emi_para(emi_no);
 	}
 
-	
+
 	for( emi_no=0;emi_no<EMI_NUM;emi_no++ )
 	{
 		/* Init. EMI bus monitor */
@@ -3431,7 +3431,7 @@ void emi_init(void)
 		// 	wsct_chn_rank_sel_val_[emi_no][5] = 0xF;
 		// 	wsct_byte_bnd_dis_[emi_no][5] = 1;
 		// }
-		
+
 		/*if msel_enable is disable, the use total(0xff) to set config*/
 		if (msel_enable_[emi_no]==0) {
 			for ( i=0; i<WSCT_AMOUNT; i++) {
@@ -3448,18 +3448,18 @@ void emi_init(void)
 		MET_BM_SetTSCT_busid_enable(tsct_busid_enable_val_[emi_no], emi_no);
 
 		MET_BM_SetTtype_high_priority_sel(high_priority_filter_[emi_no], TTYPE_HPRI_SEL_[emi_no], emi_no);
-		MET_BM_SetTtype_busid_idmask(ttype_busid_val_[emi_no], ttype_idMask_val_[emi_no], 
+		MET_BM_SetTtype_busid_idmask(ttype_busid_val_[emi_no], ttype_idMask_val_[emi_no],
 									ttype1_16_en_[emi_no], ttype17_21_en_[emi_no], emi_no);
 		MET_BM_SetTtype_chn_rank_sel(ttype_chn_rank_sel_val_[emi_no], emi_no);
-		MET_BM_SetTtype_burst_range(ttype_byte_bnd_dis_[emi_no], ttype_byte_low_bnd_val_[emi_no], 
+		MET_BM_SetTtype_burst_range(ttype_byte_bnd_dis_[emi_no], ttype_byte_low_bnd_val_[emi_no],
 									ttype_byte_up_bnd_val_[emi_no], emi_no);
-		
+
 		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
 			MET_BM_SetSLC_pmu_cnt_filter(slc_pmu_cnt_setting_enable_val_[emi_no], slc_pmu_cnt_filter0_val_[emi_no],
 											slc_pmu_cnt_filter1_val_[emi_no], slc_pmu_cnt_bw_lat_sel_val_[emi_no], emi_no);
 		}
 #ifdef EMI_LOWEFF_SUPPORT
-		MET_BM_SetLOWEFF_master_rw(0, wmask_msel_val_[emi_no], ageexp_msel_val_[emi_no], 
+		MET_BM_SetLOWEFF_master_rw(0, wmask_msel_val_[emi_no], ageexp_msel_val_[emi_no],
 										ageexp_rw_val_[emi_no],emi_no);
 #endif
 
@@ -3473,7 +3473,7 @@ void emi_init(void)
 
 		MET_BM_SetTtypeCounterRW(bmrw0_val, bmrw1_val, emi_no);
 
-	} /*end of for( emi_no=0;emi_no<EMI_NUM;emi_no++ )*/ 
+	} /*end of for( emi_no=0;emi_no<EMI_NUM;emi_no++ )*/
 
 }
 
@@ -3486,33 +3486,27 @@ void emi_uninit(void)
 #ifdef MET_SSPM
 void MET_BM_IPI_REGISTER_CB(void)
 {
-	int ret, i;
+	int ret;
 	unsigned int rdata;
-	unsigned int ipi_buf[4];
-
-	for (i = 0; i < 4; i++)
-		ipi_buf[i] = 0;
+	unsigned int ipi_buf[1] = {0};
 
 	if (sspm_buf_available == 1) {
 		ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_ARGU | SET_REGISTER_CB;
-		ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+		ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 	}
 }
 
 
 void MET_BM_IPI_configs(void)
 {
-	int ret, i;
+	int ret;
 	unsigned int rdata;
-	unsigned int ipi_buf[4];
-
-	for (i = 0; i < 4; i++)
-		ipi_buf[i] = 0;
+	unsigned int ipi_buf[3] = {0, 0, 0};
 
 	if (sspm_buf_available == 1) {
 		ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_ARGU | SET_EBM_CONFIGS1;
 		ipi_buf[2] = EMI_VER_MAJOR << 24 | EMI_VER_MINOR << 16 | DRAMC_VER << 8 | 0;
-		ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+		ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 	}
 }
 #endif
@@ -3522,19 +3516,18 @@ unsigned int get_sspm_support_feature(void)
 	unsigned int rdata=0;
 
 #ifdef MET_SSPM
-	int ret, i;
-	unsigned int ipi_buf[4];
+	int ret;
+	unsigned int ipi_buf[1] = {0};
 
 	if (met_sspm_api_ready && met_scmi_api_ready) {
-		for (i = 0; i < 4; i++)
-			ipi_buf[i] = 0;
-
 		if (sspm_buf_available == 1) {
 			ipi_buf[0] = MET_MAIN_ID | (MID_EMI << MID_BIT_SHIFT) | MET_REQ_AP2MD ;
-			ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+
+			ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 		}
 	}
 #endif
+
 	return rdata;
 }
 
@@ -3676,14 +3669,14 @@ int emi_create_header(char *buf, int buf_len)
 			"met-info [000] 0.0: met_dram_clockrate: %d\n",dram_data_rate_MHz);
 
 	/* 1 : by ondiemet, 0: by pure linux */
-	ret += snprintf(buf + ret, buf_len - ret, 
+	ret += snprintf(buf + ret, buf_len - ret,
 					"met-info [000] 0.0: ##_emi_use_ondiemet: %u,%X\n",
 					emi_use_ondiemet, get_sspm_support_feature());
-					
-	ret += snprintf(buf + ret, buf_len - ret, 
+
+	ret += snprintf(buf + ret, buf_len - ret,
 					"met-info [000] 0.0: emi_use_ondiemet: %u,%X\n",
 					emi_use_ondiemet, get_sspm_support_feature());
-					
+
 	/*dram bank num*/
 	ret += snprintf(buf + ret, buf_len - ret,
 			"met-info [000] 0.0: met_dram_rank_num_header: %u,%u\n", MET_EMI_GetDramRankNum(0),
@@ -3943,7 +3936,7 @@ int emi_create_header(char *buf, int buf_len)
 		/* this header will trigger MW ttype rename operation*/
 		ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: met_emi_ttype_enable: %d,%d,%d\n",
 										emi_no,ttype1_16_en_[emi_no], ttype17_21_en_[emi_no]);
-		
+
 		if (MET_EMI_support_list & (1<<SLC_PMU_SUPPORT_IDX)) {
 			ret += snprintf(buf + ret, buf_len - ret, "met-info [000] 0.0: slc_pmu_cnt_setting_enable: %d,",emi_no);
 			for (i=0;i<SLC_PMU_CNT_AMOUNT;i++) {

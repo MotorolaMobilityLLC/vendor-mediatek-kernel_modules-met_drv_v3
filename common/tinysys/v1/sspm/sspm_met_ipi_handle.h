@@ -30,12 +30,12 @@ void sspm_stop(void);
 void sspm_extract(void);
 void sspm_flush(void);
 
-int met_ipi_to_sspm_command(
+int met_scmi_to_sspm_command(
 	unsigned int *buffer,
 	int slot,
 	unsigned int *retbuf,
 	int retslot);
-int met_ipi_to_sspm_command_async(
+int met_scmi_to_sspm_command_async(
 	unsigned int *buffer,
 	int slot,
 	unsigned int *retbuf,
