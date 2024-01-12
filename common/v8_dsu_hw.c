@@ -3,8 +3,12 @@
  * Copyright (c) 2019 MediaTek Inc.
  */
 #include <asm/cpu.h>
+#include <asm/arm_dsu_pmu.h>
 #include "met_kernel_symbol.h"
 #include "cpu_dsu.h"
+
+#define CLUSTERPMCR_N_SHIFT		11
+#define CLUSTERPMCR_N_MASK		0x1f
 
 #if 1
 #define DBG(__fmt__, ...)
@@ -42,9 +46,14 @@ struct cpu_dsu_hw armv8_dsu = {
 	.check_event = armv8_dsu_hw_check_event,
 };
 
+static void set_dsu_pmu_event_count(void)
+{
+	armv8_dsu.event_count = (read_sysreg_s(CLUSTERPMCR_EL1) >> CLUSTERPMCR_N_SHIFT) & CLUSTERPMCR_N_MASK;
+}
+
 static void init_dsu(void)
 {
-	armv8_dsu.event_count = DSU_EVENT_MAX_CNT;
+	set_dsu_pmu_event_count();
 }
 
 struct cpu_dsu_hw *cpu_dsu_hw_init(void)
