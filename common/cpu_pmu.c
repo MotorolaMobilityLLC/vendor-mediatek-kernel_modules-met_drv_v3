@@ -841,7 +841,8 @@ static void __annotate_allocated_pmu_counter(unsigned int cpu) {
 				first = 0;
 			}
 			if (!cpu_pmu->write_counter) {
-				pr_debug("(cpu=%d, idx=%d): write_counter not implemented\n");
+				pr_debug("(cpu=%d, idx=%d): write_counter not implemented\n",
+					cpu, ii);
 				continue;
 			}
 			cpu_pmu->write_counter(ii, metpmu[ii].event,
