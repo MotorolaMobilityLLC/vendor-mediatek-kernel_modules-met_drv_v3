@@ -215,7 +215,7 @@ struct pmu_perf_data {
 	struct pmu_failed_desc init_failed_pmus[MXNR_PMU_EVENT_BUFFER_SZ];
 };
 static struct pmu_perf_data __percpu *pmu_perf_data;
-static DEFINE_PER_CPU(int, cpu_status);
+static int __percpu *cpu_status;
 
 #ifdef CPUPMU_V8_2
 #include <linux/of.h>
@@ -659,8 +659,9 @@ static int cpupmu_create_subfs(struct kobject *parent)
 	KOBJ_ATTR_LIST;
 #undef  KOBJ_ATTR_ITEM
 
-	pmu_perf_data = alloc_percpu(struct pmu_perf_data);
+	pmu_perf_data = alloc_percpu(typeof(*pmu_perf_data));
 	if (!pmu_perf_data) {
+		PR_BOOTMSG("[MET_PMU] percpu pmu_perf_data allocate fail\n");
 		pr_debug("[MET_PMU] percpu pmu_perf_data allocate fail\n");
 		/* don't return fail here, we don't break mounting process */
 	} else {
@@ -671,6 +672,18 @@ static int cpupmu_create_subfs(struct kobject *parent)
 		}
 	}
 
+	cpu_status = alloc_percpu(typeof(*cpu_status));
+	if (!cpu_status) {
+		PR_BOOTMSG("percpu cpu_status allocate fail\n");
+		pr_debug("percpu cpu_status allocate fail\n");
+	} else {
+		for_each_possible_cpu(cpu) {
+			memset(per_cpu_ptr(cpu_status, cpu),
+					0,
+					sizeof (*per_cpu_ptr(cpu_status, cpu)));
+		}
+	}
+
 	return 0;
 }
 
@@ -678,6 +691,9 @@ static void cpupmu_delete_subfs(void)
 {
 	if (pmu_perf_data) {
 		free_percpu(pmu_perf_data);
+	}
+	if (cpu_status) {
+		free_percpu(cpu_status);
 	}
 
 #define KOBJ_ATTR_ITEM(attr_name) \
@@ -695,7 +711,7 @@ void met_perf_cpupmu_polling(unsigned long long stamp, int cpu)
 	int count;
 	unsigned int pmu_value[MXNR_PMU_EVENTS];
 
-	if (per_cpu(cpu_status, cpu) != MET_CPU_ONLINE)
+	if (*per_cpu_ptr(cpu_status, cpu) != MET_CPU_ONLINE)
 		return;
 
 	if (met_cpu_pmu_method) {
@@ -783,16 +799,48 @@ static void __annotate_allocated_pmu_counter(int cpu) {
 #endif
 #endif
 
+static int reset_driver_stat(void)
+{
+	int		cpu, i;
+	int		event_count;
+	struct met_pmu	*pmu;
+
+	met_cpupmu.mode = 0;
+	for_each_possible_cpu(cpu) {
+		event_count = cpu_pmu->event_count[cpu];
+		pmu = cpu_pmu->pmu[cpu];
+		counter_cnt[cpu] = 0;
+		nr_arg[cpu] = 0;
+		nr_ignored_arg[cpu] = 0;
+		for (i = 0; i < event_count; i++) {
+			pmu[i].mode = MODE_DISABLED;
+			pmu[i].event = 0;
+			pmu[i].freq = 0;
+		}
+		if (pmu_perf_data) {
+			per_cpu_ptr(pmu_perf_data, cpu)->init_failed_cnt = 0;
+		}
+	}
+
+	return 0;
+}
+
 static void cpupmu_start(void)
 {
 	int cpu = raw_smp_processor_id();
+
+	if (!pmu_perf_data || !cpu_status) {
+		MET_TRACE("percpu pmu_perf_data/cpu_status allocate fail\n");
+		reset_driver_stat();
+		return;
+	}
 
 	if (!met_cpu_pmu_method) {
 		nr_arg[cpu] = 0;
 		cpu_pmu->start(cpu_pmu->pmu[cpu], cpu_pmu->event_count[cpu]);
 
 		met_perf_cpupmu_status = 1;
-		per_cpu(cpu_status, cpu) = MET_CPU_ONLINE;
+		*per_cpu_ptr(cpu_status, cpu) = MET_CPU_ONLINE;
 	}
 
 	pr_debug("dbg_annotate_cnt_val = %d\n", dbg_annotate_cnt_val);
@@ -889,7 +937,7 @@ static void cpupmu_unique_start(void)
 			met_perf_cpupmu_start(cpu);
 
 			met_perf_cpupmu_status = 1;
-			per_cpu(cpu_status, cpu) = MET_CPU_ONLINE;
+			*per_cpu_ptr(cpu_status, cpu) = MET_CPU_ONLINE;
 		}
 	}
 
@@ -936,32 +984,6 @@ static const char help[] =
 static int cpupmu_print_help(char *buf, int len)
 {
 	return snprintf(buf, PAGE_SIZE, help, cpu_pmu->cpu_name);
-}
-
-static int reset_driver_stat(void)
-{
-	int		cpu, i;
-	int		event_count;
-	struct met_pmu	*pmu;
-
-	met_cpupmu.mode = 0;
-	for_each_possible_cpu(cpu) {
-		event_count = cpu_pmu->event_count[cpu];
-		pmu = cpu_pmu->pmu[cpu];
-		counter_cnt[cpu] = 0;
-		nr_arg[cpu] = 0;
-		nr_ignored_arg[cpu] = 0;
-		for (i = 0; i < event_count; i++) {
-			pmu[i].mode = MODE_DISABLED;
-			pmu[i].event = 0;
-			pmu[i].freq = 0;
-		}
-		if (pmu_perf_data) {
-			per_cpu_ptr(pmu_perf_data, cpu)->init_failed_cnt = 0;
-		}
-	}
-
-	return 0;
 }
 
 #ifdef MET_TINYSYS
@@ -1282,13 +1304,8 @@ static int cpupmu_process_argument(const char *arg, int len)
 	int		is_cpu_cycle_evt;
 	struct pmu_failed_desc *failed_pmu_ptr;
 
-	if (!pmu_perf_data) {
-		/* don't return fail here, we don't block other features */
-		PR_BOOTMSG_ONCE("pmu_perf_data not allocated, turned cpu pmu off\n");
-		pr_debug("pmu_perf_data not allocated, turned cpu pmu off\n");
-		reset_driver_stat();
+	if (!pmu_perf_data || !cpu_status)
 		return 0;
-	}
 
 	/*
 	 * split cpu_list and event_list by ':'
@@ -1500,7 +1517,10 @@ arg_out:
 
 static void cpupmu_cpu_state_notify(long cpu, unsigned long action)
 {
-	per_cpu(cpu_status, cpu) = action;
+	if (!pmu_perf_data || !cpu_status)
+		return;
+
+	*per_cpu_ptr(cpu_status, cpu) = action;
 
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
 	if (met_cpu_pmu_method && action == MET_CPU_OFFLINE) {

@@ -21,6 +21,6 @@ struct met_cpu_struct {
 /* char name[16]; */
 };
 
-DECLARE_PER_CPU(struct met_cpu_struct, met_cpu);
+extern struct met_cpu_struct __percpu *met_cpu;
 
 #endif				/* _MET_STRUCT_H_ */

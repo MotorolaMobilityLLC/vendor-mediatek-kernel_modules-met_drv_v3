@@ -25,8 +25,8 @@ struct cookie_info {
 };
 
 static unsigned int back_trace_depth;
-static DEFINE_PER_CPU(struct cookie_info, info);
-static DEFINE_PER_CPU(int, cpu_status);
+static struct cookie_info __percpu *info;
+static int __percpu *cpu_status;
 
 static int reset_driver_stat(void)
 {
@@ -88,6 +88,52 @@ static void kernel_backtrace(struct pt_regs *const regs, struct cookie_info *pin
 }
 
 
+static int met_cookie_create_subfs(struct kobject *parent)
+{
+	int cpu;
+	int ret = 0;
+
+	info = alloc_percpu(typeof(*info));
+	if (!info) {
+		PR_BOOTMSG("percpu info allocate fail\n");
+		pr_debug("percpu info allocate fail\n");
+		return 0;
+	} else {
+		for_each_possible_cpu(cpu) {
+			memset(per_cpu_ptr(info, cpu),
+					0,
+					sizeof (*per_cpu_ptr(info, cpu)));
+		}
+	}
+
+	cpu_status = alloc_percpu(typeof(*cpu_status));
+	if (!cpu_status) {
+		PR_BOOTMSG("percpu cpu_status allocate fail\n");
+		pr_debug("percpu cpu_status allocate fail\n");
+		return 0;
+	} else {
+		for_each_possible_cpu(cpu) {
+			memset(per_cpu_ptr(cpu_status, cpu),
+					0,
+					sizeof (*per_cpu_ptr(cpu_status, cpu)));
+		}
+	}
+
+	return ret;
+}
+
+
+static void met_cookie_delete_subfs(void)
+{
+	if (info) {
+		free_percpu(info);
+	}
+	if (cpu_status) {
+		free_percpu(cpu_status);
+	}
+}
+
+
 void met_cookie_polling(unsigned long long stamp, int cpu)
 {
 	struct pt_regs *regs;
@@ -96,7 +142,7 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 	int ret, outflag = 0;
 	off_t off;
 
-	if (per_cpu(cpu_status, cpu) != MET_CPU_ONLINE)
+	if (*per_cpu_ptr(cpu_status, cpu) != MET_CPU_ONLINE)
 		return;
 
 	regs = get_irq_regs();
@@ -106,7 +152,7 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 
 	pc = profile_pc(regs);
 
-	pinfo = &(per_cpu(info, cpu));
+	pinfo = per_cpu_ptr(info, cpu);
 	pinfo->strlen = snprintf(pinfo->strbuf, LINE_SIZE, "%s,%lx", current->comm, pc);
 
 	if (user_mode(regs)) {
@@ -168,7 +214,14 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 static void met_cookie_start(void)
 {
 	int	cpu = raw_smp_processor_id();
-	per_cpu(cpu_status, cpu) = MET_CPU_ONLINE;
+
+	if (!info || !cpu_status) {
+		MET_TRACE("percpu info/cpu_status allocate fail\n");
+		reset_driver_stat();
+		return;
+	}
+
+	*per_cpu_ptr(cpu_status, cpu) = MET_CPU_ONLINE;
 	/* return; */
 }
 
@@ -181,6 +234,9 @@ static void met_cookie_stop(void)
 static int met_cookie_process_argument(const char *arg, int len)
 {
 	unsigned int value;
+
+	if (!info || !cpu_status)
+		return 0;
 
 	if (met_parse_num(arg, &value, len) < 0) {
 		met_cookie.mode = 0;
@@ -241,13 +297,18 @@ static int met_cookie_print_header(char *buf, int len)
 
 static void met_cookie_cpu_state_notify(long cpu, unsigned long action)
 {
-	per_cpu(cpu_status, cpu) = action;
+	if (!info || !cpu_status)
+		return;
+
+	*per_cpu_ptr(cpu_status, cpu) = action;
 }
 
 struct metdevice met_cookie = {
 	.name = "cookie",
 	.type = MET_TYPE_PMU,
 	.cpu_related = 1,
+	.create_subfs = met_cookie_create_subfs,
+	.delete_subfs = met_cookie_delete_subfs,
 	.start = met_cookie_start,
 	.stop = met_cookie_stop,
 	.reset = reset_driver_stat,
