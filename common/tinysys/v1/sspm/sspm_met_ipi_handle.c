@@ -110,7 +110,7 @@ void MET_handler(u32 r_feature_id, scmi_tinysys_report* report)
     memcpy(recv_buf_copy, recv_buf, sizeof(recv_buf_copy));
 
     cmd = report->p1 & MET_SUB_ID_MASK;
-	MET_PRINTF_D("\x1b[1;33m ==> cmd: 0x%x \033[0m\n". cmd);
+	MET_PRINTF_D("\x1b[1;33m ==> cmd: 0x%x \033[0m\n", cmd);
 	switch (cmd) {
 	case MET_DUMP_BUFFER:	/* mbox 1: start index; 2: size */
 		sspm_buffer_dumping = 1;
@@ -156,36 +156,49 @@ void MET_handler(u32 r_feature_id, scmi_tinysys_report* report)
 
 int scmi_tinysys_to_sspm_command( u32 feature_id,
                                               unsigned int *buffer,
+                                              unsigned int slot,	// size of buffer
                                               unsigned int *retbuf,
+                                              unsigned int retslot,	// size of retbuf
                                               int timeout)
 {
-    int ret = 0;
-    if (tinfo == NULL)
-    {
+    unsigned int ret = 0;
+    int __buffer[5] = {0, 0, 0, 0, 0};
+
+    if (slot > 5) {		// 5 is the upper bound of buffer[] sent by SCMI
+        PR_BOOTMSG("slot > 5, it's out of range!!\n");
+        return 1; // FAIL
+    }
+
+    if (retslot > 3) {	// 3 is the upper bound of retbuf[] sent by SCMI
+        PR_BOOTMSG("retslot > 3, it's out of range!!\n");
+        return 1; // FAIL
+    }
+
+    if (tinfo == NULL) {
         PR_BOOTMSG("scmi protocol handle is NULL!!\n");
         return 1; // FAIL
     }
 
-    MET_PRINTF_D("\x1b[1;34m ==> buffer[0~4]: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x \033[0m \n",
-								buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
+	memcpy(__buffer, buffer, slot * sizeof(unsigned int));
+    MET_PRINTF_D("\x1b[1;34m ==> __buffer[0~4]: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x \033[0m \n",
+								__buffer[0], __buffer[1], __buffer[2], __buffer[3], __buffer[4]);
 	if (scmi_tinysys_common_set_symbol) {
     	ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id,
-                                  buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
+                                  __buffer[0], __buffer[1], __buffer[2], __buffer[3], __buffer[4]);
 	} else {
-		MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
 		return 1;
 	}
     if (ret != 0) {
-		MET_PRINTF_D("scmi_tinysys_common_set error(%d)\n", ret);
+		PR_BOOTMSG("scmi_tinysys_common_set error(%d)\n", ret);
     }
 
-    MET_PRINTF_D("\x1b[1;34m ==> wait for (0x%x) completion \033[0m \n", buffer[0]);
+    MET_PRINTF_D("\x1b[1;34m ==> wait for (0x%x) completion \033[0m \n", __buffer[0]);
     ret = wait_for_completion_killable_timeout(&SSPM_ACK_comp, timeout);
 
-	memcpy(retbuf, recv_buf, sizeof(unsigned int) * 4);
-    MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK with retval: 0x%x, 0x%x, 0x%x, 0x%x \033[0m\n", buffer[0],
-                                                                retbuf[0], retbuf[1], retbuf[2], retbuf[3]);
-
+    MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK with retval: 0x%x, 0x%x, 0x%x, 0x%x \033[0m\n", __buffer[0],
+									 recv_buf_copy[0], recv_buf_copy[1], recv_buf_copy[2], recv_buf_copy[3]);
+    memcpy(retbuf, recv_buf_copy + 1, retslot * sizeof(unsigned int)); // recv_buf[0] is COMMAND
 
     return ret;
 }
@@ -198,7 +211,7 @@ void start_sspm_ipi_recv_thread()
 	if (get_scmi_tinysys_info_symbol) {
 		tinfo = get_scmi_tinysys_info_symbol();
 	} else {
-		MET_PRINTF_D("[MET] [%s,%s] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%s] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
     of_property_read_u32(tinfo->sdev->dev.of_node, "scmi_met", &feature_id);
@@ -206,13 +219,13 @@ void start_sspm_ipi_recv_thread()
 	if (scmi_tinysys_event_notify_symbol) {
     	scmi_tinysys_event_notify_symbol(feature_id, 1 /*1: ENABLE*/);
 	} else {
-		MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_event_notify is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_event_notify is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
 	if (scmi_tinysys_register_event_notifier_symbol) {
     	scmi_tinysys_register_event_notifier_symbol(feature_id, MET_handler);
 	} else {
-		MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_register_event_notifier is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_register_event_notifier is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
     MET_PRINTF_D(" ==> feature_id: %d \n", feature_id);
@@ -246,7 +259,7 @@ void sspm_start(void)
 {
 	int ret = 0;
 	unsigned int rdata = 0;
-	unsigned int ipi_buf[4];
+	unsigned int ipi_buf[4] = {0, 0, 0, 0};
 	const char* platform_name = NULL;
 	unsigned int platform_id = 0;
 
@@ -278,14 +291,14 @@ void sspm_start(void)
 		ipi_buf[2] = 0;
 
 	ipi_buf[3] = 0;
-	ret = met_ipi_to_sspm_command(ipi_buf, 0, &rdata, 1);
+	ret = met_scmi_to_sspm_command(ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 
 	/* start ondiemet now */
 	ipi_buf[0] = MET_MAIN_ID | MET_OP | MET_OP_START;
 	ipi_buf[1] = ondiemet_module[ONDIEMET_SSPM] ;
 	ipi_buf[2] = SSPM_LOG_FILE;
 	ipi_buf[3] = SSPM_RUN_NORMAL;
-	ret = met_ipi_to_sspm_command(ipi_buf, 0, &rdata, 1);
+	ret = met_scmi_to_sspm_command(ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 
 }
 
@@ -294,7 +307,7 @@ void sspm_stop(void)
 {
 	int ret = 0;
 	unsigned int rdata = 0;
-	unsigned int ipi_buf[4];
+	unsigned int ipi_buf[2] = {0, 0};
 	unsigned int chip_id = 0;
 
 	MET_PRINTF_D("\x1b[1;31m ==> sspm_stop \033[0m\n");
@@ -303,9 +316,7 @@ void sspm_stop(void)
 	if (sspm_buf_available == 1) {
 		ipi_buf[0] = MET_MAIN_ID | MET_OP | MET_OP_STOP;
 		ipi_buf[1] = chip_id;
-		ipi_buf[2] = 0;
-		ipi_buf[3] = 0;
-		ret = met_ipi_to_sspm_command(ipi_buf, 0, &rdata, 1);
+		ret = met_scmi_to_sspm_command(ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 	}
 }
 
@@ -314,7 +325,7 @@ void sspm_extract(void)
 {
 	int ret;
 	unsigned int rdata;
-	unsigned int ipi_buf[4];
+	unsigned int ipi_buf[1] = {0};
 	int count;
 
 	MET_PRINTF_D("\x1b[1;31m ==> sspm_extract \033[0m\n");
@@ -326,10 +337,7 @@ void sspm_extract(void)
 			count--;
 		}
 		ipi_buf[0] = MET_MAIN_ID | MET_OP | MET_OP_EXTRACT;
-		ipi_buf[1] = 0;
-		ipi_buf[2] = 0;
-		ipi_buf[3] = 0;
-		ret = met_ipi_to_sspm_command(ipi_buf, 0, &rdata, 1);
+		ret = met_scmi_to_sspm_command(ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 	}
 
 	if (sspm_run_mode == SSPM_RUN_NORMAL) {
@@ -342,16 +350,13 @@ void sspm_flush(void)
 {
 	int ret;
 	unsigned int rdata;
-	unsigned int ipi_buf[4];
+	unsigned int ipi_buf[1] = {0};
 
 	MET_PRINTF_D("\x1b[1;31m ==> sspm_flush \033[0m\n");
 
 	if (sspm_buf_available == 1) {
 		ipi_buf[0] = MET_MAIN_ID | MET_OP | MET_OP_FLUSH;
-		ipi_buf[1] = 0;
-		ipi_buf[2] = 0;
-		ipi_buf[3] = 0;
-		ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+		ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 	}
 
 	if (sspm_run_mode == SSPM_RUN_NORMAL) {
@@ -360,7 +365,7 @@ void sspm_flush(void)
 }
 
 
-int met_ipi_to_sspm_command(
+int met_scmi_to_sspm_command(
 	unsigned int *buffer,
 	int slot,
 	unsigned int *retbuf,
@@ -368,7 +373,7 @@ int met_ipi_to_sspm_command(
 {
 	int ret = 0;
 
-	ret = scmi_tinysys_to_sspm_command(feature_id, buffer, retbuf, 500 /*unit:jiffies (2s time out)*/);
+	ret = scmi_tinysys_to_sspm_command(feature_id, buffer, slot, retbuf, retslot, 500 /*unit:jiffies (2s time out)*/);
 
 	if (ret != 0) {
 		PR_BOOTMSG("%s 0x%X, 0x%X, 0x%X, 0x%X\n", __FUNCTION__,
@@ -378,10 +383,10 @@ int met_ipi_to_sspm_command(
 
 	return ret;
 }
-EXPORT_SYMBOL(met_ipi_to_sspm_command);
+EXPORT_SYMBOL(met_scmi_to_sspm_command);
 
 
-int met_ipi_to_sspm_command_async(
+int met_scmi_to_sspm_command_async(
 	unsigned int *buffer,
 	int slot,
 	unsigned int *retbuf,
@@ -391,7 +396,7 @@ int met_ipi_to_sspm_command_async(
 
 	return ret;
 }
-EXPORT_SYMBOL(met_ipi_to_sspm_command_async);
+EXPORT_SYMBOL(met_scmi_to_sspm_command_async);
 
 
 /*****************************************************************************
@@ -401,7 +406,7 @@ static void _log_done_cb(const void *p)
 {
 	unsigned int ret;
 	unsigned int rdata = 0;
-	unsigned int ipi_buf[4];
+	unsigned int ipi_buf[2] = {0, 0};
 	unsigned int opt = (p != NULL);
 
 	MET_PRINTF_D("\x1b[1;31m ==> _log_done_cb ++\033[0m\n");
@@ -410,9 +415,7 @@ static void _log_done_cb(const void *p)
 		MET_PRINTF_D("\x1b[1;31m ==> Send MET_RESP_AP2MD --> SSPM \033[0m\n");
 		ipi_buf[0] = MET_MAIN_ID | MET_RESP_AP2MD;
 		ipi_buf[1] = MET_DUMP_BUFFER;
-		ipi_buf[2] = 0;
-		ipi_buf[3] = 0;
-		ret = met_ipi_to_sspm_command((void *)ipi_buf, 0, &rdata, 1);
+		ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 	}
 
 	MET_PRINTF_D("\x1b[1;31m ==> _log_done_cb --\033[0m\n");
@@ -443,7 +446,7 @@ static int _sspm_recv_thread(void *data)
 
 		/* heavyweight cmd handling (not support reply_data) */
 		cmd = recv_buf_copy[0] & MET_SUB_ID_MASK;
-		MET_PRINTF_D("\x1b[1;33m ==> cmd: 0x%x \033[0m\n". cmd);
+		MET_PRINTF_D("\x1b[1;33m ==> cmd: 0x%x \033[0m\n", cmd);
 		switch (cmd) {
 		case MET_DUMP_BUFFER:	/* mbox 1: start index; 2: size */
 			sspm_buffer_dumping = 1;
@@ -520,7 +523,7 @@ static int _sspm_recv_thread(void *data)
 		if (scmi_tinysys_common_set_symbol) {
 			ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id, (MET_MAIN_ID | MET_AP_ACK), 0, 0, 0, 0);
 		} else {
-			MET_PRINTF_D("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
+			PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
 			return 1;
 		}
 	} while (!kthread_should_stop());
