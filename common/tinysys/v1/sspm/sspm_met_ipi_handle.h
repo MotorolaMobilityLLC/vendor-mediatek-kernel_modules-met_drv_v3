@@ -41,6 +41,7 @@ int met_scmi_to_sspm_command_async(
 	unsigned int *retbuf,
 	int retslot);
 
+unsigned int met_scmi_to_sspm_resrc_request(unsigned int on);
 
 /*****************************************************************************
  * external variable declaration
