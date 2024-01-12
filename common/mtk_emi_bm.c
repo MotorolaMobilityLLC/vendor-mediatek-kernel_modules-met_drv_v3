@@ -596,7 +596,7 @@ int MET_BM_Init(void)
 		{
 			ret = of_property_read_u32_index(node, // device node
 										"chn-emi-reg-base",  //device name
-										emi_no+i,
+										emi_no*dram_chann_num + i,
 										CHN_EMI_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get chn_emi_reg_base index from dts\n");
@@ -605,7 +605,7 @@ int MET_BM_Init(void)
 
 			ret = of_property_read_u32_index(node, // device node
 										"dramc-nao-reg-base",  //device name
-										emi_no+i,
+										emi_no*dram_chann_num + i,
 										DRAMC_NAO_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get dramc_nao_reg_base index from dts\n");
@@ -614,7 +614,7 @@ int MET_BM_Init(void)
 
 			ret = of_property_read_u32_index(node,
 										"dramc-ao-reg-base",
-										emi_no+i,
+										emi_no*dram_chann_num + i,
 										DRAMC_AO_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get dramc-ao-reg-base index from dts\n");
@@ -623,7 +623,7 @@ int MET_BM_Init(void)
 
 			ret = of_property_read_u32_index(node, // device node
 										"ddrphy-ao-reg-base",  //device name
-										emi_no+i,
+										emi_no*dram_chann_num + i,
 										DDRPHY_AO_PHY_ADDR[emi_no] + i);
 			if (ret) {
 				PR_BOOTMSG("Cannot get ddrphy_ao_reg_base index from dts\n");
