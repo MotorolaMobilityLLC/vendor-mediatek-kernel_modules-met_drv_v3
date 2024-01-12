@@ -108,6 +108,7 @@ void __iomem *BaseAddrSLC_PMU_2ND[MET_MAX_EMI_NUM];
 /*read from dts*/
 int EMI_NUM;
 int DRAM_CH_NUM_PER_EMI;
+int SLC_PMU_CH_NUM;
 int DRAM_FREQ_DEFAULT;
 int DDR_RATIO_DEFAULT;
 int DRAM_TYPE_DEFAULT;
@@ -411,6 +412,15 @@ int MET_BM_Init(void)
 		return -1;
 	}
 	DRAM_CH_NUM_PER_EMI = dram_chann_num;
+
+	ret = of_property_read_u32_index(node, // device node
+									"slc-pmu-ch-num",  //device name
+									0, //offset
+									&SLC_PMU_CH_NUM);
+	if (ret) {
+		PR_BOOTMSG("Cannot get slc-pmu-ch-num index from dts\n");
+		SLC_PMU_CH_NUM = dram_chann_num;
+	}
 
 	ret = of_property_read_u32_index(node, // device node
 									"dram-freq-default",  //device name
@@ -4693,6 +4703,7 @@ EXPORT_SYMBOL(BaseAddrSLC_PMU);
 /*read from dts*/
 EXPORT_SYMBOL(EMI_NUM);
 EXPORT_SYMBOL(DRAM_CH_NUM_PER_EMI);
+EXPORT_SYMBOL(SLC_PMU_CH_NUM);
 // EXPORT_SYMBOL(DRAM_FREQ_DEFAULT);
 // EXPORT_SYMBOL(DDR_RATIO_DEFAULT);
 // EXPORT_SYMBOL(DRAM_TYPE_DEFAULT);
