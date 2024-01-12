@@ -702,12 +702,26 @@ static void met_perf_cpupmu_stop(int cpu)
 
 static int cpupmu_create_subfs(struct kobject *parent)
 {
-	int ret = 0;
+	int cpu, ret = 0;
+	unsigned int event_count = 0;
 
 	cpu_pmu = cpu_pmu_hw_init();
 	if (cpu_pmu == NULL) {
 		PR_BOOTMSG("Failed to init CPU PMU HW!!\n");
 		return -ENODEV;
+	}
+
+	/* check event_count is less than MXNR_PMU_EVENTS*/
+	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
+		event_count = cpu_pmu->event_count[cpu];
+		if (event_count > MXNR_PMU_EVENTS){
+			PR_BOOTMSG("[MET_PMU] Failed to create subfs: event_count of cpu %d is greater than MXNR_PMU_EVENTS!\n", cpu);
+			pr_debug("[MET_PMU] Failed to create subfs: event_count of cpu %d is greater than MXNR_PMU_EVENTS!\n", cpu);
+			return -ENODEV;
+		}
 	}
 
 	kobj_cpu = parent;
