@@ -1,8 +1,11 @@
-ORIGIN_SRC := $(src)
-override src := $(src)/../..
+extra_symbols := $(abspath $(O)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.symvers)
 
-include $(src)/Makefile
+all: PRIVATE_SYMBOLS := $(extra_symbols)
+all:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(PRIVATE_SYMBOLS)"
 
-override src := $(ORIGIN_SRC)
+modules_install:
+	$(MAKE) M=$(M) -C $(KERNEL_SRC) modules_install
 
-obj-$(CONFIG_MTK_MET) := met_mcupm_api.o
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean
