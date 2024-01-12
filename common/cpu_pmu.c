@@ -41,9 +41,9 @@
 #endif /*MET_TINYSYS*/
 
 struct cpu_pmu_hw *cpu_pmu;
-static int counter_cnt[MXNR_CPU];
-static int nr_arg[MXNR_CPU];
-static int nr_ignored_arg[MXNR_CPU];
+static int counter_cnt[NR_CPUS];
+static int nr_arg[NR_CPUS];
+static int nr_ignored_arg[NR_CPUS];
 
 int met_perf_cpupmu_status;
 
@@ -123,7 +123,7 @@ static void pmu_pmcr_read(void *data) {
 	int *cpu_pmu_num = data;
     int core_id = smp_processor_id(); /*0~max cpu*/
     /*u32 i = read_sysreg(pmcr_el0);*/
-    if (core_id < MXNR_CPU)
+    if (core_id < NR_CPUS)
     	*(cpu_pmu_num + core_id) = (read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK;
     /*PR_BOOTMSG("[eric debug] core_id=%d, pmcr_el0=%d\n", core_id, i);*/
 }
@@ -134,9 +134,9 @@ ssize_t pmu_count_show(struct kobject *kobj,
 {
 	int cpu;
 	int ret = 0;
-	int cpu_pmu_num[MXNR_CPU] = {0}; /*read from pmcr_el0*/
+	int cpu_pmu_num[NR_CPUS] = {0}; /*read from pmcr_el0*/
 
-	for(cpu=0; cpu<MXNR_CPU; cpu++)
+	for(cpu=0; cpu<NR_CPUS; cpu++)
 	{
 		cpu_pmu_num[cpu] = 0;
 	}
@@ -153,7 +153,7 @@ ssize_t pmu_count_show(struct kobject *kobj,
 	ret += snprintf(buf + ret, PAGE_SIZE - ret, "perf_num_counters: %d\n", perf_num_counters());
 	ret += snprintf(buf + ret, PAGE_SIZE - ret, "read from pmcr_el10\n");
 
-	for(cpu=0; cpu<MXNR_CPU; cpu++)
+	for(cpu=0; cpu<NR_CPUS; cpu++)
 	{
 		ret += snprintf(buf + ret, PAGE_SIZE - ret, "cpu_%d:%d\n",cpu,cpu_pmu_num[cpu]);
 	}
@@ -215,8 +215,8 @@ static int cpu_pm_pmu_notify(struct notifier_block *b,
 			     unsigned long cmd,
 			     void *p)
 {
-	int ii;
-	int cpu, count;
+	unsigned int cpu;
+	int ii, count;
 	unsigned int pmu_value[MXNR_PMU_EVENTS];
 
 	if (!met_perf_cpupmu_status)
@@ -431,7 +431,7 @@ static int __met_perf_event_read_local(struct perf_event *event, u64 *value,
 	return ret;
 }
 
-static void perf_cpupmu_polling(unsigned long long stamp, int cpu)
+static void perf_cpupmu_polling(unsigned long long stamp, unsigned int cpu)
 {
 	int			event_count = cpu_pmu->event_count[cpu];
 	struct met_pmu		*pmu = cpu_pmu->pmu[cpu];
@@ -529,7 +529,8 @@ static inline int pmu_has_overflowed(u32 pmovsr)
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
 static irqreturn_t handle_irq_selective_ignore_overflow(struct arm_pmu *pmu)
 {
-	int cpu, ii, idx, is_cyc_cnt, event_count;
+	unsigned int cpu;
+	int ii, idx, is_cyc_cnt, event_count;
 	struct met_pmu *metpmu;
 	struct perf_event *ev;
 
@@ -577,7 +578,7 @@ static irqreturn_t handle_irq_ignore_overflow(struct arm_pmu *pmu)
 #endif
 #endif
 
-static struct perf_event * __met_perf_events_set_event(int cpu, unsigned short event, int idx)
+static struct perf_event * __met_perf_events_set_event(unsigned int cpu, unsigned short event, int idx)
 {
 	struct perf_event	*ev;
 #ifdef MET_TINYSYS
@@ -646,7 +647,7 @@ static void met_perf_cpupmu_start(int cpu)
 		return;
 }
 
-static void perf_thread_down(int cpu)
+static void perf_thread_down(unsigned int cpu)
 {
 	int			i, j;
 	struct perf_event	*ev;
@@ -757,8 +758,9 @@ static void cpupmu_delete_subfs(void)
 #undef  KOBJ_ATTR_ITEM
 }
 
-void met_perf_cpupmu_polling(unsigned long long stamp, int cpu)
+void met_perf_cpupmu_polling(unsigned long long stamp, int _cpu_)
 {
+	unsigned int cpu = _cpu_;
 	int count;
 	unsigned int pmu_value[MXNR_PMU_EVENTS];
 
@@ -794,7 +796,7 @@ void met_perf_cpupmu_polling(unsigned long long stamp, int cpu)
 
 #ifdef MET_TINYSYS
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
-static void __annotate_allocated_pmu_counter(int cpu) {
+static void __annotate_allocated_pmu_counter(unsigned int cpu) {
 
 	struct perf_event *ev;
 	struct met_pmu *metpmu;
@@ -858,6 +860,9 @@ static int reset_driver_stat(void)
 
 	met_cpupmu.mode = 0;
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		event_count = cpu_pmu->event_count[cpu];
 		pmu = cpu_pmu->pmu[cpu];
 		counter_cnt[cpu] = 0;
@@ -880,7 +885,7 @@ static int reset_driver_stat(void)
 
 static void cpupmu_start(void)
 {
-	int cpu = raw_smp_processor_id();
+	unsigned int cpu = raw_smp_processor_id();
 
 	if (!pmu_perf_data || !cpu_status) {
 		MET_TRACE("percpu pmu_perf_data/cpu_status allocate fail\n");
@@ -906,7 +911,7 @@ static void cpupmu_start(void)
 	}
 }
 
-static void __dump_perf_event_info(int cpu)
+static void __dump_perf_event_info(unsigned int cpu)
 {
 	int ii, idx;
 	struct perf_event *ev;
@@ -983,10 +988,16 @@ static void cpupmu_unique_start(void)
 	if (met_cpu_pmu_method) {
 
 		for_each_possible_cpu(cpu) {
+			if (cpu<0 || cpu>=NR_CPUS)
+				continue;
+
 			__dump_perf_event_info(cpu);
 		}
 
 		for_each_possible_cpu(cpu) {
+			if (cpu<0 || cpu>=NR_CPUS)
+				continue;
+
 			met_perf_cpupmu_start(cpu);
 
 			met_perf_cpupmu_status = 1;
@@ -1040,7 +1051,7 @@ static int cpupmu_print_help(char *buf, int len)
 }
 
 #ifdef MET_TINYSYS
-static int cycle_count_mode_enabled(int cpu) {
+static int cycle_count_mode_enabled(unsigned int cpu) {
 
 	int event_cnt;
 	struct met_pmu	*pmu;
@@ -1050,7 +1061,7 @@ static int cycle_count_mode_enabled(int cpu) {
 	return pmu[event_cnt-1].mode == MODE_POLLING;
 }
 
-static int __is_pmu_regular_reg_allocated(int cpu, int hw_idx)
+static int __is_pmu_regular_reg_allocated(unsigned int cpu, int hw_idx)
 {
 	int ii;
 	int event_count;
@@ -1088,7 +1099,7 @@ static int __is_pmu_regular_reg_allocated(int cpu, int hw_idx)
 	return 0;
 }
 
-static int __pmu_event_on_hw_idx(int cpu, int hw_idx)
+static int __pmu_event_on_hw_idx(unsigned int cpu, int hw_idx)
 {
 	int ii;
 	int event_count;
@@ -1155,6 +1166,9 @@ static int cpupmu_print_header(char *buf, int len)
 	 * we currently only prompt how many events were ignored.
 	 */
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		if (nr_ignored_arg[cpu]) {
 			ret += SNPRINTF(buf + ret,
 					len - ret,
@@ -1170,6 +1184,8 @@ static int cpupmu_print_header(char *buf, int len)
 	 * by other perf_events users
 	 */
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
 
 		event_count = cpu_pmu->event_count[cpu];
 		pmu = cpu_pmu->pmu[cpu];
@@ -1206,6 +1222,8 @@ static int cpupmu_print_header(char *buf, int len)
 	 * print error message of init failed events due cpu offline
 	 */
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
 
 		event_count = cpu_pmu->event_count[cpu];
 		pmu = cpu_pmu->pmu[cpu];
@@ -1239,6 +1257,9 @@ static int cpupmu_print_header(char *buf, int len)
 	}
 
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		event_count = cpu_pmu->event_count[cpu];
 		pmu = cpu_pmu->pmu[cpu];
 		first = 1;
@@ -1295,6 +1316,8 @@ static int cpupmu_print_header(char *buf, int len)
 
 	if (met_cpu_pmu_method) {
 		for_each_possible_cpu(cpu) {
+			if (cpu<0 || cpu>=NR_CPUS)
+				continue;
 			/*
 			 * XXX: we still need perf_event metadata until here,
 			 *      so we postpone runmet_perf_cpupmu_stop until now
@@ -1344,7 +1367,7 @@ static int cpupmu_process_argument(const char *arg, int len)
 	struct perf_event *ev;
 	char		*arg1 = (char*)arg;
 	int		len1 = len;
-	int		cpu, cpu_list[MXNR_CPU];
+	int		cpu, cpu_list[NR_CPUS];
 	int		nr_events;
 	/* overprovision for users input */
 	int		event_list[MXNR_PMU_EVENT_BUFFER_SZ];
@@ -1386,7 +1409,7 @@ static int cpupmu_process_argument(const char *arg, int len)
 		 * e.g.,
 		 *     --pmu-cpu-evt=0,1,6:0x2b,0x08,0x16,0x2a,0xff
 		 */
-		int list[MXNR_CPU], cnt;
+		int list[NR_CPUS], cnt;
 		int cpu_id;
 		if ((cnt = met_parse_num_list((char*)arg, len, list, ARRAY_SIZE(list))) <= 0)
 			goto arg_out;
@@ -1413,6 +1436,9 @@ static int cpupmu_process_argument(const char *arg, int len)
 
 	/* for each cpu in cpu_list, add all the events in event_list */
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		pmu = cpu_pmu->pmu[cpu];
 		/*
 		 * restore `nr_arg' from previous iteration,
@@ -1659,6 +1685,8 @@ static void ipi_config_pmu_counter_cnt(void) {
 	unsigned int base_offset;
 
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
 
 		MET_TRACE("core=%d, pmu_use_alloc_bitmap=%d\n",
 			  cpu, pmu_use_alloc_bitmap);
@@ -1849,6 +1877,8 @@ static int __validate_sspm_compatibility(void) {
 	int cpu;
 
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
 
 		if (!__is_perf_event_hw_slot_seq_order(cpu)) {
 			MET_TRACE("[MET_PMU] pmu not sequentially allocated on cpu %d\n"

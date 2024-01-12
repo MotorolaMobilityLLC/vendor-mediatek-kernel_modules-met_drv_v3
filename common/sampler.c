@@ -451,6 +451,9 @@ int sampler_start(void)
 #endif
 
 	for_each_possible_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+				continue;
+
 		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		met_cpu_ptr->work_enabled = 0;
 		met_cpu_ptr->hrtimer_online_check = 0;
@@ -513,6 +516,9 @@ int sampler_start(void)
 	get_online_cpus();
 	online_cpu_map = 0;
 	for_each_online_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+				continue;
+
 		online_cpu_map |= (1 << cpu);
 	}
 	dbg_met_tag_oneshot(0, "met_online cpu map", online_cpu_map);
@@ -560,6 +566,9 @@ void sampler_stop(void)
 	//on_each_cpu(__met_hrtimer_stop, NULL, 1);
 	online_cpu_map = 0;
 	for_each_online_cpu(cpu) {
+		if (cpu<0 || cpu>=NR_CPUS)
+				continue;
+
 		online_cpu_map |= (1 << cpu);
 	}
 
@@ -570,6 +579,9 @@ void sampler_stop(void)
 
 	/* for_each_online_cpu(cpu) { */
 	for_each_possible_cpu(cpu) {	/* Just for case */
+		if (cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		met_cpu_ptr = per_cpu_ptr(met_cpu, cpu);
 		dw = &met_cpu_ptr->dwork;
 		cancel_delayed_work_sync(dw);

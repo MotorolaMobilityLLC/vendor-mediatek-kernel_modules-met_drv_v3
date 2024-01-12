@@ -12,8 +12,6 @@
 #define MODE_INTERRUPT	1
 #define MODE_POLLING	2
 
-#define MXNR_CPU	NR_CPUS
-
 #define	MXNR_DSU_EVENTS	8	/* max number of pmu counter for armv8 is 6+1 */
 struct met_dsu {
 	unsigned char mode;

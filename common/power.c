@@ -22,6 +22,9 @@ void force_power_log(int cpu)
 
 	if (cpu == POWER_LOG_ALL) {
 		for_each_possible_cpu(cpu) {
+			if (cpu<0 || cpu>=NR_CPUS)
+				continue;
+
 			p = cpufreq_cpu_get(cpu);
 			if (p != NULL) {
 				cpu_frequency(p->cur, cpu);

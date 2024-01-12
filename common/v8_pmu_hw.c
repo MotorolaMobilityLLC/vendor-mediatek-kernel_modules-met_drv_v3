@@ -249,7 +249,7 @@ static unsigned long armv8_perf_event_get_evttype(struct perf_event *ev) {
 	return hwc->config_base & ARMV8_PMU_EVTYPE_EVENT;
 }
 
-static struct met_pmu	pmus[MXNR_CPU][MXNR_PMU_EVENTS];
+static struct met_pmu	pmus[NR_CPUS][MXNR_PMU_EVENTS];
 
 struct cpu_pmu_hw armv8_pmu = {
 	.name = "armv8_pmu",
@@ -288,7 +288,7 @@ static void init_pmus(void)
 	int	cpu;
 
 	for_each_possible_cpu(cpu) {
-		if (cpu >= MXNR_CPU)
+		if (cpu<0 || cpu>=NR_CPUS)
 			continue;
 
 		smp_call_function_single(cpu, set_pmu_event_count, NULL, 1);
@@ -300,7 +300,7 @@ struct cpu_pmu_hw *cpu_pmu_hw_init(void)
 	int	cpu;
 
 	init_pmus();
-	for (cpu = 0; cpu < MXNR_CPU; cpu++)
+	for (cpu = 0; cpu < NR_CPUS; cpu++)
 		armv8_pmu.pmu[cpu] = pmus[cpu];
 
 	return &armv8_pmu;

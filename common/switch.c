@@ -250,6 +250,9 @@ static void met_switch_start(void)
 	}
 
 	for_each_possible_cpu(cpu) {
+		if(cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		*per_cpu_ptr(first_log, cpu) = 1;
 		*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu)=-1;
 	}
@@ -266,6 +269,9 @@ static void met_switch_stop(void)
 	}
 
 	for_each_possible_cpu(cpu) {
+		if(cpu<0 || cpu>=NR_CPUS)
+			continue;
+
 		*per_cpu_ptr(first_log, cpu) = 0;
 		*per_cpu_ptr(per_cpu_last_need_polling_pid, cpu)=-1;
 	}

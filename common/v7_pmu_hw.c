@@ -249,7 +249,7 @@ static unsigned long armv7_perf_event_get_evttype(struct perf_event *ev) {
 	return hwc->config_base & ARMV7_PMU_EVTYPE_EVENT;
 }
 
-static struct met_pmu	pmus[MXNR_CPU][MXNR_PMU_EVENTS];
+static struct met_pmu	pmus[NR_CPUS][MXNR_PMU_EVENTS];
 
 struct cpu_pmu_hw armv7_pmu = {
 	.name = "armv7_pmu",
@@ -283,7 +283,7 @@ struct cpu_pmu_hw *cpu_pmu_hw_init(void)
 	if (pmu == NULL)
 		return NULL;
 
-	for (i = 0; i < MXNR_CPU; i++) {
+	for (i = 0; i < NR_CPUS; i++) {
 		pmu->event_count[i] = pmu->nr_cnt;
 		pmu->pmu[i] = pmus[i];
 	}

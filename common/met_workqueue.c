@@ -48,11 +48,9 @@ static struct list_head __percpu *per_cpu_invalid_list;
 static void clean_per_cpu_var(){
 	int cpu;
 
-	for_each_possible_cpu(cpu){
-
-		if(cpu<0 || cpu>=NR_CPUS){
+	for_each_possible_cpu(cpu) {
+		if(cpu<0 || cpu>=NR_CPUS)
 			continue;
-		}
 
 		met_workqueue_list_clean(per_cpu_ptr(per_cpu_valid_list, cpu));
 		met_workqueue_list_clean(per_cpu_ptr(per_cpu_invalid_list, cpu));
@@ -288,10 +286,10 @@ static int met_workqueue_create_subfs(struct kobject *parent)
 	}
 	
 	/* cpu from 0 to 7*/
-	for_each_possible_cpu(cpu){
-		if(cpu<0 || cpu>=NR_CPUS){
+	for_each_possible_cpu(cpu) {
+		if(cpu<0 || cpu>=NR_CPUS)
 			continue;
-		}
+
 		/*init head of list for each cpu*/
 		INIT_LIST_HEAD(per_cpu_ptr(per_cpu_valid_list, cpu));
 		INIT_LIST_HEAD(per_cpu_ptr(per_cpu_invalid_list, cpu));
