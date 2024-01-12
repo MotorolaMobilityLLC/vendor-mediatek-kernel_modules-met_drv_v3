@@ -123,9 +123,6 @@ static int _gpueb_print_header(char *buf, int len)
 	ondiemet_module[ONDIEMET_GPUEB] = 0;
 	met_gpueb.mode = 0;
 
-	if (len < 0)
-		return 0;
-
 	return len;
 }
 
