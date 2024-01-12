@@ -280,7 +280,7 @@ static void met_switch_stop(void)
 
 static int met_switch_process_argument(const char *arg, int len)
 {
-	unsigned int value;
+	unsigned int value = 0;
 	/*ex: mxitem is 0x0005, max value should be (5-1) + (5-2) = 0x100 + 0x11 = 7 */
 	unsigned int max_value = ((MT_SWITCH_MX_ITEM * 2) - 3);
 	char switch_mode_arg[SWITCH_MODE_LENGTH+1];

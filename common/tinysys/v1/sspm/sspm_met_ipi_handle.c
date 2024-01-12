@@ -357,8 +357,6 @@ int met_scmi_to_sspm_command(
 	ret = scmi_tinysys_to_sspm_command(feature_id, buffer, slot, retbuf, retslot, MS_TO_JIFFIES(2000));
 
 	if (ret != 0) {
-		PR_BOOTMSG("%s 0x%X, 0x%X, 0x%X, 0x%X\n", __FUNCTION__,
-			buffer[0], buffer[1], buffer[2], buffer[3]);
 		pr_debug("met_AP_to_sspm_command error(%d)\n", ret);
 	}
 
@@ -485,6 +483,8 @@ static int _sspm_recv_thread(void *data)
 						wlen * 4, _log_done_cb, (void *)1);
 			}
 			ret = sspm_log_stop();
+			if (ret)
+				PR_BOOTMSG("[MET] sspm_log_stop ret=%d\n", ret);
 
 			/* continuous mode handling */
 			if (sspm_run_mode == SSPM_RUN_CONTINUOUS) {
@@ -502,7 +502,7 @@ static int _sspm_recv_thread(void *data)
 
 		MET_PRINTF_D("\x1b[1;34m ==> In while(1) AP done CMD(0x%x) ACK --> SSPM \033[0m\n", recv_buf_copy[0]);
 		if (scmi_tinysys_common_set_symbol) {
-			ret = scmi_tinysys_common_set_symbol(tinfo->ph, feature_id, (MET_MAIN_ID | MET_AP_ACK), 0, 0, 0, 0);
+			scmi_tinysys_common_set_symbol(tinfo->ph, feature_id, (MET_MAIN_ID | MET_AP_ACK), 0, 0, 0, 0);
 		} else {
 			PR_BOOTMSG("[MET] [%s,%d] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
 			return 1;

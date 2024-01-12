@@ -96,7 +96,7 @@ static int get_rts_header_from_dts_table(struct sspm_met_event_header* __met_eve
 {
 	int idx, key_list_idx;
 	struct device_node *np;
-	const char *rts_string[NR_RTS_STR_ARRAY];
+	const char *rts_string[NR_RTS_STR_ARRAY] = {};
 	int nr_str = 0;
 	int ret = 0;
 
@@ -230,26 +230,10 @@ static void update_event_id_flag(int event_id)
 	met_sspm_common.mode = 1;
 }
 
-
-static char *strdup(const char *s)
-{
-	char *p = kmalloc(strlen(s) + 1, GFP_KERNEL);
-
-	if (p) {
-		strcpy(p, s);
-	}
-
-	return p;
-}
-
-
 static int ondiemet_sspm_process_argument(const char *arg, int len)
 {
 	int i = 0;
 	int rts_event_id = -1;
-	int res = 0;
-	char *line = NULL;
-	char *token = NULL;
 
 	if (!met_event_header_updated) {
 		nr_dts_header = get_rts_header_from_dts_table(met_event_header);
@@ -261,37 +245,6 @@ static int ondiemet_sspm_process_argument(const char *arg, int len)
 			rts_event_id = i;
 			break;
 		}
-	}
-
-	if (strstarts(arg, "update_rts_event_tbl")) {
-		char *ptr = NULL;
-
-		/* update_rts_event_tbl=rts_event_id;rts_event_name;chart_line_name;key_list*/
-		line = strdup(arg);
-		if (line == NULL) {
-			return -1;
-		}
-		ptr = line;
-		token = strsep(&line, "=");
-
-		/* rts_event_id, */
-		token = strsep(&line, ";");
-		res = kstrtoint(token, 10, &rts_event_id);
-		met_event_header[rts_event_id].rts_event_id = rts_event_id;
-
-		/* rts_event_name */
-		token = strsep(&line, ";");
-		met_event_header[rts_event_id].rts_event_name = token;
-
-		/* chart_line_name */
-		token = strsep(&line, ";");
-		met_event_header[rts_event_id].chart_line_name = token;
-
-		/* key_list */
-		token = strsep(&line, ";\n");
-		/* met_event_header[rts_event_id].key_list = token; */
-		SNPRINTF(met_event_header[rts_event_id].key_list, MAX_KEYLIST_LEN,
-			"%s",token);
 	}
 
 	if (rts_event_id >= 0) {

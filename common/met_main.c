@@ -222,7 +222,7 @@ static int __init met_drv_init(void)
 	}
 	if (platform_name) {
 		char buf[7];
-		int found = -1;
+		int found;
 
 		found = is_platform_name_valid(platform_name);
 
@@ -231,6 +231,7 @@ static int __init met_drv_init(void)
 			buf[0] = 'm';
 			buf[1] = 't';
 			strncpy(&buf[2], &platform_name[found+2], 4);
+			buf[6] = '\0';
 			met_set_platform(buf, 1);
 			PR_BOOTMSG("Get platform info from dts, platform_name=%s\n", buf);
 		} else {

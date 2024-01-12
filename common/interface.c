@@ -365,7 +365,7 @@ static ssize_t cpu_pmu_method_show(struct device *dev, struct device_attribute *
 static ssize_t cpu_pmu_method_store(struct device *dev, struct device_attribute *attr, const char *buf,
 			  size_t count)
 {
-	unsigned int value;
+	unsigned int value = 0;
 
 	if (met_parse_num(buf, &value, count) < 0)
 		return -EINVAL;
@@ -386,7 +386,7 @@ static ssize_t cpu_pm_pmu_reconfig_store(struct device *dev,
 					 const char *buf,
 					 size_t count)
 {
-	unsigned int value;
+	unsigned int value = 0;
 
 	if (met_parse_num(buf, &value, count) < 0)
 		return -EINVAL;
@@ -1311,7 +1311,7 @@ void force_sample(void *unused)
 
 int fs_reg(int met_minor)
 {
-	int ret = -1;
+	int ret;
 
 	ctrl_flags = 0;
 	met_mode = 0;

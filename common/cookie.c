@@ -221,7 +221,7 @@ static void met_cookie_stop(void)
 
 static int met_cookie_process_argument(const char *arg, int len)
 {
-	unsigned int value;
+	unsigned int value = 0;
 
 	if (!info || !cpu_status)
 		return 0;

@@ -494,7 +494,7 @@ static struct perf_event* perf_event_create(int cpu, unsigned short event, int i
 	ev_attr->pinned = 1;
 
 	ev = perf_event_create_kernel_counter(ev_attr, cpu, NULL, dummy_handler, NULL);
-	if (IS_ERR(ev))
+	if (!ev || IS_ERR(ev))
 		return NULL;
 	do {
 		if (ev->state == PERF_EVENT_STATE_ACTIVE)
@@ -578,7 +578,7 @@ static irqreturn_t handle_irq_ignore_overflow(struct arm_pmu *pmu)
 #endif
 #endif
 
-static struct perf_event * __met_perf_events_set_event(unsigned int cpu, unsigned short event, int idx)
+static struct perf_event * __met_perf_events_set_event(unsigned int cpu, unsigned short event, unsigned int idx)
 {
 	struct perf_event	*ev;
 #ifdef MET_TINYSYS
@@ -823,7 +823,7 @@ static void __annotate_allocated_pmu_counter(unsigned int cpu) {
 			armpmu = to_arm_pmu(ev->pmu);
 			if (!armpmu || !armpmu->write_counter || !armpmu->stop) {
 				pr_debug("(cpu=%d, idx=%d): armpmu=%p, write_counter=%p, stop=%p\n",
-					 cpu, ii, armpmu, armpmu->write_counter, armpmu->stop);
+					 cpu, ii, armpmu, armpmu?armpmu->write_counter:NULL, armpmu?armpmu->stop:NULL);
 				continue;
 			}
 
@@ -1370,12 +1370,12 @@ static int cpupmu_process_argument(const char *arg, int len)
 	int		cpu, cpu_list[NR_CPUS];
 	int		nr_events;
 	/* overprovision for users input */
-	int		event_list[MXNR_PMU_EVENT_BUFFER_SZ];
+	int		event_list[MXNR_PMU_EVENT_BUFFER_SZ] = {};
 	int		i;
 	int		nr_counters;
 	int		offset;
 	struct met_pmu	*pmu;
-	int		arg_nr;
+	unsigned int arg_nr;
 	int		event_no;
 	int		is_cpu_cycle_evt;
 	struct pmu_failed_desc *failed_pmu_ptr;
@@ -1409,7 +1409,7 @@ static int cpupmu_process_argument(const char *arg, int len)
 		 * e.g.,
 		 *     --pmu-cpu-evt=0,1,6:0x2b,0x08,0x16,0x2a,0xff
 		 */
-		int list[NR_CPUS], cnt;
+		int list[NR_CPUS] = {}, cnt;
 		int cpu_id;
 		if ((cnt = met_parse_num_list((char*)arg, len, list, ARRAY_SIZE(list))) <= 0)
 			goto arg_out;
