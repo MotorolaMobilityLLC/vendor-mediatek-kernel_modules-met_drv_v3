@@ -1830,12 +1830,18 @@ static void tinysys_pmu_stop(void)
 }
 
 static const char sspm_pmu_header[] = "met-info [000] 0.0: pmu_sampler: sspm\n";
+static const char mcupm_pmu_header[] = "met-info [000] 0.0: pmu_sampler: mcupm\n";
 
 static int tinysys_pmu_print_header(char *buf, int len)
 {
-	int ret;
+	int ret = 0;
 
-	ret = snprintf(buf, len, sspm_pmu_header);
+	if (met_cpupmu.tinysys_type == 0)
+	{
+		ret = snprintf(buf, len, sspm_pmu_header);
+	} else if (met_cpupmu.tinysys_type == 1)  {
+		ret = snprintf(buf, len, mcupm_pmu_header);
+	}
 
 	if (met_cpupmu.ondiemet_mode == 1)
 		ret += cpupmu_print_header(buf + ret, len - ret);
