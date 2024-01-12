@@ -350,7 +350,7 @@ int MET_BM_Init(void)
 									0, //offset
 									&EMI_NUM);
 	if (ret) {
-		PR_BOOTMSG("Cannot get emi_num index from dts(%d)\n");
+		PR_BOOTMSG("Cannot get emi_num index from dts\n");
 		return -1;
 	}
 	ret = of_property_read_u32_index(node, // device node
@@ -358,7 +358,7 @@ int MET_BM_Init(void)
 									0, //offset
 									&dram_chann_num);
 	if (ret) {
-		PR_BOOTMSG("Cannot get emi_num index from dts(%d)\n");
+		PR_BOOTMSG("Cannot get emi_num index from dts\n");
 		return -1;
 	}
 	DRAM_CH_NUM_PER_EMI = dram_chann_num;
@@ -368,7 +368,7 @@ int MET_BM_Init(void)
 									0, //offset
 									&DRAM_FREQ_DEFAULT);
 	if (ret) {
-		PR_BOOTMSG("Cannot get dram_freq_default index from dts(%d)\n");
+		PR_BOOTMSG("Cannot get dram_freq_default index from dts\n");
 		return -1;
 	}
 
