@@ -109,26 +109,23 @@ extern struct metdevice met_gpu_smmu_lmu;
 
 #ifdef MET_SSPM
 
-#include <linux/scmi_protocol.h>
 #include "sspm_reservedmem.h"
+#ifdef MET_SCMI
+#include <linux/scmi_protocol.h>
 #ifndef __TINYSYS_SCMI_H__
 #define __TINYSYS_SCMI_H__
 #include "tinysys-scmi.h"
 #endif
 
+#include "met_scmi_api/met_scmi_api.h"
+#endif /* MET_SCMI */
+
 #include "met_sspm_api/met_sspm_api.h"
 
 #endif /* MET_SSPM */
 
-extern long met_sspm_api_ready;
-
-#if defined(MET_SSPM) /* anyone of the scmi users */
-
-#include "met_scmi_api/met_scmi_api.h"
-
-#endif /* MET_SSPM (anyone of the scmi users) */
-
 extern long met_scmi_api_ready;
+extern long met_sspm_api_ready;
 
 #ifdef MET_MCUPM
 

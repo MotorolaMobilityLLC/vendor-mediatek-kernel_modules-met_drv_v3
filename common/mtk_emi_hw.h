@@ -13,12 +13,12 @@
 #define MET_MAX_EMI_NUM         2
 #define MET_MAX_DRAM_CH_NUM     2
 
-#define DRAMC_VER 2
 
 #define SLC_PMU_CNT_AMOUNT 32
 
 /*read from dts*/
 extern int EMI_NUM;
+extern int DRAMC_VER;
 extern int DRAM_CH_NUM_PER_EMI;
 extern int SLC_PMU_CH_NUM;
 extern int MET_EMI_support_list;

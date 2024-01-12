@@ -4,6 +4,10 @@
  */
 
 #include <linux/perf_event.h>
+#include <linux/version.h>
+#if KERNEL_VERSION(6, 6, 0) <= LINUX_VERSION_CODE
+#include <linux/perf/arm_pmuv3.h> /* Add for Kernel-mainline & Kernel-6.6 */
+#endif
 #include <asm/cpu.h>
 #include <asm/cputype.h>
 #include "met_kernel_symbol.h"

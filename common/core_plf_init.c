@@ -66,28 +66,27 @@ EXPORT_SYMBOL(met_backlight_api_ready);
 
 #include <linux/scmi_protocol.h>
 #include "sspm_reservedmem.h"
+#ifdef MET_SCMI
 #ifndef __TINYSYS_SCMI_H__
 #define __TINYSYS_SCMI_H__
 #include "tinysys-scmi.h"
 #endif
+#endif /* MET_SCMI */
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
 #include "met_sspm_api/met_sspm_api.h"
 
-#endif /* MET_SSPM */
-
-long met_sspm_api_ready = 0;
-EXPORT_SYMBOL(met_sspm_api_ready);
-
-#if defined(MET_SSPM) /* anyone of the scmi users */
-
+#ifdef MET_SCMI
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
 #include "met_scmi_api/met_scmi_api.h"
+#endif /* MET_SCMI */
 
 #endif /* MET_SSPM (anyone of the scmi users) */
 
 long met_scmi_api_ready = 0;
 EXPORT_SYMBOL(met_scmi_api_ready);
+long met_sspm_api_ready = 0;
+EXPORT_SYMBOL(met_sspm_api_ready);
 
 #ifdef MET_MCUPM
 

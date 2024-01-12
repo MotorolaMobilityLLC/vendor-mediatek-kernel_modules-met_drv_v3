@@ -94,7 +94,7 @@ static inline void armv7_pmu_disable_intr(unsigned int idx)
 	isb();
 }
 
-static inline void armv7_pmu_disable_cyc_intr()
+static inline void armv7_pmu_disable_cyc_intr(void)
 {
 	armv7_pmu_disable_intr(31);
 }
@@ -159,7 +159,9 @@ enum ARM_TYPE {
 	CORTEX_A15 = 0xC0F,
 	CORTEX_A17 = 0xC0E,
 	CORTEX_A53 = 0xD03,
+	CORTEX_A55 = 0xD05,
 	CORTEX_A57 = 0xD07,
+	CORTEX_A75 = 0xD0A,
 	CHIP_UNKNOWN = 0xFFF
 };
 
@@ -174,7 +176,9 @@ static struct chip_pmu chips[] = {
 	{CORTEX_A15},
 	{CORTEX_A17},
 	{CORTEX_A53},
+	{CORTEX_A55},
 	{CORTEX_A57},
+	{CORTEX_A75},
 };
 
 static int armv7_pmu_hw_check_event(struct met_pmu *pmu, int idx, int event)

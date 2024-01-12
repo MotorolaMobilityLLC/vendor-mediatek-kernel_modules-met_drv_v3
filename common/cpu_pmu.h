@@ -84,7 +84,9 @@ typedef enum {
 } PMU_IPI_Type;
 
 struct cpu_pmu_hw *cpu_pmu_hw_init(void);
+#ifndef CONFIG_MET_ARM_32BIT
 void update_pmu_event_count(unsigned int cpu);
+#endif
 
 extern struct cpu_pmu_hw *cpu_pmu;
 extern noinline void mp_cpu(unsigned char cnt, unsigned int *value);

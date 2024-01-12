@@ -6,7 +6,6 @@
 #include <linux/cpu.h>
 #include <linux/cpu_pm.h>
 #include <linux/perf_event.h>
-#include <asm/sysreg.h>
 
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
 #include <linux/platform_device.h>
@@ -119,14 +118,6 @@ static int pmu_use_alloc_bitmap = 1;
  * obviously, this option should always be defaulted to 0.
  */
 
-static void pmu_pmcr_read(void *data) {
-	int *cpu_pmu_num = data;
-    int core_id = smp_processor_id(); /*0~max cpu*/
-    /*u32 i = read_sysreg(pmcr_el0);*/
-    if (core_id < NR_CPUS)
-    	*(cpu_pmu_num + core_id) = (read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK;
-    /*PR_BOOTMSG("[eric debug] core_id=%d, pmcr_el0=%d\n", core_id, i);*/
-}
 
 ssize_t pmu_count_show(struct kobject *kobj,
 				struct kobj_attribute *attr,
@@ -134,28 +125,10 @@ ssize_t pmu_count_show(struct kobject *kobj,
 {
 	int cpu;
 	int ret = 0;
-	int cpu_pmu_num[NR_CPUS] = {0}; /*read from pmcr_el0*/
 
 	for(cpu=0; cpu<NR_CPUS; cpu++)
 	{
-		cpu_pmu_num[cpu] = 0;
-	}
-#if 0
-	for_each_possible_cpu(cpu) /*for_each_possible_cpu is not used  */
-	{
-		cpu_pmu_num[cpu] = (read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK;
-	}
-#else
-    for_each_online_cpu(cpu) {
-    	smp_call_function_single(cpu, pmu_pmcr_read, cpu_pmu_num, 1);
-    }
-#endif
-
-	ret += snprintf(buf + ret, PAGE_SIZE - ret, "read from pmcr_el10\n");
-
-	for(cpu=0; cpu<NR_CPUS; cpu++)
-	{
-		ret += snprintf(buf + ret, PAGE_SIZE - ret, "cpu_%d:%d\n",cpu,cpu_pmu_num[cpu]);
+		ret += snprintf(buf + ret, PAGE_SIZE - ret, "cpu_%d:%d\n",cpu,cpu_pmu->event_count[cpu]);
 	}
 
 	return strlen(buf);
@@ -893,7 +866,9 @@ static int reset_driver_stat(void)
 		}
 	}
 
+#ifdef MET_TINYSYS
 	armpmu_irq_hdlr_cnt = 0;
+#endif
 
 	return 0;
 }
@@ -1467,8 +1442,10 @@ static int cpupmu_process_argument(const char *arg, int len)
 
 		if (cpu_list[cpu] == 0)
 			continue;
+#ifndef CONFIG_MET_ARM_32BIT
 		if (cpu_pmu->event_count[cpu] == 0)
 			update_pmu_event_count(cpu);
+#endif
 
 		nr_counters = cpu_pmu->event_count[cpu];
 		pr_debug("[MET_PMU] pmu slot count=%d\n", nr_counters);
@@ -1733,7 +1710,11 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
+#ifdef MET_SCMI
 					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+#else
+					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+#endif
 				} else {
 					MET_TRACE("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d\n",
 						  sspm_buf_available);
@@ -1774,7 +1755,11 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
+#ifdef MET_SCMI
 					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+#else
+					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+#endif
 				} else {
 					MET_TRACE("[MET_PMU][IPI_CONFIG] sspm_buf_available=%d\n",
 						  sspm_buf_available);
@@ -1814,7 +1799,11 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
+#ifdef MET_SCMI
 					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+#else
+					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+#endif
 				}
 			}
 #endif
@@ -1841,7 +1830,11 @@ static void ipi_config_pmu_counter_cnt(void) {
 #ifdef MET_SSPM
 			if (met_cpupmu.tinysys_type == 0) {
 				if (sspm_buf_available == 1) {
+#ifdef MET_SCMI
 					ret = met_scmi_to_sspm_command((void *) ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+#else
+					ret = met_ipi_to_sspm_command((void *) ipi_buf, 0, &rdata, 1);
+#endif
 				}
 			}
 #endif
