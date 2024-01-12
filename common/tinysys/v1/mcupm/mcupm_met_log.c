@@ -623,13 +623,13 @@ static ssize_t mcupm_log_write_store(
 {
 	char *plog = NULL;
 
-	plog = kmalloc_array(count, sizeof(*plog), GFP_ATOMIC);
+	plog = kmalloc_array(count+1, sizeof(*plog), GFP_ATOMIC);
 	if (!plog) {
 		/* TODO: use a better error code */
 		return -EINVAL;
 	}
 
-	memcpy(plog, buf, count);
+	strlcpy(plog, buf, count+1);
 
 	mutex_lock(&dev->mutex);
 	mcupm_log_req_enq(plog, strnlen(plog, count), kfree, plog);
