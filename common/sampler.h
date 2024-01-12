@@ -33,9 +33,9 @@ void sampler_stop(void);
 
 extern struct list_head met_list;
 extern void add_cookie(struct pt_regs *regs, int cpu);
-extern int met_hrtimer_suspend(void);
-extern void met_hrtimer_resume(void);
 extern void met_event_timer_notify(void);
+extern void met_hrtimer_suspend(void __always_unused *data, u64 suspend_ns, u64 suspend_cycles);
+extern void met_hrtimer_resume(void __always_unused *data, u64 resume_cycles);
 
 #if IS_ENABLED(CONFIG_CPU_FREQ)
 #include "power.h"
