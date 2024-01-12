@@ -28,6 +28,7 @@ extern int ddrphy_ao_misc_cg_ctrl2;
 // extern int DRAM_TYPE_DEFAULT;
 // extern unsigned int reserve_wsct_setting;
 extern unsigned int slc_pmu_cnt_setting_enable_val_[MET_MAX_EMI_NUM][SLC_PMU_CNT_AMOUNT];
+extern int EMIPLL_CON1;
 
 #endif
 

@@ -116,6 +116,7 @@ int ddrphy_ao_misc_cg_ctrl0 = 0x0; /*default set 0, mean disable*/
 int ddrphy_ao_misc_cg_ctrl2 = 0x0;
 int dramc_ao_bus_mon1 = 0x0;
 int SLC_VER = 1;
+int EMIPLL_CON1;
 
 // #define CH0_MISC_CG_CTRL0 (((unsigned long) BaseAddrDDRPHY_AO[0]) + 0x284)
 // #define CH1_MISC_CG_CTRL0 (((unsigned long) BaseAddrDDRPHY_AO[1]) + 0x284)
@@ -382,7 +383,7 @@ int MET_BM_Init(void)
 	unsigned int ddrphy_ao_reg_size = 0x1650;
 	unsigned int slc_pmu_reg_size = 0x1000;
 	unsigned int slc_pmu_2nd_reg_size = 0x1000;
-	unsigned int apmixedsys_reg_size = 0x410;
+	unsigned int apmixedsys_reg_size = 0x1000;
 
 	// node = of_find_node_by_name(NULL, "met");
 	// if (!node) {
@@ -531,6 +532,15 @@ int MET_BM_Init(void)
 		if (ret) {
 			PR_BOOTMSG("Cannot get apmixedsts_reg_base index from dts\n");
 			return -1;
+		}
+
+		ret = of_property_read_u32_index(node, // device node
+										"apmixedsys-emipll-con1",  //device name
+										0, //offset
+										&EMIPLL_CON1);
+		if (ret) {
+			PR_BOOTMSG("Cannot get apmixedsys-emipll-con1 index from dts\n");
+			EMIPLL_CON1 = 0x3B4;
 		}
 	}
 
@@ -4701,6 +4711,7 @@ EXPORT_SYMBOL(MET_EMI_support_list);
 EXPORT_SYMBOL(ddrphy_ao_misc_cg_ctrl0);
 EXPORT_SYMBOL(ddrphy_ao_misc_cg_ctrl2);
 EXPORT_SYMBOL(slc_pmu_cnt_setting_enable_val_);
+EXPORT_SYMBOL(EMIPLL_CON1);
 
 /*func*/
 EXPORT_SYMBOL(emi_init);

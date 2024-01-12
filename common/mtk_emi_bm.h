@@ -427,8 +427,6 @@ enum  {
 /* met_drv define  & global var */
 #define CNT_COUNTDOWN   (0)
 
-/*for get emi_freq, APMIXEDSYS 0x1000C000  */
-#define EMIPLL_CON1 0x3B4
 
 /* extern struct metdevice met_sspm_emi; */
 
