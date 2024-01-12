@@ -222,6 +222,7 @@ endif
 ifeq ($(MET_GPU), y)
     ccflags-y += -DMET_GPU_LOAD_MONITOR
     ccflags-y += -DMET_GPU_DVFS_MONITOR
+    ccflags-y += -DMET_GPU_PMU_MONITOR
 
     # for mtk_gpu_utility.h
     ifneq ("$(wildcard $(srctree)/drivers/gpu/mediatek/mt-plat/mtk_gpu_utility.h)","")

@@ -515,7 +515,7 @@ struct metdevice met_gpupwr = {
 static struct delayed_work gpu_pmu_dwork;
 #endif
 
-#define MAX_PMU_STR_LEN (1024 * 5)
+#define MAX_PMU_STR_LEN (1024 * 10)
 
 static const char help_pmu[] = "  --gpu-pmu				monitor gpu pmu status";
 static const char header_pmu[] = "met-info [000] 0.0: met_gpu_pmu_header: ";
