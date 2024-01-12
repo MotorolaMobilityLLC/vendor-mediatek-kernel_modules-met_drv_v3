@@ -77,6 +77,7 @@ FEATURE_SSPM := y
 FEATURE_MCUPM := y
 FEATURE_GPUEB := y
 FEATURE_PTPOD := y
+FEATURE_SMMU_PMU := y
 
 ################################################################################
 # Tinysys SSPM module
@@ -402,6 +403,19 @@ met-$(MET_PTPOD) += $(MET_CORE)/met_ptpod.o
 $(info FEATURE_EVENT_POWER = $(FEATURE_EVENT_POWER))
 
 MET_EVENT_POWER := $(if $(filter n,$(FEATURE_EVENT_POWER)),n,y)
+
+################################################################################
+# MET_SMMU_PMU
+################################################################################
+$(info FEATURE_SMMU_PMU = $(FEATURE_SMMU_PMU))
+
+MET_SMMU_PMU := $(if $(filter n,$(FEATURE_SMMU_PMU)),n,y)
+
+ccflags-$(MET_SMMU_PMU) += -I$(DEVICE_MODULES_PATH)/drivers/iommu/arm/arm-smmu-v3
+
+$(info MET_SMMU_PMU = $(MET_SMMU_PMU))
+met-$(MET_SMMU_PMU) += $(MET_CORE)/smmu_pmu.o \
+                       $(MET_CORE)/smmu_pmu_hw.o
 
 #################################################################################
 # add met_device flags
