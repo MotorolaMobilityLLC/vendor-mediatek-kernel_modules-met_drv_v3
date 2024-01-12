@@ -224,9 +224,9 @@ int mcupm_log_init(struct device *dev)
 		mcupm_buf_available = 0;
 	}
 #else
-	np = of_find_node_by_name(NULL, "met_res_ram_mcupm");
+	np = of_find_node_by_name(NULL, "met-res-ram-mcupm");
 	if (!np) {
-		pr_debug("unable to find met_res_ram_mcupm\n");
+		pr_debug("unable to find met-res-ram-mcupm\n");
 		return 0;
 	}
 	of_property_read_u64(np, "start", &mcupm_log_phy_addr);

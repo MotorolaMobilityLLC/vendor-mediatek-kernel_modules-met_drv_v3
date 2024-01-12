@@ -99,7 +99,7 @@ static int get_rts_header_from_dts_table(struct gpueb_met_event_header* __met_ev
 	/*get string array*/
 	for (idx = 0; idx < MAX_MET_RTS_EVENT_NUM; idx++) {
 		char node_name[MXNR_NODE_NAME];
-		SPRINTF(node_name, "node_%d", idx);
+		SPRINTF(node_name, "node-%d", idx);
 		nr_str = of_property_read_string_array(np,
 				node_name, &rts_string[0], NR_RTS_STR_ARRAY);
 		if (nr_str != NR_RTS_STR_ARRAY) {

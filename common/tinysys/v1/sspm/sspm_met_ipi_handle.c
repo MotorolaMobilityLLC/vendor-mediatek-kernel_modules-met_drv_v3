@@ -66,7 +66,7 @@ static void _log_done_cb(const void *p);
 static struct completion SSPM_ACK_comp;
 static struct completion SSPM_CMD_comp;
 struct scmi_tinysys_info_st *tinfo = NULL;
-int feature_id = 3; // scmi_met = <3>, feature_id will be reloaded from .dts
+int feature_id = 3; // scmi-met = <3>, feature_id will be reloaded from .dts
 
 static int _sspm_recv_thread(void *data);
 
@@ -198,7 +198,7 @@ void start_sspm_ipi_recv_thread()
 		PR_BOOTMSG("[MET] [%s,%d] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
 		return;
 	}
-    of_property_read_u32(tinfo->sdev->dev.of_node, "scmi_met", &feature_id);
+    of_property_read_u32(tinfo->sdev->dev.of_node, "scmi-met", &feature_id);
 
 	if (scmi_tinysys_event_notify_symbol) {
     	scmi_tinysys_event_notify_symbol(feature_id, 1 /*1: ENABLE*/);

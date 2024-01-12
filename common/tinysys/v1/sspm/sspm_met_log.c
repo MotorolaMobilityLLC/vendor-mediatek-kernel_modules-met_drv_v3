@@ -225,9 +225,9 @@ int sspm_log_init(struct device *dev)
 		sspm_buf_available = 0;
 	}
 #else
-	np = of_find_node_by_name(NULL, "met_res_ram_sspm");
+	np = of_find_node_by_name(NULL, "met-res-ram-sspm");
 	if (!np) {
-		pr_debug("unable to find met_res_ram_sspm\n");
+		pr_debug("unable to find met-res-ram-sspm\n");
 		return 0;
 	}
 	of_property_read_u64(np, "start", &sspm_log_phy_addr);
