@@ -86,7 +86,11 @@ static void get_thermal_zone_from_dts(void) {
         }
 
         // Do not interfere original kernel polling
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+        if (tz->polling_delay_jiffies) {
+#else
         if (tz->polling_delay) {
+#endif
             continue;
         }
 
@@ -112,7 +116,11 @@ static void get_thermal_zone_from_ext(void) {
         }
 
         // Do not interfere original kernel polling
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+        if (tz->polling_delay_jiffies) {
+#else
         if (tz->polling_delay) {
+#endif
             continue;
         }
 

@@ -12,7 +12,6 @@
 #include <linux/profile.h>
 #include <linux/dcache.h>
 #include <linux/types.h>
-#include <linux/dcookies.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
 
