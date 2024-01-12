@@ -4,4 +4,4 @@ EXTRA_SYMBOLS += $(OUT_DIR)/../vendor/mediatek/kernel_modules/met_drv_v3/Module.
 EXTRA_SYMBOLS += $(OUT_DIR)/../vendor/mediatek/kernel_modules/met_drv_secure_v3/Module.symvers
 
 modules modules_install clean:
-	$(MAKE) -C $(KERNEL_SRC) M=$(M) $(KBUILD_OPTIONS) EXTRA_CFLAGS="$(EXTRA_CFLAGS)" KBUILD_EXTRA_SYMBOLS="$(EXTRA_SYMBOLS)" $(@)
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) $(KBUILD_OPTIONS) KBUILD_EXTRA_SYMBOLS="$(EXTRA_SYMBOLS)" $(@)
