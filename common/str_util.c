@@ -40,16 +40,20 @@ struct met_str_array * met_util_str_split(const char *input_str, int delim){
 
 	//pr_info("[met_util_str_split]delim_count=%d\n", delim_count);
 
-	str_array_obj = kzalloc(sizeof(struct met_str_array), GFP_KERNEL);
+	str_array_obj = kmalloc(sizeof(struct met_str_array), GFP_KERNEL);
 
 	if(str_array_obj ==NULL){
 		pr_info("[met_util_str_split]Failed to allocate memory for a struct met_str_array obj\n");
 		return NULL;
 	}
 
-	str_array_obj->str_ptr_array_length=0;
+	/*partial init str_array_obj due to kzalloc not work for coverity scan tool*/
+	str_array_obj->str_ptr_array_length = 0;
+	str_array_obj->str_ptr_array = NULL;
+	str_array_obj->target_str = NULL;
 
-	str_array_obj->target_str = kzalloc(str_length+1, GFP_KERNEL);
+
+	str_array_obj->target_str = kmalloc(str_length+1, GFP_KERNEL);
 	if(str_array_obj->target_str ==NULL){
 		pr_info("[met_util_str_split]Failed to allocate memory for target str\n");
 		met_util_str_array_clean(str_array_obj);
@@ -61,7 +65,7 @@ struct met_str_array * met_util_str_split(const char *input_str, int delim){
 
 	//pr_info("[met_util_str_split]str_array_obj->target_str=%s\n", str_array_obj->target_str);
 
-	str_array_obj->str_ptr_array = kzalloc(sizeof(char *)*(delim_count+1), GFP_KERNEL);
+	str_array_obj->str_ptr_array = kmalloc(sizeof(char *)*(delim_count+1), GFP_KERNEL);
 	if(str_array_obj->str_ptr_array ==NULL){
 		pr_info("[met_util_str_split]Failed to allocate memory for str array\n");
 		met_util_str_array_clean(str_array_obj);
