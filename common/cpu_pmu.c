@@ -202,7 +202,8 @@ DECLARE_KOBJ_ATTR_RO(pmu_count);
 #ifdef MET_TINYSYS
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
 DEFINE_MUTEX(handle_irq_lock);
-irqreturn_t (*handle_irq_orig)(struct arm_pmu *pmu);
+int armpmu_irq_hdlr_cnt;
+struct armpmu_handle_irq armpmu_irq_hdlr[MX_CPU_CLUSTER];
 #endif
 #endif
 
@@ -551,7 +552,12 @@ static irqreturn_t handle_irq_selective_ignore_overflow(struct arm_pmu *pmu)
 		}
 	}
 
-	return handle_irq_orig(pmu);
+	for (ii = 0; ii < armpmu_irq_hdlr_cnt; ii++) {
+		if (cpumask_test_cpu(cpu, &armpmu_irq_hdlr[ii].supported_cpus))
+			return armpmu_irq_hdlr[ii].handle_irq_orig(pmu);
+	}
+
+	return IRQ_NONE;
 }
 
 static irqreturn_t handle_irq_ignore_overflow(struct arm_pmu *pmu)
@@ -621,7 +627,9 @@ static struct perf_event * __met_perf_events_set_event(int cpu, unsigned short e
 		if (armpmu && armpmu->handle_irq != handle_irq_fptr) {
 			pr_debug("[MET_PMU] replaced original handle_irq=%p with dummy function\n",
 				    armpmu->handle_irq);
-			handle_irq_orig = armpmu->handle_irq;
+			armpmu_irq_hdlr[armpmu_irq_hdlr_cnt].supported_cpus = armpmu->supported_cpus;
+			armpmu_irq_hdlr[armpmu_irq_hdlr_cnt].handle_irq_orig = armpmu->handle_irq;
+			armpmu_irq_hdlr_cnt++;
 			armpmu->handle_irq = handle_irq_fptr;
 		}
 		mutex_unlock(&handle_irq_lock);
@@ -640,7 +648,7 @@ static void met_perf_cpupmu_start(int cpu)
 
 static void perf_thread_down(int cpu)
 {
-	int			i;
+	int			i, j;
 	struct perf_event	*ev;
 	int			event_count;
 	struct met_pmu		*pmu;
@@ -666,10 +674,16 @@ static void perf_thread_down(int cpu)
 				armpmu = container_of(ev->pmu, struct arm_pmu, pmu);
 				mutex_lock(&handle_irq_lock);
 				if (armpmu && armpmu->handle_irq == handle_irq_fptr) {
-					pr_debug("[MET_PMU] restore original handle_irq=%p\n",
-						 handle_irq_orig);
-					armpmu->handle_irq = handle_irq_orig;
-					handle_irq_orig = NULL;
+					for (j = 0; j < armpmu_irq_hdlr_cnt; j++) {
+						if (cpumask_test_cpu(cpu, &armpmu_irq_hdlr[j].supported_cpus)) {
+							pr_debug("[MET_PMU] restore original handle_irq=%p\n",
+								armpmu_irq_hdlr[j].handle_irq_orig);
+							armpmu->handle_irq = armpmu_irq_hdlr[j].handle_irq_orig;
+							armpmu_irq_hdlr[j].handle_irq_orig = NULL;
+							armpmu_irq_hdlr_cnt--;
+							break;
+						}
+					}
 				}
 				mutex_unlock(&handle_irq_lock);
 			}
@@ -859,6 +873,8 @@ static int reset_driver_stat(void)
 			per_cpu_ptr(pmu_perf_data, cpu)->init_failed_cnt = 0;
 		}
 	}
+
+	armpmu_irq_hdlr_cnt = 0;
 
 	return 0;
 }
