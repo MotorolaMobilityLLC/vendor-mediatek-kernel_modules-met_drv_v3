@@ -26,7 +26,8 @@
 
 #include "sspm_met_log.h"
 #include "sspm_met_ipi_handle.h"
-
+#include <linux/of.h>
+#include <linux/io.h>
 
 /*****************************************************************************
  * define declaration
@@ -129,7 +130,7 @@ void *sspm_log_virt_addr;
 #if IS_ENABLED(CONFIG_MTK_GMO_RAM_OPTIMIZE) || IS_ENABLED(CONFIG_MTK_MET_MEM_ALLOC)
 dma_addr_t sspm_log_phy_addr;
 #else
-unsigned int sspm_log_phy_addr;
+phys_addr_t sspm_log_phy_addr;
 #endif
 
 unsigned int sspm_buffer_size;
@@ -178,12 +179,12 @@ static struct proc_dir_entry *trace_dentry;
 int sspm_log_init(struct device *dev)
 {
 	int ret = 0;
+	struct device_node *np;
 #ifdef ONDIEMET_MOUNT_DEBUGFS
 	struct dentry *met_dir = NULL;
 #else
 	struct proc_dir_entry *met_dir = NULL;
 #endif
-	phys_addr_t (*get_size_sym)(unsigned int id) = NULL;
 
 	met_dir = dev_get_drvdata(dev);
 	mutex_init(&lock_tracef);
@@ -223,37 +224,21 @@ int sspm_log_init(struct device *dev)
 		sspm_buf_available = 0;
 	}
 #else
-	get_size_sym = sspm_reserve_mem_get_size_symbol;
-	if (get_size_sym) {
-		sspm_buffer_size = get_size_sym(MET_MEM_ID);
-		PR_BOOTMSG("sspm_buffer_size=%x \n", sspm_buffer_size);
-	} else {
-		PR_BOOTMSG("symbol_get sspm_reserve_mem_get_size failure\n");
+	np = of_find_node_by_name(NULL, "met_res_ram_sspm");
+	if (!np) {
+		pr_debug("unable to find met_res_ram_sspm\n");
+		return 0;
 	}
+	of_property_read_u64(np, "start", &sspm_log_phy_addr);
+	of_property_read_u32(np, "size", &sspm_buffer_size);
 
-	if (sspm_buffer_size > 0) {
-		phys_addr_t (*get_phys_sym)(unsigned int id) = NULL;
-		phys_addr_t (*get_virt_sym)(unsigned int id) = NULL;
+	if ((sspm_log_phy_addr > 0) && (sspm_buffer_size > 0)) {
+		sspm_log_virt_addr = (void*)ioremap_wc(sspm_log_phy_addr, sspm_buffer_size);
 
-		get_phys_sym = sspm_reserve_mem_get_virt_symbol;
-		get_virt_sym = sspm_reserve_mem_get_phys_symbol;
-		if (get_phys_sym) {
-			sspm_log_virt_addr = (void*)get_phys_sym(MET_MEM_ID);
-			PR_BOOTMSG("sspm_log_virt_addr=%x \n", sspm_log_virt_addr);
-		} else {
-			PR_BOOTMSG("symbol_get sspm_reserve_mem_get_virt failure\n");
-		}
-		if (get_virt_sym) {
-			sspm_log_phy_addr = get_virt_sym(MET_MEM_ID);
-			PR_BOOTMSG("sspm_log_phy_addr=%x \n", sspm_log_phy_addr);
-		} else {
-			PR_BOOTMSG("symbol_get sspm_reserve_mem_get_phys failure\n");
-		}
 		sspm_buf_available = 1;
 	} else {
 		sspm_buf_available = 0;
 	}
-
 #endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE */
 
 	start_sspm_ipi_recv_thread();
