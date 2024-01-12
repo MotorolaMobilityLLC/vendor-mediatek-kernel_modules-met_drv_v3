@@ -15,6 +15,7 @@
 #include <linux/stacktrace.h>
 #include "interface.h"
 #include "met_drv.h"
+#include "mtk_typedefs.h"
 
 #define LINE_SIZE	256
 
@@ -51,7 +52,7 @@ static void get_kernel_cookie(unsigned long pc, struct cookie_info *pinfo)
 	int ret;
 
 	ret =
-	    snprintf(pinfo->strbuf + pinfo->strlen, LINE_SIZE - pinfo->strlen,
+	    SNPRINTF(pinfo->strbuf + pinfo->strlen, LINE_SIZE - pinfo->strlen,
 		     ",vmlinux,%lx", pc);
 	pinfo->strlen += ret;
 	/* cookie(current->comm, pc, "vmlinux", pc, 0); */
@@ -140,7 +141,7 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 	pc = profile_pc(regs);
 
 	pinfo = per_cpu_ptr(info, cpu);
-	pinfo->strlen = snprintf(pinfo->strbuf, LINE_SIZE, "%s,%lx", current->comm, pc);
+	pinfo->strlen = SNPRINTF(pinfo->strbuf, LINE_SIZE, "%s,%lx", current->comm, pc);
 
 	if (user_mode(regs)) {
 		struct mm_struct *mm;
@@ -162,7 +163,7 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 					off = (vma->vm_pgoff << PAGE_SHIFT) + pc - vma->vm_start;
 
 				ret =
-				    snprintf(pinfo->strbuf + pinfo->strlen,
+				    SNPRINTF(pinfo->strbuf + pinfo->strlen,
 					     LINE_SIZE - pinfo->strlen, ",%s,%lx",
 					     (char *)(ppath->dentry->d_name.name), off);
 				pinfo->strlen += ret;
@@ -170,7 +171,7 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 			} else {
 				/* must be an anonymous map */
 				ret =
-				    snprintf(pinfo->strbuf + pinfo->strlen,
+				    SNPRINTF(pinfo->strbuf + pinfo->strlen,
 					     LINE_SIZE - pinfo->strlen, ",nofile,%lx", pc);
 				pinfo->strlen += ret;
 				outflag = 1;
@@ -242,7 +243,7 @@ static const char help[] =
 
 static int met_cookie_print_help(char *buf, int len)
 {
-	len = snprintf(buf, PAGE_SIZE, help);
+	len = SNPRINTF(buf, PAGE_SIZE, help);
 	return len;
 }
 
@@ -259,23 +260,23 @@ static int met_cookie_print_header(char *buf, int len)
 	int i, ret;
 
 	if (back_trace_depth == 0) {
-		len = snprintf(buf, PAGE_SIZE, header);
+		len = SNPRINTF(buf, PAGE_SIZE, header);
 	} else {
-		len = snprintf(buf, PAGE_SIZE, header2_1);
+		len = SNPRINTF(buf, PAGE_SIZE, header2_1);
 		for (i = 0; i < back_trace_depth; i++) {
-			ret = snprintf(buf + len, PAGE_SIZE, ",cookie%d,offset%d", i + 1, i + 1);
+			ret = SNPRINTF(buf + len, PAGE_SIZE, ",cookie%d,offset%d", i + 1, i + 1);
 			len += ret;
 		}
-		ret = snprintf(buf + len, PAGE_SIZE, "\n");
+		ret = SNPRINTF(buf + len, PAGE_SIZE, "\n");
 		len += ret;
 
-		ret = snprintf(buf + len, PAGE_SIZE, header2_2);
+		ret = SNPRINTF(buf + len, PAGE_SIZE, header2_2);
 		len += ret;
 		for (i = 0; i < back_trace_depth; i++) {
-			ret = snprintf(buf + len, PAGE_SIZE, ",cookie%d,offset%d", i + 1, i + 1);
+			ret = SNPRINTF(buf + len, PAGE_SIZE, ",cookie%d,offset%d", i + 1, i + 1);
 			len += ret;
 		}
-		ret = snprintf(buf + len, PAGE_SIZE, "\n");
+		ret = SNPRINTF(buf + len, PAGE_SIZE, "\n");
 		len += ret;
 	}
 

@@ -17,6 +17,7 @@
 #include "met_kernel_symbol.h"
 #include "str_util.h"
 #include "switch.h"
+#include "mtk_typedefs.h"
 
 #define MAX_FUNC_LENGTH 64
 

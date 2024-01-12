@@ -82,9 +82,9 @@ extern struct met_strbuf_t __percpu *p_met_strbuf;
 		else \
 			pmet_strbuf = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf; \
 		if (met_mode & MET_MODE_TRACE_CMD) \
-			_met_trace_str = snprintf(pmet_strbuf, MET_STRBUF_SIZE, "%s: " FORMAT, __func__, ##args); \
+			_met_trace_str = SNPRINTF(pmet_strbuf, MET_STRBUF_SIZE, "%s: " FORMAT, __func__, ##args); \
 		else \
-			_met_trace_str = snprintf(pmet_strbuf, MET_STRBUF_SIZE, FORMAT, ##args); \
+			_met_trace_str = SNPRINTF(pmet_strbuf, MET_STRBUF_SIZE, FORMAT, ##args); \
 		if (_met_trace_str > 0) \
 			TRACE_PUTS(pmet_strbuf); \
 		my_preempt_enable(); \
@@ -107,7 +107,7 @@ extern struct met_strbuf_t __percpu *p_met_strbuf;
 			*pSOB = per_cpu_ptr(p_met_strbuf, smp_processor_id())->met_strbuf; \
 		*pEOB = *pSOB; \
 		if (met_mode & MET_MODE_TRACE_CMD) \
-			*pEOB += snprintf(*pEOB, MET_STRBUF_SIZE, "%s: ", __func__); \
+			*pEOB += SNPRINTF(*pEOB, MET_STRBUF_SIZE, "%s: ", __func__); \
 	})
 
 #define MET_TRACE_PUTBUF(SOB, EOB) \

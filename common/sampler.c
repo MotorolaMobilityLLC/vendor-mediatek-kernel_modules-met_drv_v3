@@ -25,6 +25,7 @@
 #include "trace.h"
 #include "met_drv.h"
 #include "met_tag.h" /* for tracing_mark_write */
+#include "mtk_typedefs.h"
 
 #include "cpu_pmu.h"	/* for using kernel perf PMU driver */
 
@@ -96,7 +97,7 @@ static enum hrtimer_restart met_hrtimer_notify(struct hrtimer *hrtimer)
 	{
 		char msg[32];
 
-		snprintf(msg, sizeof(msg), "met_hrtimer notify_%d", cpu);
+		SNPRINTF(msg, sizeof(msg), "met_hrtimer notify_%d", cpu);
 		dbg_met_tag_oneshot(0, msg, 1);
 	}
 #endif
@@ -215,7 +216,7 @@ static void __met_hrtimer_register(void *unused)
 	{
 		char msg[32];
 
-		snprintf(msg, sizeof(msg), "met_hrtimer status_%d", met_cpu_ptr->cpu);
+		SNPRINTF(msg, sizeof(msg), "met_hrtimer status_%d", met_cpu_ptr->cpu);
 		dbg_met_tag_oneshot(0, msg, 1);
 	}
 #endif
@@ -249,7 +250,7 @@ static void __met_hrtimer_stop(void *unused)
 	{
 		char msg[32];
 
-		snprintf(msg, sizeof(msg), "met_hrtimer status_%d", met_cpu_ptr->cpu);
+		SNPRINTF(msg, sizeof(msg), "met_hrtimer status_%d", met_cpu_ptr->cpu);
 		dbg_met_tag_oneshot(0, msg, 0);
 	}
 #endif
@@ -298,7 +299,7 @@ static int met_pmu_cpu_notify(enum met_action action, unsigned int cpu)
 	{
 		char msg[32];
 
-		snprintf(msg, sizeof(msg), "met_cpu notify_%d", cpu);
+		SNPRINTF(msg, sizeof(msg), "met_cpu notify_%d", cpu);
 		dbg_met_tag_oneshot(0, msg, action);
 	}
 #elif	defined(PR_CPU_NOTIFY)
@@ -306,7 +307,7 @@ static int met_pmu_cpu_notify(enum met_action action, unsigned int cpu)
 		char msg[32];
 
 		if (met_cpu_notify) {
-			snprintf(msg, sizeof(msg), "met_cpu notify_%d", cpu);
+			SNPRINTF(msg, sizeof(msg), "met_cpu notify_%d", cpu);
 			dbg_met_tag_oneshot(0, msg, action);
 		}
 	}

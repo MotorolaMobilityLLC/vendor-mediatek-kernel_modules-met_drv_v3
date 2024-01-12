@@ -11,6 +11,7 @@
 #include <linux/of.h>
 
 #include "met_drv.h"
+#include "mtk_typedefs.h"
 #include "tinysys_mcupm.h"
 #include "tinysys_mgr.h"
 
@@ -98,7 +99,7 @@ static int get_rts_header_from_dts_table(struct mcupm_met_event_header* __met_ev
 	/*get string array*/
 	for (idx = 0; idx < MAX_MET_RTS_EVENT_NUM; idx++) {
 		char node_name[MXNR_NODE_NAME];
-		sprintf(node_name, "node_%d", idx);
+		SPRINTF(node_name, "node_%d", idx);
 		nr_str = of_property_read_string_array(np,
 				node_name, &rts_string[0], NR_RTS_STR_ARRAY);
 		if (nr_str != NR_RTS_STR_ARRAY) {
@@ -132,7 +133,7 @@ static int ondiemet_mcupm_print_header(char *buf, int len)
 	len = 0;
 	met_mcupm_common.header_read_again = 0;
 	if (is_dump_header == 0) {
-		len = snprintf(buf, PAGE_SIZE, "%s", header);
+		len = SNPRINTF(buf, PAGE_SIZE, "%s", header);
 		is_dump_header = 1;
 	}
 

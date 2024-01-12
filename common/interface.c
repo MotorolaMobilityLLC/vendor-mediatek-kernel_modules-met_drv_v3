@@ -36,6 +36,7 @@
 #include "met_power.h"
 #include "version.h"
 #include "met_workqueue.h"
+#include "mtk_typedefs.h"
 
 extern int enable_met_backlight_tag(void);
 extern int output_met_backlight_tag(int level);
@@ -265,7 +266,7 @@ static ssize_t ver_show(struct device *dev, struct device_attribute *attr, char 
 	int i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "%s\n", MET_BACKEND_VERSION);
+	i = SNPRINTF(buf, PAGE_SIZE, "%s\n", MET_BACKEND_VERSION);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
@@ -279,11 +280,11 @@ static ssize_t devices_show(struct device *dev, struct device_attribute *attr, c
 	list_for_each_entry(c, &met_list, list) {
 		len = 0;
 		if (c->type == MET_TYPE_PMU)
-			len = snprintf(buf, PAGE_SIZE - total_len, "pmu/%s:0\n", c->name);
+			len = SNPRINTF(buf, PAGE_SIZE - total_len, "pmu/%s:0\n", c->name);
 		else if (c->type == MET_TYPE_BUS)
-			len = snprintf(buf, PAGE_SIZE - total_len, "bus/%s:0\n", c->name);
+			len = SNPRINTF(buf, PAGE_SIZE - total_len, "bus/%s:0\n", c->name);
 		else if (c->type == MET_TYPE_MISC)
-			len = snprintf(buf, PAGE_SIZE - total_len, "misc/%s:0\n", c->name);
+			len = SNPRINTF(buf, PAGE_SIZE - total_len, "misc/%s:0\n", c->name);
 
 		if (c->ondiemet_mode == 0) {
 			if (c->process_argument)
@@ -312,7 +313,7 @@ static ssize_t plf_show(struct device *dev, struct device_attribute *attr, char 
 	int i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "%s\n", met_platform);
+	i = SNPRINTF(buf, PAGE_SIZE, "%s\n", met_platform);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
@@ -323,7 +324,7 @@ static ssize_t chip_id_show(struct device *dev, struct device_attribute *attr, c
 	int i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "0x%08X\n", met_chip_id);
+	i = SNPRINTF(buf, PAGE_SIZE, "0x%08X\n", met_chip_id);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
@@ -334,14 +335,14 @@ static ssize_t core_topology_show(struct device *dev, struct device_attribute *a
 	int i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "%s\n", met_topology);
+	i = SNPRINTF(buf, PAGE_SIZE, "%s\n", met_topology);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
 
 static ssize_t ctrl_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%d\n", ctrl_flags);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", ctrl_flags);
 }
 
 static ssize_t ctrl_store(struct device *dev, struct device_attribute *attr, const char *buf,
@@ -358,7 +359,7 @@ static ssize_t ctrl_store(struct device *dev, struct device_attribute *attr, con
 
 static ssize_t cpu_pmu_method_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%d\n", met_cpu_pmu_method);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", met_cpu_pmu_method);
 }
 
 static ssize_t cpu_pmu_method_store(struct device *dev, struct device_attribute *attr, const char *buf,
@@ -377,7 +378,7 @@ static ssize_t cpu_pm_pmu_reconfig_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%d\n", met_cpu_pm_pmu_reconfig);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", met_cpu_pm_pmu_reconfig);
 }
 
 static ssize_t cpu_pm_pmu_reconfig_store(struct device *dev,
@@ -443,7 +444,7 @@ static ssize_t bootmsg_show(struct device *dev, struct device_attribute *attr, c
 	int	i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "%s\n", met_boot_msg);
+	i = SNPRINTF(buf, PAGE_SIZE, "%s\n", met_boot_msg);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
@@ -458,7 +459,7 @@ static ssize_t spr_show(struct device *dev, struct device_attribute *attr, char 
 	int i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "%d\n", sample_rate);
+	i = SNPRINTF(buf, PAGE_SIZE, "%d\n", sample_rate);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
@@ -504,7 +505,7 @@ static ssize_t run_show(struct device *dev, struct device_attribute *attr, char 
 	int i;
 
 	mutex_lock(&dev->mutex);
-	i = snprintf(buf, PAGE_SIZE, "%d\n", run);
+	i = SNPRINTF(buf, PAGE_SIZE, "%d\n", run);
 	mutex_unlock(&dev->mutex);
 	return i;
 }
@@ -582,9 +583,9 @@ static ssize_t ksym_show(struct device *dev, struct device_attribute *attr, char
 		for (idx = 0; idx < 512; idx++)
 			if (met_func_name[idx] == ' ')
 				met_func_name[idx] = '\0';
-		i = snprintf(buf, PAGE_SIZE, "%s\n", met_func_name);
+		i = SNPRINTF(buf, PAGE_SIZE, "%s\n", met_func_name);
 	} else
-		i = snprintf(buf, PAGE_SIZE, "ksymlookup fail(%x)\n", met_ksym_addr);
+		i = SNPRINTF(buf, PAGE_SIZE, "ksymlookup fail(%x)\n", met_ksym_addr);
 
 	mutex_unlock(&dev->mutex);
 	return i;
@@ -614,7 +615,7 @@ static ssize_t cpu_notify_show(struct device *dev, struct device_attribute *attr
 {
 	int i;
 
-	i = snprintf(buf, PAGE_SIZE, "%d\n", met_cpu_notify);
+	i = SNPRINTF(buf, PAGE_SIZE, "%d\n", met_cpu_notify);
 	return i;
 }
 
@@ -636,7 +637,7 @@ static ssize_t dvfs_show(struct device *dev, struct device_attribute *attr, char
 {
 	int i;
 
-	i = snprintf(buf, PAGE_SIZE, "%d\n", 0);
+	i = SNPRINTF(buf, PAGE_SIZE, "%d\n", 0);
 	return i;
 }
 
@@ -651,7 +652,7 @@ static ssize_t suspend_compensation_enable_show(struct device *dev, struct devic
 {
 	int ret;
 
-	ret = snprintf(buf, PAGE_SIZE, "%d\n", met_suspend_compensation_mode);
+	ret = SNPRINTF(buf, PAGE_SIZE, "%d\n", met_suspend_compensation_mode);
 
 	return ret;
 }
@@ -679,7 +680,7 @@ static ssize_t suspend_compensation_flag_show(struct device *dev, struct device_
 {
 	int ret;
 
-	ret = snprintf(buf, PAGE_SIZE, "%d\n", met_suspend_compensation_flag);
+	ret = SNPRINTF(buf, PAGE_SIZE, "%d\n", met_suspend_compensation_flag);
 
 	return ret;
 }
@@ -708,7 +709,7 @@ static ssize_t mode_show(struct kobject *kobj, struct kobj_attribute *attr, char
 	if (c == NULL)
 		return -ENOENT;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->mode);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", c->mode);
 }
 
 static ssize_t mode_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf,
@@ -743,7 +744,7 @@ static ssize_t ondiemet_mode_show(struct kobject *kobj, struct kobj_attribute *a
 	if (c == NULL)
 		return -ENOENT;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->ondiemet_mode);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", c->ondiemet_mode);
 }
 
 static ssize_t ondiemet_mode_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf,
@@ -777,7 +778,7 @@ static ssize_t tinysys_type_show(struct kobject *kobj, struct kobj_attribute *at
 	if (c == NULL)
 		return -ENOENT;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->tinysys_type);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", c->tinysys_type);
 }
 
 static ssize_t tinysys_type_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf,
@@ -816,7 +817,7 @@ static ssize_t polling_interval_show(struct kobject *kobj, struct kobj_attribute
 	if (c->polling_interval)
 		interval = c->polling_interval;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", interval);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", interval);
 }
 
 static ssize_t polling_interval_store(struct kobject *kobj, struct kobj_attribute *attr,
@@ -953,7 +954,7 @@ static ssize_t argu_store(struct kobject *kobj, struct kobj_attribute *attr, con
 
 static ssize_t argu_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
-	return snprintf(buf, PAGE_SIZE, "%d\n", argu_status);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", argu_status);
 }
 
 static struct kobj_attribute argu_attr = __ATTR(argu, 0664, argu_show, argu_store);
@@ -1011,7 +1012,7 @@ static ssize_t header_read_again_show(struct kobject *kobj, struct kobj_attribut
 	if (c == NULL)
 		return -ENOENT;
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", c->header_read_again);
+	return SNPRINTF(buf, PAGE_SIZE, "%d\n", c->header_read_again);
 }
 
 static struct kobj_attribute header_read_again_attr = __ATTR(header_read_again, 0664, header_read_again_show, NULL);

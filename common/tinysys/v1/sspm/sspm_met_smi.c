@@ -197,7 +197,7 @@ static int smi_init(void)
 
 	if (smi_array_index < MAX_CONFIG_ARRAY_SIZE) {
 		for (i = 0; i < (smi_array_index + 1); i++) {
-			snprintf(debug_msg, MET_SMI_DEBUGBUF_SIZE,
+			SNPRINTF(debug_msg, MET_SMI_DEBUGBUF_SIZE,
 				"===SMI config: parallel_mode = %d, master = %d, \
 				port0 = %d, port1 = %d, port2 = %d, port3 = %d, \
 				rwtype0 = %d, rwtype1 = %d, rwtype2 = %d, rwtype3 = %d, \
@@ -319,7 +319,7 @@ static char help[] =
 
 static int smi_print_help(char *buf, int len)
 {
-	return snprintf(buf, PAGE_SIZE, "%s", help);
+	return SNPRINTF(buf, PAGE_SIZE, "%s", help);
 }
 
 static int get_num(const char *__restrict__ dc, int *pValue)
@@ -427,7 +427,7 @@ static int smi_process_argument(const char *__restrict__ arg, int len)
 
 /*debug log to ftrace*/
 #ifdef MET_SMI_DEBUG
-	snprintf(debug_msg, MET_SMI_DEBUGBUF_SIZE,
+	SNPRINTF(debug_msg, MET_SMI_DEBUGBUF_SIZE,
 		"(argu)===SMI process argu Master[%d]: parallel_mode = %d, \
 		master = %d, port0 = %d, port1 = %d, port2 = %d, port3 = %d, \
 		rwtype0 = %d, rwtype1 = %d, rwtype2 = %d, rwtype3 = %d, \
@@ -467,7 +467,7 @@ static int smi_process_argument(const char *__restrict__ arg, int len)
 	}
 
 	if ((smi_array_index >= MAX_CONFIG_ARRAY_SIZE) || (array_index >= MAX_CONFIG_ARRAY_SIZE)) {
-		snprintf(err_msg, MET_SMI_BUF_SIZE,
+		SNPRINTF(err_msg, MET_SMI_BUF_SIZE,
 			"===Setting Master[%d]: check smi_array_index=%d, array_index=%d overflow (> %d)\n",
 			args[0], smi_array_index, array_index, MAX_CONFIG_ARRAY_SIZE);
 		return -1;
