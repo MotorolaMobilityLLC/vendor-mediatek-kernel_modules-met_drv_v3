@@ -1457,7 +1457,7 @@ int fs_reg(int met_minor)
 		return -1;
 	}
 
-	//met_register(&met_cookie);
+	met_register(&met_cookie);
 	met_register(&met_cpupmu);
 	met_register(&met_memstat);
 	met_register(&met_switch);
@@ -1507,7 +1507,7 @@ void fs_unreg(void)
 	met_deregister(&met_switch);
 	met_deregister(&met_memstat);
 	met_deregister(&met_cpupmu);
-	//met_deregister(&met_cookie);
+	met_deregister(&met_cookie);
 
 	kobject_del(kobj_misc);
 	kobject_put(kobj_misc);

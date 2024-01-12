@@ -49,25 +49,12 @@ noinline void cookie2(char *strbuf)
 static void get_kernel_cookie(unsigned long pc, struct cookie_info *pinfo)
 {
 	int ret;
-#if IS_ENABLED(CONFIG_MODULES)
-	off_t off;
-	struct module *mod = __module_address(pc);
 
-	if (mod) {
-		off = pc - (unsigned long)mod->core_layout.base;
-		ret = snprintf(pinfo->strbuf + pinfo->strlen, LINE_SIZE - pinfo->strlen,
-			       ",%s.ko,%lx", mod->name, off);
-		pinfo->strlen += ret;
-		/* cookie(current->comm, pc, mod->name, off, 1); */
-	} else
-#endif
-	{
-		ret =
-		    snprintf(pinfo->strbuf + pinfo->strlen, LINE_SIZE - pinfo->strlen,
-			     ",vmlinux,%lx", pc);
-		pinfo->strlen += ret;
-		/* cookie(current->comm, pc, "vmlinux", pc, 0); */
-	}
+	ret =
+	    snprintf(pinfo->strbuf + pinfo->strlen, LINE_SIZE - pinfo->strlen,
+		     ",vmlinux,%lx", pc);
+	pinfo->strlen += ret;
+	/* cookie(current->comm, pc, "vmlinux", pc, 0); */
 }
 
 #if defined(__arm__)
