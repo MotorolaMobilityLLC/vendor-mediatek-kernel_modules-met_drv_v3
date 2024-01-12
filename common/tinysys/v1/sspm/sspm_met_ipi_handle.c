@@ -39,6 +39,8 @@
 #include "tinysys-scmi.h"
 #endif
 
+#define MS_TO_JIFFIES(TIME)     ((unsigned long)(TIME) / (MSEC_PER_SEC / HZ))
+
 /*****************************************************************************
  * define declaration
  *****************************************************************************/
@@ -159,24 +161,24 @@ int scmi_tinysys_to_sspm_command( u32 feature_id,
                                               unsigned int slot,	// size of buffer
                                               unsigned int *retbuf,
                                               unsigned int retslot,	// size of retbuf
-                                              int timeout)
+                                              unsigned int timeout)
 {
-    unsigned int ret = 0;
+    int ret = 0;
     int __buffer[5] = {0, 0, 0, 0, 0};
 
     if (slot > 5) {		// 5 is the upper bound of buffer[] sent by SCMI
         PR_BOOTMSG("slot > 5, it's out of range!!\n");
-        return 1; // FAIL
+        return -1; // FAIL
     }
 
     if (retslot > 3) {	// 3 is the upper bound of retbuf[] sent by SCMI
         PR_BOOTMSG("retslot > 3, it's out of range!!\n");
-        return 1; // FAIL
+        return -1; // FAIL
     }
 
     if (tinfo == NULL) {
         PR_BOOTMSG("scmi protocol handle is NULL!!\n");
-        return 1; // FAIL
+        return -1; // FAIL
     }
 
 	memcpy(__buffer, buffer, slot * sizeof(unsigned int));
@@ -187,18 +189,28 @@ int scmi_tinysys_to_sspm_command( u32 feature_id,
                                   __buffer[0], __buffer[1], __buffer[2], __buffer[3], __buffer[4]);
 	} else {
 		PR_BOOTMSG("[MET] [%s,%s] scmi_tinysys_common_set is not linked!\n", __FILE__, __LINE__);
-		return 1;
+		return -1;
 	}
     if (ret != 0) {
-		PR_BOOTMSG("scmi_tinysys_common_set error(%d)\n", ret);
+		PR_BOOTMSG("scmi_tinysys_common_set fail(%d)\n", ret);
+    } else {
+        long wait_ret = 0;
+        MET_PRINTF_D("\x1b[1;34m ==> wait for (0x%x) completion , timeout: %d\033[0m \n", __buffer[0], timeout);
+        wait_ret = wait_for_completion_killable_timeout(&SSPM_ACK_comp, timeout);
+
+        if (wait_ret < 0) { // Interrupt occurred, ret = -ERESTARTSYS
+            PR_BOOTMSG("wait_for_completion_killable_timeout() is interrupted! (%d)\n", wait_ret);
+            ret = -1; // FAIL
+        } else if (wait_ret == 0) { // 0 if timed out, positive (at least 1, or number of jiffies left till timeout) if completed.
+            PR_BOOTMSG("scmi_tinysys_common_set wait complete time out (%d)\n", wait_ret);
+            ret = -1; // FAIL
+        } else {
+            MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK with retval: 0x%x, 0x%x, 0x%x, 0x%x \033[0m\n", __buffer[0],
+    									 recv_buf_copy[0], recv_buf_copy[1], recv_buf_copy[2], recv_buf_copy[3]);
+
+            memcpy(retbuf, recv_buf_copy + 1, retslot * sizeof(unsigned int)); // recv_buf[0] is COMMAND
+        }
     }
-
-    MET_PRINTF_D("\x1b[1;34m ==> wait for (0x%x) completion \033[0m \n", __buffer[0]);
-    ret = wait_for_completion_killable_timeout(&SSPM_ACK_comp, timeout);
-
-    MET_PRINTF_D("\x1b[1;34m ==> (0x%x) SSPM ACK with retval: 0x%x, 0x%x, 0x%x, 0x%x \033[0m\n", __buffer[0],
-									 recv_buf_copy[0], recv_buf_copy[1], recv_buf_copy[2], recv_buf_copy[3]);
-    memcpy(retbuf, recv_buf_copy + 1, retslot * sizeof(unsigned int)); // recv_buf[0] is COMMAND
 
     return ret;
 }
@@ -373,7 +385,7 @@ int met_scmi_to_sspm_command(
 {
 	int ret = 0;
 
-	ret = scmi_tinysys_to_sspm_command(feature_id, buffer, slot, retbuf, retslot, 500 /*unit:jiffies (2s time out)*/);
+	ret = scmi_tinysys_to_sspm_command(feature_id, buffer, slot, retbuf, retslot, MS_TO_JIFFIES(2000));
 
 	if (ret != 0) {
 		PR_BOOTMSG("%s 0x%X, 0x%X, 0x%X, 0x%X\n", __FUNCTION__,
