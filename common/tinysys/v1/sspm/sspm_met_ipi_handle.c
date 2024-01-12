@@ -194,6 +194,10 @@ void start_sspm_ipi_recv_thread(void)
 
 	if (get_scmi_tinysys_info_symbol) {
 		tinfo = get_scmi_tinysys_info_symbol();
+		if (tinfo == NULL) {
+			PR_BOOTMSG("[MET] [%s,%d] scmi protocol handle is NULL!!\n", __FILE__, __LINE__);
+			return; // FAIL
+		}
 	} else {
 		PR_BOOTMSG("[MET] [%s,%d] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
 		return;

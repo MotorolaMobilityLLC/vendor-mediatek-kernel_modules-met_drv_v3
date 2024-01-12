@@ -10,6 +10,7 @@
 #include <linux/cpu.h>
 #include <linux/module.h>
 #include <linux/fs.h>
+#include <linux/version.h>
 #include <asm/irq_regs.h>
 #include <asm/stacktrace.h>
 #include <linux/stacktrace.h>
@@ -129,6 +130,9 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 	unsigned long pc;
 	int ret, outflag = 0;
 	off_t off;
+#if KERNEL_VERSION(6, 0, 0) <= LINUX_VERSION_CODE
+	MA_STATE(mas, 0, 0, 0);
+#endif
 
 	if (*per_cpu_ptr(cpu_status, cpu) != MET_CPU_ONLINE)
 		return;
@@ -149,8 +153,12 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 		struct path *ppath;
 
 		mm = current->mm;
+#if KERNEL_VERSION(6, 0, 0) <= LINUX_VERSION_CODE
+		mas.tree = &current->mm->mm_mt;
+		mas_for_each(&mas, vma, ULONG_MAX) {
+#else
 		for (vma = find_vma(mm, pc); vma; vma = vma->vm_next) {
-
+#endif
 			if (pc < vma->vm_start || pc >= vma->vm_end)
 				continue;
 
