@@ -121,6 +121,7 @@ enum {
 	BUS_MON_IDLE_SHIFT = 3,
 	BC_OVERRUN_SHIFT = 8,
 	DRAMC_CG_SHIFT = 9,
+	SLC_DCM_DIS_SHIFT = 23,
 };
 
 #define BM_REQ_OK				(0)
@@ -169,6 +170,7 @@ enum  {
 	DRAMC_BUS_MON_TRIGGER = 5,
 	SSPM_REG_WRITE = 6,
 	EMI_RESUME_DISABLE = 7,
+	DIS_SLC_DCM_FOR_BMEN = 8,
 };
 
 #define	EMI_OFF			0x0000
@@ -294,6 +296,7 @@ enum  {
 
 /* slc pmu cnt filter */
 #define	SLC_OFF			0x0000
+#define SLC_CMD_CON             (0x04 - SLC_OFF) /* slc_dcm_dis reg */
 #define SLC_PMU_CNT0_FILTER0    (0x100 - SLC_OFF)
 #define SLC_PMU_CNT0_FILTER1    (0x104 - SLC_OFF)
 #define SLC_PMU_CNT0_BW_LAT_SEL (0x108 - SLC_OFF)
