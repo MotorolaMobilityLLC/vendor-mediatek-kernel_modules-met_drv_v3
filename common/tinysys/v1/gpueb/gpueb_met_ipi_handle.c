@@ -311,11 +311,11 @@ int met_ipi_to_gpueb_command(
 		return -1;
 	}
 
-	if (mtk_ipi_send_compl_symbol) {
-		ret = mtk_ipi_send_compl_symbol(gpueb_ipidev_symbol, id_ch_ipis_c_met,
+	if (mtk_ipi_send_compl_to_gpueb_symbol) {
+		ret = mtk_ipi_send_compl_to_gpueb_symbol(id_ch_ipis_c_met,
 			IPI_SEND_WAIT, (void*)buffer, slot, 2000);
 	} else {
-		PR_BOOTMSG("[MET] [%s,%d] mtk_ipi_send_compl is not linked!\n", __FILE__, __LINE__);
+		PR_BOOTMSG("[MET] [%s,%d] mtk_ipi_send_compl_to_gpueb is not linked!\n", __FILE__, __LINE__);
 		return -1;
 	}
 	*retbuf = ackdata;
