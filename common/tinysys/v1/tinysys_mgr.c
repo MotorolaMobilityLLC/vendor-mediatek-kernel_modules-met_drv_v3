@@ -336,9 +336,9 @@ static struct device *ondiemet_attr_dev;
 //#include "sspm/ondiemet_sspm.h"
 extern struct mtk_ipi_device sspm_ipidev;
 extern struct mtk_ipi_device *sspm_ipidev_symbol;
-#endif
+#endif /* SSPM_VERSION_V2 */
 #endif /* !MET_SCMI */
-#endif
+#endif /* CONFIG_MTK_TINYSYS_SSPM_SUPPORT */
 
 /*****************************************************************************
  * external function ipmlement
@@ -609,9 +609,9 @@ static ssize_t sspm_ipi_supported_show(
         ipi_supported = 1;
     else
         ipi_supported = 0;
-#endif
+#endif /* SSPM_VERSION_V2 */
 #endif /* !MET_SCMI */
-#endif
+#endif /* CONFIG_MTK_TINYSYS_SSPM_SUPPORT */
 
 	i = snprintf(buf, PAGE_SIZE, "%d\n", ipi_supported);
 	if (i < 0)

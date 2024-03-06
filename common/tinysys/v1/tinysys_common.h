@@ -15,11 +15,11 @@
 #ifndef IPI_ID_MET
 /* #define IPI_ID_MET IPI_ID_TST1 */
 #define IPI_ID_MET IPI_ID_PLATFORM
-#endif
+#endif /* !IPI_ID_MET */
 #else //SSPM_VERSION_V1
 #include <sspm_ipi_id.h>
-#endif /* SSPM_VERSION_V2 */
-#endif /* MET_SCMI */
+#endif /* !SSPM_VERSION_V2 */
+#endif /* !MET_SCMI */
 
 /*****************************************************************************
  * define declaration

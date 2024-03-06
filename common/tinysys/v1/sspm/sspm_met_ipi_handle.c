@@ -101,7 +101,7 @@ static struct ipi_action ondiemet_sspm_isr;
 uint32_t rdata = 0;
 uint32_t ridx, widx, wlen;
 uint32_t ackdata = 0;
-#endif
+#endif /* !SSPM_VERSION_V2 */
 #endif /* !MET_SCMI */
 
 /*****************************************************************************
@@ -249,7 +249,7 @@ void start_sspm_ipi_recv_thread(void)
 	}
 }
 
-#else /* MET_SCMI */
+#else
 
 #ifdef SSPM_VERSION_V2
 static int met_ipi_cb(unsigned int ipi_id, void *prdata, void *data, unsigned int len)
@@ -332,7 +332,7 @@ void start_sspm_ipi_recv_thread(void)
 
 	if (ret)
 		pr_debug("[MET] ipi_register:%d failed:%d\n", IPIS_C_MET, ret);
-#endif
+#endif /* SSPM_VERSION_V2 */
 
 	if (sspm_ipi_thread_started != 1) {
 		sspm_recv_thread_comp = 0;
@@ -345,7 +345,7 @@ void start_sspm_ipi_recv_thread(void)
 	}
 }
 
-#endif
+#endif /* MET_SCMI */
 
 #ifdef MET_SCMI
 void stop_sspm_ipi_recv_thread(void)
@@ -376,9 +376,9 @@ void stop_sspm_ipi_recv_thread(void)
 		mtk_ipi_unregister(sspm_ipidev_symbol, IPIS_C_MET);
 #endif
 	}
-} /* MET_SCMI */
+}
 
-#endif
+#endif /* MET_SCMI */
 
 #if defined(SSPM_VERSION_V0) || defined(SSPM_VERSION_V1) || defined(SSPM_VERSION_V2) /* SSPM_VERSION_V0 AND V1 AND V2 */
 int met_ipi_to_sspm_command(void *buffer, int slot, unsigned int *retbuf, int retslot)
@@ -394,7 +394,7 @@ int met_ipi_to_sspm_command(void *buffer, int slot, unsigned int *retbuf, int re
 		ret = mtk_ipi_send_compl(sspm_ipidev_symbol, IPIS_C_MET, IPI_SEND_WAIT, buffer, slot, 2000);
 		*retbuf = ackdata;
 	}
-#endif
+#endif /* SSPM_VERSION_V2 */
 	if (ret != 0)
 		pr_debug("met_ipi_to_sspm_command error(%d)\n", ret);
 
@@ -402,7 +402,7 @@ int met_ipi_to_sspm_command(void *buffer, int slot, unsigned int *retbuf, int re
 	return ret;
 }
 EXPORT_SYMBOL(met_ipi_to_sspm_command);
-#endif
+#endif /* SSPM_VERSION_V0 AND V1 AND V2 */
 
 
 
@@ -510,7 +510,6 @@ void sspm_extract(void)
 			count--;
 		}
 		ipi_buf[0] = MET_MAIN_ID | MET_OP | MET_OP_EXTRACT;
-
 #ifdef MET_SCMI
 		ret = met_scmi_to_sspm_command(ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 #else
@@ -536,7 +535,6 @@ void sspm_flush(void)
 
 	if (sspm_buf_available == 1) {
 		ipi_buf[0] = MET_MAIN_ID | MET_OP | MET_OP_FLUSH;
-
 #ifdef MET_SCMI
 		ret = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
 #else

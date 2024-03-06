@@ -249,7 +249,7 @@ int sspm_log_init(struct device *dev)
 		} else {
 			sspm_buf_available = 0;
 		}
-#endif
+#endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE || CONFIG_MTK_MET_MEM_ALLOC */
 
 	start_sspm_ipi_recv_thread();
 
@@ -265,7 +265,7 @@ int sspm_log_uninit(struct device *dev)
 #if IS_ENABLED(CONFIG_MTK_GMO_RAM_OPTIMIZE) || IS_ENABLED(CONFIG_MTK_MET_MEM_ALLOC)
 		dma_free_coherent(dev, sspm_buffer_size, sspm_log_virt_addr,
 			sspm_log_phy_addr);
-#endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE */
+#endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE || CONFIG_MTK_MET_MEM_ALLOC */
 		sspm_log_virt_addr = NULL;
 	}
 
