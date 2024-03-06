@@ -4094,7 +4094,7 @@ unsigned met_get_dram_data_rate(void)
 #elif IS_ENABLED(CONFIG_MTK_DRAMC_LEGACY)
 	if (get_dram_data_rate_symbol)
 		dram_data_rate_MHz = get_dram_data_rate_symbol();
-#endif
+#endif /* CONFIG_MTK_DRAMC */
 	if (dram_data_rate_MHz == 0)
 		dram_data_rate_MHz = met_emi_default_val[e_MET_DRAM_FREQ];
 

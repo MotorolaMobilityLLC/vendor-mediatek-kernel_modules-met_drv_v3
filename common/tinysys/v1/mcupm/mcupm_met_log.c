@@ -224,18 +224,20 @@ int mcupm_log_init(struct device *dev)
 	}
 #elif defined(MET_MCUPM)
 	mcupm_buf_available = 0;
-	np = of_find_node_by_name(NULL, "met_res_ram_mcupm");
-	if (np) {
-		of_property_read_u64(np, "start", &mcupm_log_phy_addr);
-		of_property_read_u32(np, "size", &mcupm_buffer_size);
+	np = of_find_node_by_name(NULL, "met-res-ram-mcupm");
+	if (!np) {
+		pr_debug("unable to find met-res-ram-mcupm\n");
+		return 0;
+	}
+	of_property_read_u64(np, "start", &mcupm_log_phy_addr);
+	of_property_read_u32(np, "size", &mcupm_buffer_size);
 
-		if ((mcupm_log_phy_addr > 0) && (mcupm_buffer_size > 0)) {
-			mcupm_log_virt_addr = (void*)ioremap_wc(mcupm_log_phy_addr, mcupm_buffer_size);
+	if ((mcupm_log_phy_addr > 0) && (mcupm_buffer_size > 0)) {
+		mcupm_log_virt_addr = (void*)ioremap_wc(mcupm_log_phy_addr, mcupm_buffer_size);
 
-			mcupm_buf_available = 1;
-		} else {
-			mcupm_buf_available = 0;
-		}
+		mcupm_buf_available = 1;
+	} else {
+		mcupm_buf_available = 0;
 	}
 
 	if(mcupm_buf_available == 0) {
@@ -254,7 +256,7 @@ int mcupm_log_init(struct device *dev)
 			}
 		}
 	}
-#endif
+#endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE || defined(CONFIG_MTK_MET_MEM_ALLOC) */
 	start_mcupm_ipi_recv_thread();
 
 	return 0;

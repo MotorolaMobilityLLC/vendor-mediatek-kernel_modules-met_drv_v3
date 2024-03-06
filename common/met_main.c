@@ -32,7 +32,7 @@
 #include "sspm_ipi_id.h"  /* for sspm_ipidev */
 #endif /* SSPM_VERSION_V2 */
 #endif /* !MET_SCMI */
-#endif
+#endif /* CONFIG_MTK_TINYSYS_SSPM_SUPPORT */
 
 extern struct device_node *of_root;
 static const char *platform_name;
@@ -60,7 +60,7 @@ static struct cpu_type_name met_known_cpu_type[] = {
 struct mtk_ipi_device *sspm_ipidev_symbol = NULL;
 #endif /* SSPM_VERSION_V2 */
 #endif /* !MET_SCMI */
-#endif
+#endif /* CONFIG_MTK_TINYSYS_SSPM_SUPPORT */
 
 
 static char met_cpu_topology[64];
