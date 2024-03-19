@@ -684,9 +684,7 @@ static int gpu_pmu_print_help(
 	return SNPRINTF(buf, PAGE_SIZE, "%s\n", help_pmu);
 }
 
-static int gpu_pmu_print_header(
-	char *buf,
-	int len)
+static int gpu_pmu_print_header(char *buf, int len)
 {
 	char* output_buf;
 
@@ -699,18 +697,20 @@ static int gpu_pmu_print_header(
 	if (pmu_str){
 		if(output_header_pmu_len == 0){
 			len = SNPRINTF(buf, PAGE_SIZE, "%s", header_pmu);
-			met_gpu_pmu.header_read_again = 1;
-			output_header_pmu_len = len;
+	        	met_gpu_pmu.header_read_again = 1;
+	        	output_header_pmu_len = len;
 		}
 		else{
 			if( (strlen(pmu_str) - output_pmu_str_len) > PAGE_SIZE ){
-
-				strncpy(output_buf, pmu_str+output_pmu_str_len, PAGE_SIZE/4);
+				strncpy(output_buf, pmu_str+output_pmu_str_len, (PAGE_SIZE/4) -1);
+				output_buf[(PAGE_SIZE/4) - 1] = '\0';
 				len = SNPRINTF(buf, PAGE_SIZE, "%s", output_buf);
 				output_pmu_str_len += len;
+				met_gpu_pmu.header_read_again = 1;
+				PR_BOOTMSG("GPU PMU header read again!\n");
 			}
 			else{
-				len = SNPRINTF(buf, PAGE_SIZE, "%s\n", pmu_str+output_pmu_str_len);
+				SNPRINTF(buf, PAGE_SIZE, "%s\n", pmu_str+output_pmu_str_len);
 
 				/* reset state */
 				met_gpu_pmu.header_read_again = 0;
@@ -719,17 +719,10 @@ static int gpu_pmu_print_header(
 			}
 		}
 	}
-	
 	kfree(output_buf);
 	return len;
 }
 
-
-// static int gpu_pmu_create_subfs(struct kobject *parent)
-// {
-// 	int ret = 0;
-// 	return ret;
-// }
 
 static void gpu_pmu_delete_subfs(void)
 {

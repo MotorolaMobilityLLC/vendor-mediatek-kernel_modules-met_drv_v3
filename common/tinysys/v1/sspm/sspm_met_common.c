@@ -243,10 +243,13 @@ static int ondiemet_sspm_process_argument(const char *arg, int len)
 		nr_dts_header = get_rts_header_from_dts_table(met_event_header);
 		met_event_header_updated = true;
 	}
-
-	for (i = 0; met_event_header[i].rts_event_name && i < nr_dts_header; i++) {
-		if (strncmp(met_event_header[i].rts_event_name, arg, MXNR_EVENT_NAME) == 0) {
-			rts_event_id = i;
+	for (i = 0;  i < nr_dts_header; i++) {
+		if (met_event_header[i].rts_event_name) {
+			if (strncmp(met_event_header[i].rts_event_name, arg, MXNR_EVENT_NAME) == 0) {
+				rts_event_id = i;
+				break;
+			}
+		}else {
 			break;
 		}
 	}
