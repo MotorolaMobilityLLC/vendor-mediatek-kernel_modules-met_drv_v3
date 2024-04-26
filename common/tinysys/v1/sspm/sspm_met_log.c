@@ -651,7 +651,7 @@ static ssize_t ondiemet_log_write_store(
 		/* TODO: use a better error code */
 		return -EINVAL;
 	}
-	strlcpy(plog, buf, count+1);
+	strscpy(plog, buf, count+1);
 
 	mutex_lock(&dev->mutex);
 	sspm_log_req_enq(plog, strnlen(plog, count), kfree, plog);

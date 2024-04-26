@@ -662,7 +662,7 @@ static ssize_t mcupm_log_write_store(
 		return -EINVAL;
 	}
 
-	strlcpy(plog, buf, count+1);
+	strscpy(plog, buf, count+1);
 
 	mutex_lock(&dev->mutex);
 	mcupm_log_req_enq(plog, strnlen(plog, count), kfree, plog);
