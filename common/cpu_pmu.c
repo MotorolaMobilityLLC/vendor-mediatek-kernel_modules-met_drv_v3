@@ -127,7 +127,11 @@ static void pmu_pmcr_read(void *data) {
     int core_id = smp_processor_id(); /*0~max cpu*/
     /*u32 i = read_sysreg(pmcr_el0);*/
     if (core_id < NR_CPUS)
+#if (KERNEL_VERSION(6, 8, 0) > LINUX_VERSION_CODE)
     	*(cpu_pmu_num + core_id) = (read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK;
+#else
+    	*(cpu_pmu_num + core_id) = FIELD_GET(ARMV8_PMU_PMCR_N, read_sysreg(pmcr_el0));
+#endif
     /*PR_BOOTMSG("[eric debug] core_id=%d, pmcr_el0=%d\n", core_id, i);*/
 }
 

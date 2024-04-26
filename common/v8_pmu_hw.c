@@ -235,7 +235,11 @@ static void set_pmu_event_count(void *info)
 	unsigned int cpu;
 
 	cpu = smp_processor_id();
+#if (KERNEL_VERSION(6, 8, 0) > LINUX_VERSION_CODE)
 	armv8_pmu.event_count[cpu] = ((read_sysreg(pmcr_el0) >> ARMV8_PMU_PMCR_N_SHIFT) & ARMV8_PMU_PMCR_N_MASK) + 1;
+#else
+	armv8_pmu.event_count[cpu] = FIELD_GET(ARMV8_PMU_PMCR_N, read_sysreg(pmcr_el0)) + 1;
+#endif
 }
 
 void update_pmu_event_count(unsigned int cpu)
