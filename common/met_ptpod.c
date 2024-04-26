@@ -88,7 +88,7 @@ static int parsing_use_regulator(const char *buf,
 	}
 
 	while ((reg_name = strsep(&reg_buf, ","))) {
-		strlcpy((*rg)[*rg_cnt].name, reg_name, sizeof((*rg)[*rg_cnt].name));
+		strscpy((*rg)[*rg_cnt].name, reg_name, sizeof((*rg)[*rg_cnt].name));
 		(*rg_cnt)++;
 	}
 
@@ -289,7 +289,7 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strlcpy(cpu_rg_node, CPU_RG_NODE, sizeof(CPU_RG_NODE));
+		strscpy(cpu_rg_node, CPU_RG_NODE, sizeof(CPU_RG_NODE));
 	}
 
 	if (!met_use_cpu_regulator) {
@@ -299,8 +299,8 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strlcpy(met_use_cpu_regulator[0].name, CPU_REGULATOR_1, sizeof(met_use_cpu_regulator[0].name));
-		strlcpy(met_use_cpu_regulator[1].name, CPU_REGULATOR_2, sizeof(met_use_cpu_regulator[1].name));
+		strscpy(met_use_cpu_regulator[0].name, CPU_REGULATOR_1, sizeof(met_use_cpu_regulator[0].name));
+		strscpy(met_use_cpu_regulator[1].name, CPU_REGULATOR_2, sizeof(met_use_cpu_regulator[1].name));
 
 		met_use_cpu_rg_cnt = 2;
 	}
@@ -312,7 +312,7 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strlcpy(gpu_rg_node, GPU_RG_NODE, sizeof(GPU_RG_NODE));
+		strscpy(gpu_rg_node, GPU_RG_NODE, sizeof(GPU_RG_NODE));
 	}
 
 	if (!met_use_gpu_regulator) {
@@ -322,7 +322,7 @@ static int init_cg_regulator_setting(void)
 			goto error;
 		}
 
-		strlcpy(met_use_gpu_regulator[0].name, GPU_REGULATOR_1, sizeof(met_use_gpu_regulator[0].name));
+		strscpy(met_use_gpu_regulator[0].name, GPU_REGULATOR_1, sizeof(met_use_gpu_regulator[0].name));
 
 		met_use_gpu_rg_cnt = 1;
 	}

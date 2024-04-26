@@ -176,7 +176,6 @@ static struct proc_dir_entry *trace_dentry;
 /*****************************************************************************
  * external function ipmlement
  *****************************************************************************/
-
 int mcupm_log_init(struct device *dev)
 {
 	int ret = 0;
@@ -242,36 +241,19 @@ int mcupm_log_init(struct device *dev)
 	}
 
 	if(mcupm_buf_available == 0) {
-		if(mcupm_reserve_mem_get_size_symbol){
-			mcupm_buffer_size = mcupm_reserve_mem_get_size_symbol(MCUPM_MET_ID);
-			PR_BOOTMSG("mcupm_buffer_size=%x\n", mcupm_buffer_size);
-		}else {
-			PR_BOOTMSG("[MET] [%s,%d] mcupm_reserve_mem_get_size is not linked!\n", __FILE__, __LINE__);
-			return -1;
-		}
+		mcupm_buffer_size = mcupm_reserve_mem_get_size(MCUPM_MET_ID);
+		PR_BOOTMSG("mcupm_buffer_size=%x\n", mcupm_buffer_size);
 		if (mcupm_buffer_size > 0) {
-			if(mcupm_reserve_mem_get_virt_symbol){
-				mcupm_log_virt_addr = (void*)mcupm_reserve_mem_get_virt_symbol(MCUPM_MET_ID);
-				PR_BOOTMSG("mcupm_log_virt_addr=%p\n", mcupm_log_virt_addr);
-			}else {
-				PR_BOOTMSG("[MET] [%s,%d] mcupm_reserve_mem_get_virt is not linked!\n", __FILE__, __LINE__);
-				return -1;
-			}
-			if(mcupm_reserve_mem_get_phys_symbol){
-				mcupm_log_phy_addr = mcupm_reserve_mem_get_phys_symbol(MCUPM_MET_ID);
-				PR_BOOTMSG("mcupm_log_phy_addr=%u\n", (unsigned int) mcupm_log_phy_addr);
-			}else {
-				PR_BOOTMSG("[MET] [%s,%d] mcupm_reserve_mem_get_phys is not linked!\n", __FILE__, __LINE__);
-				return -1;
-			}
+			mcupm_log_virt_addr = (void*)mcupm_reserve_mem_get_virt(MCUPM_MET_ID);
+			PR_BOOTMSG("mcupm_log_virt_addr=%p\n", mcupm_log_virt_addr);
+			mcupm_log_phy_addr = mcupm_reserve_mem_get_phys(MCUPM_MET_ID);
+			PR_BOOTMSG("mcupm_log_phy_addr=%u\n", (unsigned int) mcupm_log_phy_addr);
 
-			if ((mcupm_log_phy_addr > 0) && (mcupm_log_virt_addr > 0)) {
+			if ((mcupm_log_phy_addr > 0) && (mcupm_buffer_size > 0) && (mcupm_log_virt_addr > 0)) {
 				mcupm_buf_available = 1;
 			} else {
 				mcupm_buf_available = 0;
 			}
-		}else {
-			PR_BOOTMSG("mcupm_reserve_mem_get_size fail(%d)\n", ret);
 		}
 	}
 #endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE || defined(CONFIG_MTK_MET_MEM_ALLOC) */
@@ -662,7 +644,7 @@ static ssize_t mcupm_log_write_store(
 		return -EINVAL;
 	}
 
-	strlcpy(plog, buf, count+1);
+	strscpy(plog, buf, count+1);
 
 	mutex_lock(&dev->mutex);
 	mcupm_log_req_enq(plog, strnlen(plog, count), kfree, plog);
