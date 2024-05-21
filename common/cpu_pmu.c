@@ -198,7 +198,7 @@ DECLARE_KOBJ_ATTR_RO(pmu_count);
 #ifdef MET_TINYSYS
 #if (IS_ENABLED(CONFIG_ARM64) || IS_ENABLED(CONFIG_ARM))
 DEFINE_MUTEX(handle_irq_lock);
-int armpmu_irq_hdlr_cnt;
+unsigned int armpmu_irq_hdlr_cnt;
 struct armpmu_handle_irq armpmu_irq_hdlr[MX_CPU_CLUSTER];
 #endif
 #endif
