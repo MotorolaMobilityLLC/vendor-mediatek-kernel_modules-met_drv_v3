@@ -408,7 +408,7 @@ static int _down_freezable_interruptible(struct completion *comp)
 	int ret = 0;
 
 #if KERNEL_VERSION(6, 1, 0) <= LINUX_VERSION_CODE
-	wait_for_completion_state(comp,
+	ret = wait_for_completion_state(comp,
 			TASK_INTERRUPTIBLE|TASK_FREEZABLE);
 #else
 	freezer_do_not_count();
