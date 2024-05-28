@@ -399,15 +399,27 @@ $(info FEATURE_CPUDSU = $(FEATURE_CPUDSU))
 
 MET_CPUDSU := $(if $(filter n,$(FEATURE_CPUDSU)),n,y)
 
-ifeq ($(ARCH), arm64)
-    $(info ARCH = $(ARCH))
-    $(info MET_CPUDSU = $(MET_CPUDSU))
-    met-$(MET_CPUDSU) += $(MET_CORE)/cpu_dsu.o
-    met-$(MET_CPUDSU) += $(MET_CORE)/v8_dsu_hw.o
+ifneq (,$(filter $(CONFIG_ARM_DSU_PMU),y m))
+    $(info CONFIG_ARM_DSU_PMU = y)
 else
-    $(info ARCH = $(ARCH))
-    $(info ======== disable FEATURE_CPUDSU ========)
+    $(info CONFIG_ARM_DSU_PMU = n)
     MET_CPUDSU := n
+endif
+ 
+ifeq ($(MET_CPUDSU), y)
+    ifeq ($(ARCH), arm64)
+        $(info ARCH = $(ARCH))
+        $(info MET_CPUDSU = $(MET_CPUDSU))
+        met-$(MET_CPUDSU) += $(MET_CORE)/cpu_dsu.o
+        met-$(MET_CPUDSU) += $(MET_CORE)/v8_dsu_hw.o
+    else
+        $(info ARCH = $(ARCH))
+        $(info ======== disable FEATURE_CPUDSU ========)
+        MET_CPUDSU := n
+    endif
+else
+    $(info ======== disable FEATURE_CPUDSU ========)
+        MET_CPUDSU := n
 endif
 
 ################################################################################
