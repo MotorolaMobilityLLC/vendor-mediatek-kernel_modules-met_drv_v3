@@ -18,6 +18,11 @@ static unsigned int dts_tz_num, ext_tz_num;
 static bool dts_tz_updated;
 struct delayed_work dwork;
 
+static int output_header_dts_len = 0;
+static int output_header_ext_len = 0;
+static int dts_print_done = 0;
+static int ext_print_done = 0;
+static int read_idx = 0;
 #define FILE_NODE_STR_LEN 256
 char ext_tz_str[FILE_NODE_STR_LEN] = {'\0'};
 struct kobject *kobj_thermal;
@@ -157,6 +162,11 @@ static void thermal_start(void)
     get_thermal_zone_from_ext();
 
     INIT_DELAYED_WORK(&dwork, wq_get_thermal);
+    output_header_dts_len = 0;
+    output_header_ext_len = 0;
+    dts_print_done = 0;
+    ext_print_done = 0;
+
 }
 
 static void thermal_stop(void)
@@ -185,41 +195,70 @@ static void clear_ext_tz(void) {
     ext_tz_str[0] = '\0';
 }
 
-static const char dts_tz_header[] = "met-info [000] 0.0: dts_tz:";
-static const char ext_tz_header[] = "met-info [000] 0.0: ext_tz:";
+static const char dts_tz_header[] = "met-info [000] 0.0: dts_tz: ";
+static const char ext_tz_header[] = "met-info [000] 0.0: ext_tz: ";
 static int thermal_print_header(char *buf, int len)
 {
-    int i = 0;
-    int ret = 0;
-    unsigned int buf_len = PAGE_SIZE;
-
-    if (dts_tz_num) {
-        ret += SNPRINTF(buf + ret, buf_len - ret, "%s ", dts_tz_header);
-        for(i=0; i<(dts_tz_num-1); i++) {
-            if (dts_tz_list[i]) {
-                ret += SNPRINTF(buf + ret, buf_len - ret, "%s, ", dts_tz_list[i]->type);
+    int i;
+    int write_len;
+    len = 0;
+    met_thermal.header_read_again = 0;
+    //print dts_tz header from dts file
+    if(dts_tz_num) {
+        if(!dts_print_done) {
+            if (output_header_dts_len == 0) {
+                len = SNPRINTF(buf, PAGE_SIZE, "%s", dts_tz_header);
+                output_header_dts_len = 1; 
+            }
+            for (i = read_idx; i <= dts_tz_num; i++) {
+                if (i == dts_tz_num) {
+                    output_header_dts_len = 0;
+                    read_idx = 0;
+                    buf[len - 1] = '\n';
+                    met_thermal.header_read_again = 0;
+                    dts_print_done = 1;
+                }else {
+                    write_len = strlen(dts_tz_list[i]->type);
+                    if ((len + write_len) < PAGE_SIZE) {
+                        len += SNPRINTF(buf+len, PAGE_SIZE-len, "%s,", dts_tz_list[i]->type);
+                    } else {
+                        met_thermal.header_read_again = 1;
+                        read_idx = i;
+                        return len;
+                    }
+                }
             }
         }
-        if (dts_tz_list[dts_tz_num-1]) {
-            ret += SNPRINTF(buf + ret, buf_len - ret, "%s\n", dts_tz_list[dts_tz_num-1]->type);
-        }
     }
-
-    if (ext_tz_num) {
-        ret += SNPRINTF(buf + ret, buf_len - ret, "%s ", ext_tz_header);
-        for(i=0; i<(ext_tz_num-1); i++) {
-            if (ext_tz_list[i]) {
-                ret += SNPRINTF(buf + ret, buf_len - ret, "%s, ", ext_tz_list[i]->type);
+    //print ext_tz header
+    if(ext_tz_num) {
+        if(!ext_print_done) {
+            if (output_header_ext_len == 0) {
+                len += SNPRINTF(buf+len, PAGE_SIZE-len, "%s", ext_tz_header);
+                output_header_ext_len = 1;
+            }
+            for (i = read_idx; i <= ext_tz_num; i++) {
+                if (i == ext_tz_num) {
+                    output_header_ext_len = 0;
+                    read_idx = 0;
+                    buf[len - 1] = '\n';
+                    met_thermal.header_read_again = 0;
+                    ext_print_done = 1;
+                } else {
+                    write_len = strlen(ext_tz_list[i]->type);
+                    if ((len + write_len) < PAGE_SIZE) {
+                        len += SNPRINTF(buf+len, PAGE_SIZE-len, "%s,", ext_tz_list[i]->type);
+                    } else {
+                        met_thermal.header_read_again = 1;
+                        read_idx = i;
+                        return len;
+                    }
+                }
             }
         }
-        if (ext_tz_list[ext_tz_num-1]) {
-            ret += SNPRINTF(buf + ret, buf_len - ret, "%s\n", ext_tz_list[ext_tz_num-1]->type);
-        }
-
-        clear_ext_tz();
     }
-
-    return ret;
+    clear_ext_tz();
+    return len;
 }
 
 struct metdevice met_thermal = {
