@@ -6,6 +6,7 @@
 #include <linux/kernel.h>
 #include <linux/thermal.h>
 #include <linux/of.h>
+#include "thermal_core.h"
 
 #include "met_drv.h"
 #include "core_plf_init.h"
