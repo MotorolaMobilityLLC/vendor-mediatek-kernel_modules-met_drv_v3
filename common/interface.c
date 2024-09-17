@@ -1221,7 +1221,7 @@ int met_set_chip_id(const unsigned int chip_id)
 }
 EXPORT_SYMBOL(met_set_chip_id);
 
-const unsigned int met_get_chip_id(void)
+unsigned int met_get_chip_id(void)
 {
 	return met_chip_id;
 }
