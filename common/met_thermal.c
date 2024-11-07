@@ -12,7 +12,7 @@
 #include "core_plf_trace.h"
 #include "mtk_typedefs.h"
 
-#define TZ_NUM_MAX 128
+#define TZ_NUM_MAX 50
 static struct thermal_zone_device *dts_tz_list[TZ_NUM_MAX], *ext_tz_list[TZ_NUM_MAX];
 static unsigned int dts_tz_num, ext_tz_num;
 static bool dts_tz_updated;
@@ -86,11 +86,7 @@ static void get_thermal_zone_from_dts(void) {
         }
 
         // Do not interfere original kernel polling
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
-        if (tz->polling_delay_jiffies) {
-#else
         if (tz->polling_delay) {
-#endif
             continue;
         }
 
@@ -116,11 +112,7 @@ static void get_thermal_zone_from_ext(void) {
         }
 
         // Do not interfere original kernel polling
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
-        if (tz->polling_delay_jiffies) {
-#else
         if (tz->polling_delay) {
-#endif
             continue;
         }
 

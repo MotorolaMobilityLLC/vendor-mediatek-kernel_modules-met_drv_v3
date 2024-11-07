@@ -23,11 +23,6 @@
 #include "mcupm/mcupm_met_log.h"
 #endif
 
-#ifdef MET_GPUEB
-#include "gpueb/gpueb_met_ipi_handle.h"
-#include "gpueb/gpueb_met_log.h"
-#endif
-
 
 /*****************************************************************************
  * define declaration
@@ -152,88 +147,6 @@ static int _create_mcupm_node(struct kobject *kobj);
 static void _remove_mcupm_node(void);
 #endif
 
-#ifdef MET_GPUEB
-static ssize_t _gpueb_ipi_supported_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-
-static ssize_t _gpueb_buffer_size_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-
-static ssize_t _gpueb_available_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-
-static ssize_t _gpueb_log_discard_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-
-static ssize_t _gpueb_log_size_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-static ssize_t _gpueb_log_size_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count);
-
-static ssize_t _gpueb_run_mode_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-static ssize_t _gpueb_run_mode_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count);
-
-static ssize_t _gpueb_modules_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-static ssize_t _gpueb_modules_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count);
-
-static ssize_t _gpueb_op_ctrl_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count);
-
-static ssize_t _gpueb_record_check_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-static ssize_t _gpueb_record_check_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count);
-
-static ssize_t _gpueb_recording_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf);
-static ssize_t _gpueb_recording_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count);
-
-
-static int _create_gpueb_node(struct kobject *kobj);
-static void _remove_gpueb_node(void);
-#endif
-
 
 /*****************************************************************************
  * external variable declaration
@@ -256,7 +169,7 @@ static struct kobject *_g_tinysys_kobj;
 static int _sspm_log_mode;
 static int _sspm_run_mode;
 static int _sspm_log_size;
-static int _sspm_log_discard;
+int _sspm_log_discard = -1;
 
 static DEVICE_ATTR(sspm_ipi_supported, 0444, sspm_ipi_supported_show, NULL);
 static DEVICE_ATTR(sspm_buffer_size, 0444, sspm_buffer_size_show, NULL);
@@ -298,34 +211,17 @@ static struct kobj_attribute _attr_mcupm_recording = \
 	__ATTR(recording, 0664, _mcupm_recording_show, _mcupm_recording_store);
 #endif
 
-#ifdef MET_GPUEB
-static int _gpueb_run_mode;
-static int _gpueb_log_size;
-static int _gpueb_log_discard;
-static struct kobject *_gpueb_kobj;
-static struct kobj_attribute _attr_gpueb_ipi_supported = \
-	__ATTR(ipi_supported, 0444, _gpueb_ipi_supported_show, NULL);
-static struct kobj_attribute _attr_gpueb_buffer_size = \
-	__ATTR(buffer_size, 0444, _gpueb_buffer_size_show, NULL);
-static struct kobj_attribute _attr_gpueb_available = \
-	__ATTR(available, 0444, _gpueb_available_show, NULL);
-static struct kobj_attribute _attr_gpueb_log_discard = \
-	__ATTR(log_discard, 0444, _gpueb_log_discard_show, NULL);
-static struct kobj_attribute _attr_gpueb_log_size = \
-	__ATTR(log_size, 0664, _gpueb_log_size_show, _gpueb_log_size_store);
-static struct kobj_attribute _attr_gpueb_run_mode = \
-	__ATTR(run_mode, 0664, _gpueb_run_mode_show, _gpueb_run_mode_store);
-static struct kobj_attribute _attr_gpueb_modules = \
-	__ATTR(modules, 0664, _gpueb_modules_show, _gpueb_modules_store);
-static struct kobj_attribute _attr_gpueb_op_ctrl = \
-	__ATTR(op_ctrl, 0220, NULL, _gpueb_op_ctrl_store);
-static struct kobj_attribute _attr_gpueb_record_check = \
-	__ATTR(record_check, 0664, _gpueb_record_check_show, _gpueb_record_check_store);
-static struct kobj_attribute _attr_gpueb_recording = \
-	__ATTR(recording, 0664, _gpueb_recording_show, _gpueb_recording_store);
-#endif
-
 static struct device *ondiemet_attr_dev;
+
+#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
+#ifndef MET_SCMI
+#ifdef SSPM_VERSION_V2
+//#include "sspm/ondiemet_sspm.h"
+extern struct mtk_ipi_device sspm_ipidev;
+extern struct mtk_ipi_device *sspm_ipidev_symbol;
+#endif
+#endif /* !MET_SCMI */
+#endif
 
 /*****************************************************************************
  * external function ipmlement
@@ -382,24 +278,6 @@ int met_ondiemet_attr_init_mcupm(void)
 }
 EXPORT_SYMBOL(met_ondiemet_attr_init_mcupm);
 
-int met_ondiemet_attr_init_gpueb(void)
-{
-	int ret = 0;
-
-#ifdef MET_GPUEB
-	if (!(met_gpueb_api_ready && met_ipi_api_ready))
-		return -1;
-
-	ret = _create_gpueb_node(_g_tinysys_kobj);
-	if (ret != 0) {
-		pr_debug("can not create gpueb node\n");
-		return ret;
-	}
-#endif
-	return ret;
-}
-EXPORT_SYMBOL(met_ondiemet_attr_init_gpueb);
-
 int ondiemet_attr_uninit(struct device *dev)
 {
 	if (_g_tinysys_kobj != NULL) {
@@ -432,17 +310,6 @@ int met_ondiemet_attr_uninit_mcupm(void)
 	return 0;
 }
 EXPORT_SYMBOL(met_ondiemet_attr_uninit_mcupm);
-
-int met_ondiemet_attr_uninit_gpueb(void)
-{
-#ifdef MET_GPUEB
-	if (!(met_gpueb_api_ready && met_ipi_api_ready))
-		return -1;
-	_remove_gpueb_node();
-#endif
-	return 0;
-}
-EXPORT_SYMBOL(met_ondiemet_attr_uninit_gpueb);
 
 int ondiemet_log_manager_init(struct device *dev)
 {
@@ -495,19 +362,6 @@ void ondiemet_start()
 			mcupm_start();
 	}
 #endif
-
-#ifdef MET_GPUEB
-	if (met_gpueb_api_ready && met_ipi_api_ready) {
-		if (ondiemet_record_check[ONDIEMET_GPUEB]) {
-			ondiemet_recording[ONDIEMET_GPUEB] = 0;
-			if (ondiemet_module[ONDIEMET_GPUEB] > 0) {
-				ondiemet_recording[ONDIEMET_GPUEB] = 1;
-				gpueb_start();
-			}
-		} else
-			gpueb_start();
-	}
-#endif
 }
 
 void ondiemet_stop()
@@ -529,16 +383,6 @@ void ondiemet_stop()
 				mcupm_stop();
 		} else
 			mcupm_stop();
-	}
-#endif
-
-#ifdef MET_GPUEB
-	if (met_gpueb_api_ready && met_ipi_api_ready) {
-		if (ondiemet_record_check[ONDIEMET_GPUEB]) {
-			if (ondiemet_recording[ONDIEMET_GPUEB])
-				gpueb_stop();
-		} else
-			gpueb_stop();
 	}
 #endif
 }
@@ -564,16 +408,6 @@ void ondiemet_extract()
 			mcupm_extract();
 	}
 #endif
-
-#ifdef MET_GPUEB
-	if (met_gpueb_api_ready && met_ipi_api_ready) {
-		if (ondiemet_record_check[ONDIEMET_GPUEB]) {
-			if (ondiemet_recording[ONDIEMET_GPUEB])
-				gpueb_extract();
-		} else
-			gpueb_extract();
-	}
-#endif
 }
 
 
@@ -588,6 +422,17 @@ static ssize_t sspm_ipi_supported_show(
 {
 	int ipi_supported = 1;
 	int i = 0;
+
+#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
+#ifndef MET_SCMI
+#ifdef SSPM_VERSION_V2
+    if(sspm_ipidev_symbol)
+        ipi_supported = 1;
+    else
+        ipi_supported = 0;
+#endif
+#endif /* !MET_SCMI */
+#endif
 
 	i = snprintf(buf, PAGE_SIZE, "%d\n", ipi_supported);
 	if (i < 0)
@@ -1287,349 +1132,6 @@ static void _remove_mcupm_node()
 		kobject_del(_mcupm_kobj);
 		kobject_put(_mcupm_kobj);
 		_mcupm_kobj = NULL;
-	}
-}
-#endif
-
-#ifdef MET_GPUEB
-static ssize_t _gpueb_ipi_supported_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int ipi_supported = 1;
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", ipi_supported);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-
-static ssize_t _gpueb_buffer_size_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", gpueb_buffer_size);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-
-static ssize_t _gpueb_available_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", 1);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-
-static ssize_t _gpueb_log_discard_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", _gpueb_log_discard);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-
-static ssize_t _gpueb_log_size_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", _gpueb_log_size);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-
-static ssize_t _gpueb_log_size_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count)
-{
-	int value = 0;
-
-	if (kstrtoint(buf, 0, &value) != 0) {
-		return -EINVAL;
-	}
-
-	_gpueb_log_size = value;
-
-	return count;
-}
-
-
-static ssize_t _gpueb_run_mode_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", _gpueb_run_mode);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-
-static ssize_t _gpueb_run_mode_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count)
-{
-	int value = 0;
-
-	if (kstrtoint(buf, 0, &value) != 0) {
-		return -EINVAL;
-	}
-
-	_gpueb_run_mode = value;
-
-	return count;
-}
-
-
-static ssize_t _gpueb_op_ctrl_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count)
-{
-	int value = 0;
-
-	if (kstrtoint(buf, 0, &value) != 0) {
-		return -EINVAL;
-	}
-
-	if (met_gpueb_api_ready && met_ipi_api_ready) {
-		if (value == 1) {
-			gpueb_start();
-		} else if (value == 2) {
-			gpueb_stop();
-		} else if (value == 3) {
-			gpueb_extract();
-		} else if (value == 4) {
-			gpueb_flush();
-		}
-	}
-
-	return count;
-}
-
-
-static ssize_t _gpueb_modules_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "0x%X\n", ondiemet_module[ONDIEMET_GPUEB]);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-static ssize_t _gpueb_modules_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count)
-{
-	unsigned int value;
-
-	if (kstrtoint(buf, 0, &value) != 0) {
-		return -EINVAL;
-	}
-
-	ondiemet_module[ONDIEMET_GPUEB] = value;
-
-	return count;
-}
-
-static ssize_t _gpueb_record_check_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", ondiemet_record_check[ONDIEMET_GPUEB]);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-static ssize_t _gpueb_record_check_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count)
-{
-	unsigned int value;
-
-	if (kstrtoint(buf, 0, &value) != 0) {
-		return -EINVAL;
-	}
-
-	ondiemet_record_check[ONDIEMET_GPUEB] = value;
-
-	return count;
-}
-
-static ssize_t _gpueb_recording_show(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	char *buf)
-{
-	int i = 0;
-
-	i = snprintf(buf, PAGE_SIZE, "%d\n", ondiemet_recording[ONDIEMET_GPUEB]);
-	if (i < 0)
-		return 0;
-
-	return i;
-}
-
-static ssize_t _gpueb_recording_store(
-	struct kobject *kobj,
-	struct kobj_attribute *attr,
-	const char *buf,
-	size_t count)
-{
-	unsigned int value;
-
-	if (kstrtoint(buf, 0, &value) != 0) {
-		return -EINVAL;
-	}
-
-	ondiemet_recording[ONDIEMET_GPUEB] = value;
-
-	return count;
-}
-
-static int _create_gpueb_node(struct kobject *parent)
-{
-	int ret = 0;
-
-	_gpueb_kobj = kobject_create_and_add("gpueb", parent);
-	if (_gpueb_kobj == NULL) {
-		return -1;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_available.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: available\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_buffer_size.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: buffer_size\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_log_discard.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: log_discard\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_log_size.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: log_size\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_run_mode.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: run_mode\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_op_ctrl.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: op_ctrl\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_modules.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: modules\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_ipi_supported.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: ipi_supported\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_record_check.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: record_check\n");
-		return ret;
-	}
-
-	ret = sysfs_create_file(_gpueb_kobj, &_attr_gpueb_recording.attr);
-	if (ret != 0) {
-		pr_debug("can not create device file: recording\n");
-		return ret;
-	}
-
-	return ret;
-}
-
-
-static void _remove_gpueb_node()
-{
-	if (_gpueb_kobj != NULL) {
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_buffer_size.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_available.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_log_discard.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_log_size.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_run_mode.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_op_ctrl.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_modules.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_ipi_supported.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_record_check.attr);
-		sysfs_remove_file(_gpueb_kobj, &_attr_gpueb_recording.attr);
-
-		kobject_del(_gpueb_kobj);
-		kobject_put(_gpueb_kobj);
-		_gpueb_kobj = NULL;
 	}
 }
 #endif

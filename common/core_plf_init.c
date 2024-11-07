@@ -66,28 +66,27 @@ EXPORT_SYMBOL(met_backlight_api_ready);
 
 #include <linux/scmi_protocol.h>
 #include "sspm_reservedmem.h"
+#ifdef MET_SCMI
 #ifndef __TINYSYS_SCMI_H__
 #define __TINYSYS_SCMI_H__
 #include "tinysys-scmi.h"
 #endif
+#endif /* MET_SCMI */
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
 #include "met_sspm_api/met_sspm_api.h"
 
-#endif /* MET_SSPM */
-
-long met_sspm_api_ready = 0;
-EXPORT_SYMBOL(met_sspm_api_ready);
-
-#if defined(MET_SSPM) /* anyone of the scmi users */
-
+#ifdef MET_SCMI
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
 #include "met_scmi_api/met_scmi_api.h"
+#endif /* MET_SCMI */
 
-#endif /* MET_SSPM (anyone of the scmi users) */
+#endif /* MET_SSPM */
 
 long met_scmi_api_ready = 0;
 EXPORT_SYMBOL(met_scmi_api_ready);
+long met_sspm_api_ready = 0;
+EXPORT_SYMBOL(met_sspm_api_ready);
 
 #ifdef MET_MCUPM
 
@@ -97,33 +96,15 @@ EXPORT_SYMBOL(met_scmi_api_ready);
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
 #include "met_mcupm_api/met_mcupm_api.h"
 
-#endif /* MET_MCUPM */
-
-long met_mcupm_api_ready = 0;
-EXPORT_SYMBOL(met_mcupm_api_ready);
-
-#ifdef MET_GPUEB
-
-#include "mtk_tinysys_ipi.h"
-#include "gpueb_reserved_mem.h"
-
-#define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_gpueb_api/met_gpueb_api.h"
-
-#endif /* MET_GPUEB */
-
-long met_gpueb_api_ready = 0;
-EXPORT_SYMBOL(met_gpueb_api_ready);
-
-#if defined(MET_MCUPM) || defined(MET_GPUEB) /* anyone of the ipi users */
-
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
 #include "met_ipi_api/met_ipi_api.h"
 
-#endif /* MET_MCUPM || MET_GPUEB (anyone of the ipi users) */
+#endif /* MET_MCUPM */
 
 long met_ipi_api_ready = 0;
 EXPORT_SYMBOL(met_ipi_api_ready);
+long met_mcupm_api_ready = 0;
+EXPORT_SYMBOL(met_mcupm_api_ready);
 
 int core_plf_init(void)
 {
@@ -156,7 +137,9 @@ int core_plf_init(void)
 #endif
 
 #ifdef MET_EMI
+#ifdef MET_SSPM
 	met_register(&met_sspm_emi);
+#endif
 #endif
 
 #ifdef MET_SMI
@@ -173,10 +156,6 @@ int core_plf_init(void)
 
 #ifdef MET_MCUPM
 	met_register(&met_mcupm_common);
-#endif
-
-#ifdef MET_GPUEB
-	met_register(&met_gpueb_common);
 #endif
 
 #ifdef MET_CPUDSU
@@ -243,10 +222,6 @@ void core_plf_exit(void)
 
 #ifdef MET_MCUPM
 	met_deregister(&met_mcupm_common);
-#endif
-
-#ifdef MET_GPUEB
-	met_deregister(&met_gpueb_common);
 #endif
 
 #ifdef MET_CPUDSU

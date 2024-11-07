@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2019 MediaTek Inc.
  */
+
 #include <linux/perf_event.h>
 #include "met_drv.h"
 #include "met_kernel_symbol.h"
@@ -11,26 +12,6 @@
 #include "core_plf_init.h"
 #include "mtk_typedefs.h"
 
-#if 1
-#define DIN()
-#define DOUT()
-#define DBG(__fmt__, ...)
-#else
-#undef TAG
-#define TAG "[MET_DSU]"
-#define DIN() \
-	do{\
-		pr_debug(TAG"[%s][%d] IN", __func__, __LINE__); \
-	}while(0)
-#define DOUT() \
-	do{\
-		pr_debug(TAG"[%s][%d] OUT", __func__, __LINE__); \
-	}while(0)
-#define DBG(__fmt__, ...) \
-	do{\
-		pr_debug(TAG"[%s][%d]" __fmt__, __func__, __LINE__, ##__VA_ARGS__); \
-	}while(0)
-#endif
 
 struct cpu_dsu_hw *cpu_dsu;
 static int counter_cnt;
@@ -42,12 +23,6 @@ static int perfCntFirst[MXNR_DSU_EVENTS];
 static struct perf_event * pevent[MXNR_DSU_EVENTS];
 static struct perf_event_attr pevent_attr[MXNR_DSU_EVENTS];
 static unsigned int perf_device_type = 7;
-
-//collect fail to init events
-static int nr_ignored_arg=0;
-static unsigned int init_failed_cnt=0;
-static struct dsu_failed_desc init_failed_dsus[MXNR_DSU_EVENT_BUFFER_SZ];
-
 static ssize_t perf_type_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%d\n", perf_device_type);
@@ -132,6 +107,7 @@ static void perf_cpudsu_polling(unsigned long long stamp, int cpu)
 
 		ev = pevent[i];
 		if ((ev != NULL) && (ev->state == PERF_EVENT_STATE_ACTIVE)) {
+
 			ret = __met_perf_event_read_local(ev, &value, NULL, NULL);
 			if (ret < 0) {
 				PR_BOOTMSG_ONCE("[MET_DSU] perf_event_read_local fail (ret=%d)\n", ret);
@@ -154,7 +130,6 @@ static void perf_cpudsu_polling(unsigned long long stamp, int cpu)
 
 	if (count == counter_cnt)
 		mp_dsu(count, pmu_value);
-	
 }
 
 static int perf_thread_set_perf_events(unsigned int cpu)
@@ -182,29 +157,10 @@ static int perf_thread_set_perf_events(unsigned int cpu)
 		ev_attr->pinned = 1;
 
 		ev = perf_event_create_kernel_counter(ev_attr, cpu, NULL, dummy_handler, NULL);
-		if (!ev || IS_ERR(ev)){
-			/*bookkeep and remove occupied event from event array*/
-			init_failed_dsus[init_failed_cnt].event = pmu[i].event;
-			init_failed_dsus[init_failed_cnt].init_failed = DSU_INIT_FAIL_OCCUPIED;
-			init_failed_cnt++;
-			//clear pmu[i]
-			pmu[i].mode = MODE_DISABLED;
-			pmu[i].event = 0;
-			pmu[i].freq = 0;
-			counter_cnt--; //decrease avail count
+		if (!ev || IS_ERR(ev))
 			continue;
-		}
 		if (ev->state != PERF_EVENT_STATE_ACTIVE) {
 			perf_event_release_kernel(ev);
-			/*bookkeep and remove occupied event from event array*/
-			init_failed_dsus[init_failed_cnt].event = pmu[i].event;
-			init_failed_dsus[init_failed_cnt].init_failed = DSU_INIT_FAIL_OCCUPIED;
-			init_failed_cnt++;
-			//clear pmu[i]
-			pmu[i].mode = MODE_DISABLED;
-			pmu[i].event = 0;
-			pmu[i].freq = 0;
-			counter_cnt--; //decrease avail count
 			continue;
 		}
 		pevent[i] = ev;
@@ -243,10 +199,8 @@ inline static void met_perf_cpudsu_start(int cpu)
 {
 	if (met_cpudsu.mode == 0)
 		return;
-
 	if (cpu != 0)
 		return;
-
 	perf_thread_set_perf_events(cpu);
 }
 
@@ -317,9 +271,6 @@ static int reset_driver_stat(void)
 		pmu[i].event = 0;
 		pmu[i].freq = 0;
 	}
-	//
-	nr_ignored_arg = 0;
-	init_failed_cnt = 0;
 	return 0;
 }
 
@@ -331,58 +282,6 @@ static int cpudsu_print_header(char *buf, int len)
 	struct met_dsu	*pmu;
 	ret = 0;
 
-	/*
-	 * print error message when user requested more dsu events than
-	 * platform's capability.
-	 * we currently only prompt how many events were ignored.
-	 */
-	if (nr_ignored_arg) {
-		ret += SNPRINTF(buf + ret,
-				len - ret,
-				"met-info [000] 0.0: ##_DSU_INIT_FAIL: "
-				"too many events requested (max = %d), %d events ignored\n",
-				cpu_dsu->event_count, nr_ignored_arg);
-		DBG("too many events requested (max = %d), %d events ignored\n",
-                                cpu_dsu->event_count, nr_ignored_arg);
-	}
-
-	/*
-	 * print error message of init failed events due cpu offline
-	 */
-	event_count = cpu_dsu->event_count;
-	pmu = cpu_dsu->pmu;
-	first = 1;
-
-	for (i = 0; i < init_failed_cnt; i++) {
-
-		if (init_failed_dsus[i].init_failed != DSU_INIT_FAIL_OCCUPIED)
-			continue;
-
-		if (first) {
-			ret += SNPRINTF(buf + ret,
-					len - ret,
-					"met-info [000] 0.0: ##_DSU_INIT_FAIL: "
-					"Occupied DSU specified slots: 0x%x",
-					init_failed_dsus[i].event);
-			first = 0;
-			DBG("%x is occupied\n", init_failed_dsus[i].event);
-			continue;
-		}
-
-		ret += SNPRINTF(buf + ret, len - ret, ",0x%x", init_failed_dsus[i].event);
-	}
-	/*
-	if (!first && init_failed_cnt >=
-		ARRAY_SIZE(init_failed_dsus))
-		ret += SNPRINTF(buf + ret, len - ret,
-				"... (truncated if there's more)");
-				*/
-	if (!first)
-		ret += SNPRINTF(buf + ret, len - ret, "\n");
-
-	/*
-	 * active events
-	 */
 	ret += snprintf(buf + ret, PAGE_SIZE - ret, "# mp_dsu: pmu_value1, ...\n");
 	event_count = cpu_dsu->event_count;
 	pmu = cpu_dsu->pmu;
@@ -398,7 +297,6 @@ static int cpudsu_print_header(char *buf, int len)
 		pmu[i].mode = 0;
 	}
 	ret += snprintf(buf + ret, PAGE_SIZE - ret, "\n");
-
 	reset_driver_stat();
 	return ret;
 }
@@ -435,13 +333,13 @@ static int met_parse_num_list(char *arg, int len, int *list, int list_cnt)
 
 static int cpudsu_process_argument(const char *arg, int len)
 {
-	int		nr_events, event_list[MXNR_DSU_EVENT_BUFFER_SZ] = {};
+	int		nr_events, event_list[MXNR_DSU_EVENTS] = {};
 	int		i;
 	int		nr_counters;
 	struct met_dsu	*pmu;
 	int		arg_nr;
+	int		counters;
 	int		event_no;
-
 
 	/* get event_list */
 	if ((nr_events = met_parse_num_list((char*)arg, len, event_list, ARRAY_SIZE(event_list))) <= 0)
@@ -452,6 +350,15 @@ static int cpudsu_process_argument(const char *arg, int len)
 	pmu = cpu_dsu->pmu;
 	arg_nr = nr_arg;
 
+	/*
+	 * setup nr_counters for linux native perf mode.
+	 * because the selected events are stored in pmu,
+	 * so nr_counters can't large then event count in pmu.
+	 */
+	counters = perf_num_counters();
+	if (counters < nr_counters)
+		nr_counters = counters;
+
 	if (nr_counters == 0)
 		goto arg_out;
 
@@ -461,18 +368,10 @@ static int cpudsu_process_argument(const char *arg, int len)
 		 * check if event is duplicate,
 		 * but may not include 0xff when met_cpu_dsu_method == 0.
 		 */
-		if (cpu_dsu->check_event(pmu, arg_nr, event_no) < 0){
-			DBG("arg_nr=%d, event_no=%d, duplicated!\n", arg_nr,event_no);
-			continue;
-		}
-		if (arg_nr >= nr_counters){
-			DBG("arg_nr(%d) exceeds nr_counters(%d)\n", arg_nr, nr_counters);
-			nr_ignored_arg++;
-			continue;
-		}
-
-		DBG("%x event is specified by user\n", event_no);
-
+		if (cpu_dsu->check_event(pmu, arg_nr, event_no) < 0)
+			goto arg_out;
+		if (arg_nr >= nr_counters)
+			goto arg_out;
 		pmu[arg_nr].mode = MODE_POLLING;
 		pmu[arg_nr].event = event_no;
 		pmu[arg_nr].freq = 0;

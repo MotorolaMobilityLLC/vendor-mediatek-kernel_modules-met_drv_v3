@@ -513,7 +513,7 @@ int sampler_start(void)
 		}
 	}
 
-	cpus_read_lock();
+	get_online_cpus();
 	online_cpu_map = 0;
 	for_each_online_cpu(cpu) {
 		if (cpu<0 || cpu>=NR_CPUS)
@@ -549,7 +549,7 @@ int sampler_start(void)
 				__met_hrtimer_register, NULL, 1);
 		}
 	}
-	cpus_read_unlock();
+	put_online_cpus();
 
 	return ret;
 }
@@ -562,7 +562,7 @@ void sampler_stop(void)
 	struct delayed_work *dw;
 
 
-	cpus_read_lock();
+	get_online_cpus();
 	//on_each_cpu(__met_hrtimer_stop, NULL, 1);
 	online_cpu_map = 0;
 	for_each_online_cpu(cpu) {
@@ -588,7 +588,7 @@ void sampler_stop(void)
 		/* sync_samples(cpu); */
 	}
 	start = 0;
-	cpus_read_unlock();
+	put_online_cpus();
 
 	cpuhp_remove_state_nocalls(CPUHP_AP_ONLINE_DYN);
 

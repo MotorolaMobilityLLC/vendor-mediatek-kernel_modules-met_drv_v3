@@ -157,7 +157,10 @@ void met_cookie_polling(unsigned long long stamp, int cpu)
 			if (vma->vm_file) {
 				ppath = &(vma->vm_file->f_path);
 
-				off = (vma->vm_pgoff << PAGE_SHIFT) + pc - vma->vm_start;
+				if (vma->vm_flags & VM_DENYWRITE)
+					off = pc;
+				else
+					off = (vma->vm_pgoff << PAGE_SHIFT) + pc - vma->vm_start;
 
 				ret =
 				    SNPRINTF(pinfo->strbuf + pinfo->strlen,

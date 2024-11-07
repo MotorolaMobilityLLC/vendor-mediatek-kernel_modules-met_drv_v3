@@ -135,20 +135,15 @@ static ssize_t bl_tag_enable_store(struct kobject *kobj,
 #if IS_ENABLED(CONFIG_MTK_PRINTK)
 	if (value == 0)
 	{
-		if(update_uartlog_status_symbol == NULL) {
-			PR_BOOTMSG("[backlight] update_uartlog_status_symbol is NULL\n");
-			return -EINVAL;
-		}
-
 		ret = met_tag_oneshot_real(33880, "_MM_BL_", 255);
 
-		update_uartlog_status_symbol(true, 1);
+		update_uartlog_status(true, 1);
 		pr_info("%s\n", _trigger_DAQ_);
 		pr_info("trigger patern size[%zu]\n", strlen(_trigger_DAQ_));
 
 		ret = met_tag_oneshot_real(33880, "_MM_BL_", 0);
 
-		update_uartlog_status_symbol(true, 0);
+		update_uartlog_status(true, 0);
 		PR_BOOTMSG("[backlight] UART tigger DAQ\n");
 	}
 #else

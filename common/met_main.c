@@ -13,6 +13,7 @@
 #include <linux/profile.h>
 #include <linux/dcache.h>
 #include <linux/types.h>
+#include <linux/dcookies.h>
 #include <linux/sched.h>
 #include <linux/fs.h>
 /* #include <mt-plat/mtk_chip.h> */
@@ -25,6 +26,14 @@
 #include "interface.h"
 #include <linux/of.h>
 #include "mtk_typedefs.h"
+
+#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
+#ifndef MET_SCMI
+#if defined(SSPM_VERSION_V2)
+#include "sspm_ipi_id.h"  /* for sspm_ipidev */
+#endif /* SSPM_VERSION_V2 */
+#endif /* !MET_SCMI */
+#endif
 
 extern struct device_node *of_root;
 static const char *platform_name;
@@ -44,6 +53,16 @@ static struct cpu_type_name met_known_cpu_type[] = {
 };
 #define MET_KNOWN_CPU_TYPE_COUNT \
 	(sizeof(met_known_cpu_type)/sizeof(struct cpu_type_name))
+
+
+#if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
+#ifndef MET_SCMI
+#if defined(SSPM_VERSION_V2)
+struct mtk_ipi_device *sspm_ipidev_symbol = NULL;
+#endif /* SSPM_VERSION_V2 */
+#endif /* !MET_SCMI */
+#endif
+
 
 static char met_cpu_topology[64];
 

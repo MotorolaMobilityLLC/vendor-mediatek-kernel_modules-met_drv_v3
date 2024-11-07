@@ -11,7 +11,7 @@
 #include "trace.h"
 #include "mtk_typedefs.h"
 
-char *ms_formatH(char *__restrict__ buf, unsigned int cnt, unsigned int *__restrict__ value)
+char *ms_formatH(char *__restrict__ buf, unsigned char cnt, unsigned int *__restrict__ value)
 {
 	char *s = buf;
 	int len;
@@ -61,7 +61,7 @@ char *ms_formatH(char *__restrict__ buf, unsigned int cnt, unsigned int *__restr
 }
 EXPORT_SYMBOL(ms_formatH);
 
-char *ms_formatD(char *__restrict__ buf, unsigned int cnt, unsigned int *__restrict__ value)
+char *ms_formatD(char *__restrict__ buf, unsigned char cnt, unsigned int *__restrict__ value)
 {
 	char *s = buf;
 	int len;
@@ -111,7 +111,7 @@ char *ms_formatD(char *__restrict__ buf, unsigned int cnt, unsigned int *__restr
 }
 EXPORT_SYMBOL(ms_formatD);
 
-char *ms_formatH_ulong(char *__restrict__ buf, unsigned int cnt, unsigned long *__restrict__ value)
+char *ms_formatH_ulong(char *__restrict__ buf, unsigned char cnt, unsigned long *__restrict__ value)
 {
 	char *s = buf;
 	int len;
@@ -161,7 +161,7 @@ char *ms_formatH_ulong(char *__restrict__ buf, unsigned int cnt, unsigned long *
 }
 EXPORT_SYMBOL(ms_formatH_ulong);
 
-char *ms_formatD_ulong(char *__restrict__ buf, unsigned int cnt, unsigned long *__restrict__ value)
+char *ms_formatD_ulong(char *__restrict__ buf, unsigned char cnt, unsigned long *__restrict__ value)
 {
 	char *s = buf;
 	int len;
@@ -211,7 +211,7 @@ char *ms_formatD_ulong(char *__restrict__ buf, unsigned int cnt, unsigned long *
 }
 EXPORT_SYMBOL(ms_formatD_ulong);
 
-char *ms_formatH_EOL(char *__restrict__ buf, unsigned int cnt, unsigned int *__restrict__ value)
+char *ms_formatH_EOL(char *__restrict__ buf, unsigned char cnt, unsigned int *__restrict__ value)
 {
 	char *s = buf;
 	int len;
@@ -262,7 +262,7 @@ char *ms_formatH_EOL(char *__restrict__ buf, unsigned int cnt, unsigned int *__r
 }
 EXPORT_SYMBOL(ms_formatH_EOL);
 
-char *ms_formatD_EOL(char *__restrict__ buf, unsigned int cnt, unsigned int *__restrict__ value)
+char *ms_formatD_EOL(char *__restrict__ buf, unsigned char cnt, unsigned int *__restrict__ value)
 {
 	char *s = buf;
 	int len;
@@ -314,7 +314,7 @@ char *ms_formatD_EOL(char *__restrict__ buf, unsigned int cnt, unsigned int *__r
 EXPORT_SYMBOL(ms_formatD_EOL);
 
 char *ms_formatH_ulonglong_EOL(char *__restrict__ buf,
-						unsigned int cnt,
+						unsigned char cnt,
 						unsigned long long *__restrict__ value)
 {
 	char *s = buf;

@@ -6,6 +6,14 @@
 #ifndef _TRACE_H_
 #define _TRACE_H_
 
+
+extern void (*mp_cp_ptr)(unsigned long long timestamp,
+	       struct task_struct *task,
+	       unsigned long program_counter,
+	       unsigned long dcookie,
+	       unsigned long offset,
+	       unsigned char cnt, unsigned int *value);
+
 #define MP_FMT1	"%x\n"
 #define MP_FMT2	"%x,%x\n"
 #define MP_FMT3	"%x,%x,%x\n"

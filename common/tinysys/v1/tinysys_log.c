@@ -33,12 +33,6 @@
 #include "mcupm/mcupm_met_log.h"
 #endif
 
-#ifdef MET_GPUEB
-#include <linux/platform_device.h>  /* for struct platform_device used in gpueb_reserved_mem.h & gpueb_ipi.h */
-#include "gpueb_reserved_mem.h"  /* for gpueb_ipidev */
-#include "gpueb/gpueb_met_log.h"
-#endif
-
 
 /*****************************************************************************
  * define declaration
@@ -83,10 +77,6 @@ static unsigned int _g_sspm_status;
 
 #ifdef MET_MCUPM
 static unsigned int _g_mcupm_status;
-#endif
-
-#ifdef MET_GPUEB
-static unsigned int _g_gpueb_status;
 #endif
 
 struct device *tinysys_log_manager_fsdevice;
@@ -141,16 +131,6 @@ int met_mcupm_log_init(void)
 EXPORT_SYMBOL(met_mcupm_log_init);
 #endif
 
-#ifdef MET_GPUEB
-int met_gpueb_log_init(void)
-{
-	if (!(met_gpueb_api_ready && met_ipi_api_ready))
-		return -1;
-	return gpueb_log_init(tinysys_log_manager_fsdevice);
-}
-EXPORT_SYMBOL(met_gpueb_log_init);
-#endif
-
 int tinysys_log_manager_uninit(struct device *dev)
 {
 #ifdef ONDIEMET_MOUNT_DEBUGFS
@@ -198,16 +178,6 @@ int met_mcupm_log_uninit(void)
 EXPORT_SYMBOL(met_mcupm_log_uninit);
 #endif
 
-#ifdef MET_GPUEB
-int met_gpueb_log_uninit(void)
-{
-	if (!(met_gpueb_api_ready && met_ipi_api_ready))
-		return -1;
-	return gpueb_log_uninit(tinysys_log_manager_fsdevice);
-}
-EXPORT_SYMBOL(met_gpueb_log_uninit);
-#endif
-
 int tinysys_log_manager_start(void)
 {
 #ifdef MET_SSPM
@@ -221,13 +191,6 @@ int tinysys_log_manager_start(void)
 	if (met_mcupm_api_ready && met_ipi_api_ready) {
 		mcupm_log_start();
 		_reset(kTINYSYS_LOG_START, ONDIEMET_MCUPM);
-	}
-#endif
-
-#ifdef MET_GPUEB
-	if (met_gpueb_api_ready && met_ipi_api_ready) {
-		gpueb_log_start();
-		_reset(kTINYSYS_LOG_START, ONDIEMET_GPUEB);
 	}
 #endif
 
@@ -259,17 +222,6 @@ int tinysys_log_manager_stop(void)
 	}
 #endif
 
-#ifdef MET_GPUEB
-	if ((ondiemet_module[ONDIEMET_GPUEB] == 0) || (gpueb_buffer_size == -1)) {
-		if (met_gpueb_api_ready && met_ipi_api_ready) {
-			if (!ondiemet_record_check[ONDIEMET_GPUEB]) {
-				gpueb_log_stop();
-				_reset(kTINYSYS_LOG_STOP, ONDIEMET_GPUEB);
-			}
-		}
-	}
-#endif
-
 	return 0;
 }
 
@@ -290,12 +242,6 @@ static void _reset(int status, int type)
 #ifdef MET_MCUPM
 	case ONDIEMET_MCUPM:
 		_g_mcupm_status = status;
-		break;
-#endif
-
-#ifdef MET_GPUEB
-	case ONDIEMET_GPUEB:
-		_g_gpueb_status = status;
 		break;
 #endif
 
