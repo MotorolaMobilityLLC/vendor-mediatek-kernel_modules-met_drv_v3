@@ -69,6 +69,8 @@ extern unsigned int met_cpu_pm_pmu_reconfig;
 
 /* met config from dts */
 extern int met_config_list;
+extern int _is_new_RTS_mode;
+
 /* bit definition in met_config_list */
 enum {
 	RESOURCE_CTRL = 0,

@@ -65,6 +65,9 @@ EXPORT_SYMBOL(met_mode);
 
 int met_config_list = 0;
 EXPORT_SYMBOL(met_config_list);
+int _is_new_RTS_mode = 0;
+EXPORT_SYMBOL(_is_new_RTS_mode);
+
 
 struct met_strbuf_t __percpu *p_met_strbuf;
 EXPORT_PER_CPU_SYMBOL(p_met_strbuf);
@@ -1273,6 +1276,18 @@ void met_get_config_list(void)
 	}
 
 	PR_BOOTMSG("get met-config-list=%d index from dts\n", met_config_list);
+
+	ret = of_property_read_u32_index(node, /* device node */
+									"sspm-rts-unlimited-enable",  /*device name */
+									0, /* offset */
+									&_is_new_RTS_mode);
+	if (ret) {
+		PR_BOOTMSG("Cannot get sspm-rts-unlimited-enable index from dts, set to 0\n");
+		_is_new_RTS_mode = 0;
+		return;
+	}
+
+	PR_BOOTMSG("get sspm-rts-unlimited-enable=%d index from dts\n", _is_new_RTS_mode);
 }
 
 int met_set_topology(const char *topology_name, int flag)

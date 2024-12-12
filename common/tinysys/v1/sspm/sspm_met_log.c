@@ -225,48 +225,48 @@ int sspm_log_init(struct device *dev)
 		sspm_buf_available = 0;
 	}
 #elif defined(MET_SCMI)
-		np = of_find_node_by_name(NULL, "met-res-ram-sspm");
-		if (!np) {
-			pr_debug("unable to find met-res-ram-sspm\n");
-			return 0;
-		}
-		of_property_read_u64(np, "start", &sspm_log_phy_addr);
-		of_property_read_u32(np, "size", &sspm_buffer_size);
+	np = of_find_node_by_name(NULL, "met-res-ram-sspm");
+	if (!np) {
+		pr_debug("unable to find met-res-ram-sspm\n");
+		return 0;
+	}
+	of_property_read_u64(np, "start", &sspm_log_phy_addr);
+	of_property_read_u32(np, "size", &sspm_buffer_size);
 
-		if ((sspm_log_phy_addr > 0) && (sspm_buffer_size > 0)) {
-			sspm_log_virt_addr = (void*)ioremap_wc(sspm_log_phy_addr, sspm_buffer_size);
-			sspm_buf_available = 1;
-		} else {
-			sspm_buf_available = 0;
-		}
+	if ((sspm_log_phy_addr > 0) && (sspm_buffer_size > 0)) {
+		sspm_log_virt_addr = (void*)ioremap_wc(sspm_log_phy_addr, sspm_buffer_size);
+		sspm_buf_available = 1;
+	} else {
+		sspm_buf_available = 0;
+	}
 #elif defined(SSPM_VERSION_V0) || defined(SSPM_VERSION_V1) || defined(SSPM_VERSION_V2)
-		if(sspm_reserve_mem_get_virt_symbol){
-			sspm_log_virt_addr = (void*)sspm_reserve_mem_get_virt_symbol(MET_MEM_ID);
-			PR_BOOTMSG("sspm_log_virt_addr=%p\n", sspm_log_virt_addr);
-		}else {
-			PR_BOOTMSG("[MET] [%s,%d] sspm_reserve_mem_get_virt is not linked!\n", __FILE__, __LINE__);
-			return -1;
-		}
-		if(sspm_reserve_mem_get_phys_symbol){ 
-			sspm_log_phy_addr = sspm_reserve_mem_get_phys_symbol(MET_MEM_ID);
-			PR_BOOTMSG("sspm_log_phy_addr=%u\n", (unsigned int) sspm_log_phy_addr);
-		}else {
-			PR_BOOTMSG("[MET] [%s,%d] sspm_reserve_mem_get_phys is not linked!\n", __FILE__ ,__LINE__);
-			return -1;
-		}
-		if(sspm_reserve_mem_get_size_symbol){
-			sspm_buffer_size = sspm_reserve_mem_get_size_symbol(MET_MEM_ID);
-			PR_BOOTMSG("sspm_buffer_size=%x\n", sspm_buffer_size);
-		}else {
-			PR_BOOTMSG("[MET] [%s,%d] sspm_reserve_mem_get_size is not linked!\n", __FILE__, __LINE__);
-			return -1;
-}		
+	if(sspm_reserve_mem_get_virt_symbol){
+		sspm_log_virt_addr = (void*)sspm_reserve_mem_get_virt_symbol(MET_MEM_ID);
+		PR_BOOTMSG("sspm_log_virt_addr=%p\n", sspm_log_virt_addr);
+	}else {
+		PR_BOOTMSG("[MET] [%s,%d] sspm_reserve_mem_get_virt is not linked!\n", __FILE__, __LINE__);
+		return -1;
+	}
+	if(sspm_reserve_mem_get_phys_symbol){ 
+		sspm_log_phy_addr = sspm_reserve_mem_get_phys_symbol(MET_MEM_ID);
+		PR_BOOTMSG("sspm_log_phy_addr=%u\n", (unsigned int) sspm_log_phy_addr);
+	}else {
+		PR_BOOTMSG("[MET] [%s,%d] sspm_reserve_mem_get_phys is not linked!\n", __FILE__ ,__LINE__);
+		return -1;
+	}
+	if(sspm_reserve_mem_get_size_symbol){
+		sspm_buffer_size = sspm_reserve_mem_get_size_symbol(MET_MEM_ID);
+		PR_BOOTMSG("sspm_buffer_size=%x\n", sspm_buffer_size);
+	}else {
+		PR_BOOTMSG("[MET] [%s,%d] sspm_reserve_mem_get_size is not linked!\n", __FILE__, __LINE__);
+		return -1;
+	}		
 
-		if ((sspm_log_phy_addr > 0) && (sspm_buffer_size > 0)) {
-			sspm_buf_available = 1;
-		} else {
-			sspm_buf_available = 0;
-		}
+	if ((sspm_log_phy_addr > 0) && (sspm_buffer_size > 0)) {
+		sspm_buf_available = 1;
+	} else {
+		sspm_buf_available = 0;
+	}
 #endif /* CONFIG_MTK_GMO_RAM_OPTIMIZE || CONFIG_MTK_MET_MEM_ALLOC */
 
 	start_sspm_ipi_recv_thread();
