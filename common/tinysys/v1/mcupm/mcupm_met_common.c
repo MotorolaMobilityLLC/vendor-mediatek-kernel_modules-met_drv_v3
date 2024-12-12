@@ -18,7 +18,7 @@
 #include "mcupm_met_log.h"
 #include "mcupm_met_ipi_handle.h" /* for met_ipi_to_mcupm_command */
 
-
+#define MAX_KEYLIST_LEN 1024
 /*****************************************************************************
  * struct & enum declaration
  *****************************************************************************/
@@ -26,7 +26,7 @@ struct mcupm_met_event_header {
 	unsigned int rts_event_id;
 	const char *rts_event_name;
 	const char *chart_line_name;
-	const char *key_list;
+	char key_list[MAX_KEYLIST_LEN];
 };
 
 
@@ -48,7 +48,8 @@ static int ondiemet_mcupm_print_header(char *buf, int len);
 /*****************************************************************************
  * internal variable
  *****************************************************************************/
-#define NR_RTS_STR_ARRAY 2
+#define NR_RTS_STR_ARRAY 50
+#define NR_RTS_STR_MIN_SIZE 2
 #define MXNR_NODE_NAME 32
 #define MXNR_EVENT_NAME 64
 #define MAX_MET_RTS_EVENT_NUM 128
@@ -84,10 +85,11 @@ static int ondiemet_mcupm_print_help(char *buf, int len)
 
 static int get_rts_header_from_dts_table(struct mcupm_met_event_header* __met_event_header)
 {
-	int idx;
+	int idx,key_list_idx;
 	struct device_node *np;
 	const char *rts_string[NR_RTS_STR_ARRAY] = {};
 	int nr_str = 0;
+	int ret = 0;
 
 	/*get rts root node*/
 	np = of_find_node_by_name(NULL, "mcupm-rts-header");
@@ -102,20 +104,23 @@ static int get_rts_header_from_dts_table(struct mcupm_met_event_header* __met_ev
 		SPRINTF(node_name, "node-%d", idx);
 		nr_str = of_property_read_string_array(np,
 				node_name, &rts_string[0], NR_RTS_STR_ARRAY);
-		if (nr_str != NR_RTS_STR_ARRAY) {
-			pr_debug("%s: nr_str != %d\n", node_name, NR_RTS_STR_ARRAY);
+		if (nr_str < NR_RTS_STR_MIN_SIZE)
 			break;
-		} else {
-		    pr_debug(" ==> \x1b[1;31m  met_event_header[%d]: %s, %s \033[0m\n", idx, rts_string[0], rts_string[1]);
-            pr_debug(" ==> \x1b[1;31m  met_event_header[%d]: %s, %s \033[0m\n", idx, rts_string[0], rts_string[1]);
-		    pr_debug(" ==> \x1b[1;31m  met_event_header[%d]: %s, %s \033[0m\n", idx, rts_string[0], rts_string[1]);
-			__met_event_header[idx].rts_event_id = idx;
-			__met_event_header[idx].rts_event_name = rts_string[0];
-			__met_event_header[idx].chart_line_name = rts_string[0];
-			__met_event_header[idx].key_list = rts_string[1];
+		__met_event_header[idx].rts_event_id = idx;
+		__met_event_header[idx].rts_event_name = rts_string[0];
+		__met_event_header[idx].chart_line_name = rts_string[0];
+		__met_event_header[idx].key_list[0] = '\0'; /*clear the string buf*/
+		ret = 0;
+		for (key_list_idx=1; key_list_idx<nr_str; key_list_idx++)
+		{
+			ret += snprintf(__met_event_header[idx].key_list + ret, MAX_KEYLIST_LEN - ret,
+				"%s", rts_string[key_list_idx]);
 		}
+		pr_debug("__met_event_header[%d] rts_event_name[%s] key_list[%s] \n",
+			idx,
+			__met_event_header[idx].rts_event_name,
+			__met_event_header[idx].key_list);
 	}
-
 	return idx;
 }
 
