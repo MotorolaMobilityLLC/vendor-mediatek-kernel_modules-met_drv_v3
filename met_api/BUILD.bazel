@@ -41,6 +41,8 @@ define_mgk_ko(
     outs = mgk_outs,
     deps = [
         "//vendor/mediatek/kernel_modules/met_drv_v3:met_drv_v3",
+        "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v3:mcupm".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v2:mcupm".format(kernel_version),
     ],
 )
 
