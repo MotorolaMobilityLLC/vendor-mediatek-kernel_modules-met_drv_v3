@@ -257,6 +257,9 @@ ifeq ($(MET_GPUEB), y)
     endif
 endif
 
+ifeq ($(CONFIG_MTK_GPU_LEGACY),y)
+MET_GPUEB := n
+endif
 $(info MET_GPUEB = $(MET_GPUEB))
 met-$(MET_GPUEB) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/gpueb/gpueb_met.o
 met-$(MET_GPUEB) += $(MET_CORE)/tinysys/$(TINYSYS_VERSION)/gpueb/gpueb_met_log.o
