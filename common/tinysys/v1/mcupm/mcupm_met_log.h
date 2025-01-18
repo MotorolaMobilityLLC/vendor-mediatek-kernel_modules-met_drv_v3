@@ -28,21 +28,24 @@ int mcupm_log_start(void);
 int mcupm_log_stop(void);
 
 int mcupm_log_req_enq(
+    unsigned int mcupm_no,
 	const char *src, size_t num,
 	void (*on_fini_cb)(const void *p),
 	const void *param);
 int mcupm_parse_num(const char *str, unsigned int *value, int len);
 
+extern unsigned int mcupm_count;
 
 /*****************************************************************************
  * external variable declaration
  *****************************************************************************/
-extern void *mcupm_log_virt_addr;
+extern void **mcupm_log_virt_addr;
 #if defined(CONFIG_MTK_GMO_RAM_OPTIMIZE) || defined(CONFIG_MTK_MET_MEM_ALLOC)
 extern dma_addr_t mcupm_log_phy_addr;
 #else
-extern phys_addr_t mcupm_log_phy_addr;
+extern phys_addr_t *mcupm_log_phy_addr;
 #endif
-extern unsigned int mcupm_buffer_size;
+extern unsigned int *mcupm_buffer_size;
+extern int *mcupm_buf_available;
 
 #endif	/* __MCUPM_MET_LOG_H__ */

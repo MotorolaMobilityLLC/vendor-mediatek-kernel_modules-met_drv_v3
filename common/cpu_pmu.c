@@ -39,6 +39,7 @@
 #ifdef MET_MCUPM
 #include "tinysys_mcupm.h"
 #include "mcupm_met_ipi_handle.h"
+#include "mcupm_met_log.h"
 #endif/*MET_MCUPM*/
 
 #endif /*MET_TINYSYS*/
@@ -1700,6 +1701,7 @@ static void ipi_config_pmu_counter_cnt(void) {
 	unsigned int ipi_buf[4] = {0, 0, 0, 0};
 	struct hw_perf_event *hwc;
 	unsigned int base_offset;
+	unsigned int mcupm_no = 0;
 
 	for_each_possible_cpu(cpu) {
 		if (cpu<0 || cpu>=NR_CPUS)
@@ -1749,14 +1751,15 @@ static void ipi_config_pmu_counter_cnt(void) {
 #endif
 #ifdef MET_MCUPM
 			if (met_cpupmu.tinysys_type == 1) {
-				if (mcupm_buf_available == 1) {
-					ret = met_ipi_to_mcupm_command((void *) ipi_buf, 0, &rdata, 1);
-				} else {
-					MET_TRACE("[MET_PMU][IPI_CONFIG] mcupm_buf_available=%d\n",
-						  mcupm_buf_available);
-					pr_debug("[MET_PMU][IPI_CONFIG] mcupm_buf_available=%d\n",
-						 mcupm_buf_available);
-
+				for (mcupm_no = 0; mcupm_no < mcupm_count; mcupm_no++) {
+					if (mcupm_buf_available[mcupm_no] == 1) {
+						ret = met_ipi_to_mcupm_command(mcupm_no, (void *) ipi_buf, 0, &rdata, 1);
+					} else {
+						MET_TRACE("[MET_PMU][IPI_CONFIG] mcupm_buf_available[%d]=%d\n",
+							mcupm_no, mcupm_buf_available[mcupm_no]);
+						pr_debug("[MET_PMU][IPI_CONFIG] mcupm_buf_available[%d]=%d\n",
+							mcupm_no, mcupm_buf_available[mcupm_no]);
+					}
 				}
 			}
 #endif
@@ -1793,13 +1796,15 @@ static void ipi_config_pmu_counter_cnt(void) {
 #endif
 #ifdef MET_MCUPM
 			if (met_cpupmu.tinysys_type == 1) {
-				if (mcupm_buf_available == 1) {
-					ret = met_ipi_to_mcupm_command((void *) ipi_buf, 0, &rdata, 1);
-				} else {
-					MET_TRACE("[MET_PMU][IPI_CONFIG] mcupm_buf_available=%d\n",
-						  mcupm_buf_available);
-					pr_debug("[MET_PMU][IPI_CONFIG] mcupm_buf_available=%d\n",
-						 mcupm_buf_available);
+				for (mcupm_no = 0; mcupm_no < mcupm_count; mcupm_no++) {
+					if (mcupm_buf_available[mcupm_no] == 1) {
+						ret = met_ipi_to_mcupm_command(mcupm_no, (void *) ipi_buf, 0, &rdata, 1);
+					} else {
+						MET_TRACE("[MET_PMU][IPI_CONFIG] mcupm_buf_available[%d]=%d\n",
+							mcupm_no, mcupm_buf_available[mcupm_no]);
+						pr_debug("[MET_PMU][IPI_CONFIG] mcupm_buf_available[%d]=%d\n",
+							mcupm_no, mcupm_buf_available[mcupm_no]);
+					}
 				}
 			}
 #endif
@@ -1832,8 +1837,10 @@ static void ipi_config_pmu_counter_cnt(void) {
 #endif
 #ifdef MET_MCUPM
 			if (met_cpupmu.tinysys_type == 1) {
-				if (mcupm_buf_available == 1) {
-					ret = met_ipi_to_mcupm_command((void *) ipi_buf, 0, &rdata, 1);
+				for (mcupm_no = 0; mcupm_no < mcupm_count; mcupm_no++) {
+					if (mcupm_buf_available[mcupm_no] == 1) {
+						ret = met_ipi_to_mcupm_command(mcupm_no, (void *) ipi_buf, 0, &rdata, 1);
+					}
 				}
 			}
 #endif
@@ -1863,8 +1870,10 @@ static void ipi_config_pmu_counter_cnt(void) {
 #endif
 #ifdef MET_MCUPM
 			if (met_cpupmu.tinysys_type == 1) {
-				if (mcupm_buf_available == 1) {
-					ret = met_ipi_to_mcupm_command((void *) ipi_buf, 0, &rdata, 1);
+				for (mcupm_no = 0; mcupm_no < mcupm_count; mcupm_no++) {
+					if (mcupm_buf_available[mcupm_no] == 1) {
+						ret = met_ipi_to_mcupm_command(mcupm_no, (void *) ipi_buf, 0, &rdata, 1);
+					}
 				}
 			}
 #endif

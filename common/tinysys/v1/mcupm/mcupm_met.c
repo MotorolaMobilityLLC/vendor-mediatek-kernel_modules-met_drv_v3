@@ -113,11 +113,8 @@ EXPORT_SYMBOL(deregister_mcupm_print_header);
  *****************************************************************************/
 static void _mcupm_start(void)
 {
-	if (mcupm_buffer_size == 0) {
-		ondiemet_module[ONDIEMET_MCUPM] = 0;
-		met_mcupm.mode = 0;
-		return;
-	}
+	ondiemet_module[ONDIEMET_MCUPM] = 0;
+	met_mcupm.mode = 0;
 
 	return;
 }

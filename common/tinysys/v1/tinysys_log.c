@@ -249,7 +249,7 @@ int tinysys_log_manager_stop(void)
 #endif
 
 #ifdef MET_MCUPM
-	if ((ondiemet_module[ONDIEMET_MCUPM] == 0) || (mcupm_buffer_size == -1)) {
+	if (ondiemet_module[ONDIEMET_MCUPM] == 0) {
 		if (met_mcupm_api_ready && met_ipi_api_ready) {
 			if (!ondiemet_record_check[ONDIEMET_MCUPM]) {
 				mcupm_log_stop();

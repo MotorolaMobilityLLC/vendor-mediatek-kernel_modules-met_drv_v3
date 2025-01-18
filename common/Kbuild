@@ -195,7 +195,9 @@ else
 endif
 
 ifeq ($(MET_MCUPM), y)
-    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
+    ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/v3/mcupm_driver.h)","")
+        subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/v3/
+    else ifneq ("$(wildcard $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h)","")
         subdir-ccflags-y += -I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/
     else
         $(info ======== Missing $(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/mcupm_driver.h========)

@@ -43,6 +43,8 @@ static int ondiemet_mcupm_print_header(char *buf, int len);
 /*****************************************************************************
  * external function declaration
  *****************************************************************************/
+extern int *mcupm_buf_available;
+extern unsigned int mcupm_count;
 
 
 /*****************************************************************************
@@ -59,6 +61,8 @@ static char mcupm_help[] = "  --mcupm_common=rts_event_name\n";
 static char header[] = 	"met-info [000] 0.0: mcupm_common_header: ";
 static bool met_event_header_updated = false;
 static int nr_dts_header = 0;
+static int nr_mcupm_list = 0;
+static int mcupm_list_to_send[32] = {};
 
 struct metdevice met_mcupm_common = {
 	.name = "mcupm_common",
@@ -181,8 +185,12 @@ static int ondiemet_mcupm_print_header(char *buf, int len)
 
 static void ondiemet_mcupm_start(void)
 {
-	if (mcupm_buffer_size == 0) {
-		return;
+	unsigned int mcupm_no = 0;
+
+	for (mcupm_no = 0; mcupm_no < mcupm_count; mcupm_no++) {
+		if (mcupm_buffer_size[mcupm_no] == 0) {
+			return;
+		}
 	}
 
 	ondiemet_module[ONDIEMET_MCUPM] |= ID_COMMON;
@@ -199,11 +207,10 @@ static void update_event_id_flag(int event_id)
 {
 	unsigned int ipi_buf[4] = {0};
 	unsigned int rdata = 0;
-	unsigned int res = 0;
+	unsigned int ret = 0;
 	unsigned int group = 0;
-
-	if (mcupm_buffer_size == 0)
-		return ;
+	unsigned int mcupm_no = 0;
+	int i = 0;
 
 	group = event_id / 32;
 	event_id_flag[group] |= 1 << (event_id - group * 32);
@@ -211,15 +218,89 @@ static void update_event_id_flag(int event_id)
 	ipi_buf[1] = group;
 	ipi_buf[2] = event_id_flag[group];
 	ipi_buf[3] = 0;
-	res = met_ipi_to_mcupm_command((void *)ipi_buf, 0, &rdata, 1);
+
+	for (i = 0; i < mcupm_count; i++) {
+		if (nr_mcupm_list != 0)	{// Send event to specific MCUPMs
+			if (mcupm_list_to_send[i] == -1)
+				break;
+			mcupm_no = mcupm_list_to_send[i];
+		} else {// Broadcate event to all MCUPMs
+			mcupm_no = i;
+		}
+
+		if (mcupm_buffer_size[mcupm_no] == 0)
+			return ;
+		if (mcupm_buf_available[mcupm_no] == 1) {
+			ret = met_ipi_to_mcupm_command(mcupm_no, (void *)ipi_buf, 0, &rdata, 1);
+		}
+	}
 
 	met_mcupm_common.mode = 1;
+}
+
+static int met_parse_num_list(char *arg, int len, int *list, int list_cnt)
+{
+	int	nr_num = 0;
+	char	*num;
+	int	num_len;
+	int	ret;
+
+	/* search ',' as the splitter */
+	while (len) {
+		num = arg;
+		num_len = 0;
+		if (list_cnt <= 0)
+			return -1;
+
+		while (len) {
+			len--;
+			if (*arg == ',') {
+				*(arg++) = '\0';
+				break;
+			}
+			arg++;
+			num_len++;
+		}
+
+		ret = kstrtoint(num, 10, list);
+
+		list++;
+		list_cnt--;
+		nr_num++;
+	}
+
+	return nr_num;
 }
 
 static int ondiemet_mcupm_process_argument(const char *arg, int len)
 {
 	int i = 0;
 	int rts_event_id = -1;
+	char *arg1 = (char*)arg;
+	int len1 = len;
+	nr_mcupm_list = 0;
+	memset(mcupm_list_to_send, 0xFF, sizeof(mcupm_list_to_send));
+
+	/*
+	 * split cpu_list and event_list by ':'
+	 *   arg, len: cpu_list when found (i < len)
+	 *   arg1, len1: event_list
+	 */
+	for (i = 0; i < len; i++) {
+		if (arg[i] == ':') {
+			arg1[i] = '\0';
+			arg1 += i+1;
+			len1 = len - i - 1;
+			len = i;
+			break;
+		}
+	}
+
+	if (arg1 != arg) {
+		nr_mcupm_list = met_parse_num_list((char*)arg, len, mcupm_list_to_send, mcupm_count);
+	} else {
+		nr_mcupm_list = 0;
+	}
 
 	if (!met_event_header_updated) {
 		nr_dts_header = get_rts_header_from_dts_table(met_event_header);
@@ -227,7 +308,7 @@ static int ondiemet_mcupm_process_argument(const char *arg, int len)
 	}
 
 	for (i = 0; met_event_header[i].rts_event_name && i < nr_dts_header; i++) {
-		if (strncmp(met_event_header[i].rts_event_name, arg, MXNR_EVENT_NAME) == 0) {
+		if (strncmp(met_event_header[i].rts_event_name, arg1, MXNR_EVENT_NAME) == 0) {
 			rts_event_id = i;
 			break;
 		}

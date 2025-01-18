@@ -1037,8 +1037,23 @@ static ssize_t _mcupm_buffer_size_show(
 	char *buf)
 {
 	int i = 0;
+	unsigned int mcupm_no = 0;
+	unsigned int _tmp_mcupm_buffer_size = 0;
 
-	i = snprintf(buf, PAGE_SIZE, "%d\n", mcupm_buffer_size);
+	for (mcupm_no = 0; mcupm_no < mcupm_count; mcupm_no++) {
+		if (mcupm_buffer_size[mcupm_no] == 0) {
+			_tmp_mcupm_buffer_size = 0;
+			i = snprintf(buf, PAGE_SIZE, "got mcupm-%d buffer_size is 0\n", mcupm_no);
+			if (i < 0)
+				return 0;
+
+			return i;
+		}
+
+		_tmp_mcupm_buffer_size = mcupm_buffer_size[mcupm_no];
+	}
+
+	i = snprintf(buf, PAGE_SIZE, "%d\n", _tmp_mcupm_buffer_size);
 	if (i < 0)
 		return 0;
 
