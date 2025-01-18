@@ -1,4 +1,5 @@
 load("//build/bazel_mgk_rules:mgk_ko.bzl", "define_mgk_ko")
+load("@mgk_info//:kernel_version.bzl", "kernel_version")
 
 package(
     default_visibility = [
@@ -59,5 +60,7 @@ define_mgk_ko(
     deps = [
         "//vendor/mediatek/kernel_modules/met_drv_v3:met_drv_v3",
         "//vendor/mediatek/kernel_modules/met_drv_secure_v3:met_drv_secure_v3",
+        "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v3:mcupm".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v2:mcupm".format(kernel_version),
     ],
 )
