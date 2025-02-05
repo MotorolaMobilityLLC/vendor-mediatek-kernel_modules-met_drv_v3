@@ -28,6 +28,9 @@ define_mgk_ddk_ko(
         "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v2:mcupm".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v3:mcupm".format(kernel_version),
     ],
+    local_defines = [
+        "MET_MCUPM",
+    ],
 )
 
 define_mgk_ddk_ko(
@@ -42,5 +45,8 @@ define_mgk_ddk_ko(
         "//vendor/mediatek/kernel_modules/met_drv_v3:met_drv_v3",
         "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v2:mcupm".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm/v3:mcupm".format(kernel_version),
+    ],
+    local_defines = [
+        "MET_MCUPM",
     ],
 )
