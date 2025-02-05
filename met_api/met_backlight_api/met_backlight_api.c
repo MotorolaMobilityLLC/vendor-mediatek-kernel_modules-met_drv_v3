@@ -11,7 +11,7 @@
 extern long met_backlight_api_ready;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_LINK
-#include "met_backlight_api/met_backlight_api.h"
+#include "met_backlight_api.h"
 
 #endif /* MET_BACKLIGHT */
 
@@ -22,7 +22,7 @@ static int __init met_api_init(void)
     met_backlight_api_ready = 1;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_INIT
-#include "met_backlight_api/met_backlight_api.h"
+#include "met_backlight_api.h"
 
 #endif /* MET_BACKLIGHT */
     return 0;
@@ -35,7 +35,7 @@ static void __exit met_api_exit(void)
     met_backlight_api_ready = 0;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_EXIT
-#include "met_backlight_api/met_backlight_api.h"
+#include "met_backlight_api.h"
 
 #endif /* MET_BACKLIGHT */
 }

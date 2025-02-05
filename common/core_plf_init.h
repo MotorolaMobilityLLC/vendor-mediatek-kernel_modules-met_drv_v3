@@ -15,8 +15,8 @@ extern struct miscdevice met_device;
 #ifdef MET_GPU
 #include <mtk_gpu_utility.h>
 
-#include "met_gpu_api/met_gpu_api.h"
-#include "met_gpu_adv_api/met_gpu_adv_api.h"
+#include "met_gpu_api.h"
+#include "met_gpu_adv_api.h"
 
 #ifdef MET_GPU_LOAD_MONITOR
 extern struct metdevice met_gpu;
@@ -47,14 +47,14 @@ extern long met_gpu_api_ready;
 extern long met_gpu_adv_api_ready;
 
 #ifdef MET_VCOREDVFS
-#include "met_vcore_api/met_vcore_api.h"
+#include "met_vcore_api.h"
 extern struct metdevice met_vcoredvfs;
 #endif /* MET_VCOREDVFS */
 
 extern long met_vcore_api_ready;
 
 #ifdef MET_EMI
-#include "met_emi_api/met_emi_api.h"
+#include "met_emi_api.h"
 extern struct metdevice met_sspm_emi;
 #endif /* MET_EMI */
 
@@ -89,7 +89,7 @@ extern struct metdevice met_thermal;
 #endif
 
 #ifdef MET_BACKLIGHT
-#include "met_backlight_api/met_backlight_api.h"
+#include "met_backlight_api.h"
 
 extern struct metdevice met_backlight;
 #endif
@@ -117,10 +117,10 @@ extern struct metdevice met_gpu_smmu_lmu;
 #include "tinysys-scmi.h"
 #endif
 
-#include "met_scmi_api/met_scmi_api.h"
+#include "met_scmi_api.h"
 #endif /* MET_SCMI */
 
-#include "met_sspm_api/met_sspm_api.h"
+#include "met_sspm_api.h"
 
 #endif /* MET_SSPM */
 
@@ -133,7 +133,7 @@ extern long met_sspm_api_ready;
 #include "mcupm_driver.h"
 #include "mcupm_ipi_id.h"
 
-#include "met_mcupm_api/met_mcupm_api.h"
+#include "met_mcupm_api.h"
 
 #endif /* MET_MCUPM */
 
@@ -146,7 +146,7 @@ extern long met_mcupm_api_ready;
 #include "gpueb_reserved_mem.h"
 #include "gpueb_ipi.h"
 
-#include "met_gpueb_api/met_gpueb_api.h"
+#include "met_gpueb_api.h"
 
 #endif /* MET_GPUEB */
 
@@ -154,7 +154,7 @@ extern long met_gpueb_api_ready;
 
 #if defined(MET_MCUPM) || defined(MET_GPUEB) /* anyone of the ipi users */
 
-#include "met_ipi_api/met_ipi_api.h"
+#include "met_ipi_api.h"
 
 #endif /* MET_MCUPM || MET_GPUEB (anyone of the ipi users) */
 

@@ -18,7 +18,7 @@ extern long met_scmi_api_ready;
 #endif
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_LINK
-#include "met_scmi_api/met_scmi_api.h"
+#include "met_scmi_api.h"
 #endif /* MET_SCMI */
 
 #include "met_drv.h"
@@ -57,7 +57,7 @@ static int __init met_api_init(void)
 
 #ifdef MET_SCMI
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_INIT
-#include "met_scmi_api/met_scmi_api.h"
+#include "met_scmi_api.h"
 #endif /* MET_SCMI */
 
     met_sspm_log_init();
@@ -94,7 +94,7 @@ static void __exit met_api_exit(void)
 
 #ifdef MET_SCMI
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_EXIT
-#include "met_scmi_api/met_scmi_api.h"
+#include "met_scmi_api.h"
 #endif /* MET_SCMI */
 
     if (!met_sspm_emi_ret) met_register(&met_sspm_emi);

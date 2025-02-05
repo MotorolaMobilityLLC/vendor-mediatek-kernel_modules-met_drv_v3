@@ -182,7 +182,6 @@ static struct proc_dir_entry **trace_dentry;
 
 static int _alloc_all_mcupm_para(void)
 {
-	unsigned int mcupm_no = 0;
 
 	trace_owner_pid = kmalloc_array(mcupm_count, sizeof(pid_t), GFP_KERNEL);
 	if (!trace_owner_pid) {

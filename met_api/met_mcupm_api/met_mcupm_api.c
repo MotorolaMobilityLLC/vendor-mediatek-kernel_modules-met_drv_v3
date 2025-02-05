@@ -14,7 +14,7 @@ extern long met_mcupm_api_ready;
 #include "mcupm_ipi_id.h"
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_LINK
-#include "met_mcupm_api/met_mcupm_api.h"
+#include "met_mcupm_api.h"
 
 extern int met_mcupm_log_init(void);
 extern int met_mcupm_log_uninit(void);
@@ -30,7 +30,7 @@ static int __init met_api_init(void)
     met_mcupm_api_ready = 1;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_INIT
-#include "met_mcupm_api/met_mcupm_api.h"
+#include "met_mcupm_api.h"
 
     met_mcupm_log_init();
     met_ondiemet_attr_init_mcupm();
@@ -49,7 +49,7 @@ static void __exit met_api_exit(void)
     met_mcupm_api_ready = 0;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_EXIT
-#include "met_mcupm_api/met_mcupm_api.h"
+#include "met_mcupm_api.h"
 
 #endif /* MET_MCUPM */
 }

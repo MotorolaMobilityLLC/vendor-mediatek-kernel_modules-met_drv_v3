@@ -13,7 +13,7 @@
 extern long met_emi_api_ready;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_LINK
-#include "met_emi_api/met_emi_api.h"
+#include "met_emi_api.h"
 
 int met_register(struct metdevice *met);
 int met_deregister(struct metdevice *met);
@@ -40,7 +40,7 @@ static int __init met_api_init(void)
     met_emi_api_ready = 1;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_INIT
-#include "met_emi_api/met_emi_api.h"
+#include "met_emi_api.h"
 
     if (!met_sspm_emi_ret) met_register(&met_sspm_emi);
 #ifdef MET_PLF_EXIST
@@ -67,7 +67,7 @@ static void __exit met_api_exit(void)
     met_emi_api_ready = 0;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_EXIT
-#include "met_emi_api/met_emi_api.h"
+#include "met_emi_api.h"
 
     if (!met_sspm_emi_ret) met_register(&met_sspm_emi);
 #ifdef MET_PLF_EXIST

@@ -14,7 +14,7 @@ extern long met_sspm_api_ready;
 #include "met_drv.h"
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_LINK
-#include "met_sspm_api/met_sspm_api.h"
+#include "met_sspm_api.h"
 
 int met_register(struct metdevice *met);
 int met_deregister(struct metdevice *met);
@@ -45,7 +45,7 @@ static int __init met_api_init(void)
     met_sspm_api_ready = 1;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_INIT
-#include "met_sspm_api/met_sspm_api.h"
+#include "met_sspm_api.h"
 
     met_sspm_log_init();
     met_ondiemet_attr_init_sspm();
@@ -78,7 +78,7 @@ static void __exit met_api_exit(void)
     met_sspm_api_ready = 0;
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_MOD_EXIT
-#include "met_sspm_api/met_sspm_api.h"
+#include "met_sspm_api.h"
 
     if (!met_sspm_emi_ret) met_register(&met_sspm_emi);
 #ifdef MET_PLF_EXIST

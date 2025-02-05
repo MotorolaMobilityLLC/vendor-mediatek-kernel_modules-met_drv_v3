@@ -21,9 +21,9 @@
  */
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_gpu_api/met_gpu_api.h"
+#include "met_gpu_api.h"
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_gpu_adv_api/met_gpu_adv_api.h"
+#include "met_gpu_adv_api.h"
 #endif /* MET_GPU */
 
 long met_gpu_api_ready = 0;
@@ -38,7 +38,7 @@ EXPORT_SYMBOL(met_gpu_adv_api_ready);
 #include <dvfsrc-exp.h>
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_vcore_api/met_vcore_api.h"
+#include "met_vcore_api.h"
 #endif /* MET_VCOREDVFS */
 
 long met_vcore_api_ready = 0;
@@ -47,7 +47,7 @@ EXPORT_SYMBOL(met_vcore_api_ready);
 #ifdef MET_EMI
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_emi_api/met_emi_api.h"
+#include "met_emi_api.h"
 #endif /* MET_EMI */
 
 long met_emi_api_ready = 0;
@@ -56,7 +56,7 @@ EXPORT_SYMBOL(met_emi_api_ready);
 #ifdef MET_BACKLIGHT
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_backlight_api/met_backlight_api.h"
+#include "met_backlight_api.h"
 #endif /* MET_BACKLIGHT */
 
 long met_backlight_api_ready = 0;
@@ -74,11 +74,11 @@ EXPORT_SYMBOL(met_backlight_api_ready);
 #endif /* MET_SCMI */
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_sspm_api/met_sspm_api.h"
+#include "met_sspm_api.h"
 
 #ifdef MET_SCMI
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_scmi_api/met_scmi_api.h"
+#include "met_scmi_api.h"
 #endif /* MET_SCMI */
 
 #endif /* MET_SSPM (anyone of the scmi users) */
@@ -94,7 +94,7 @@ EXPORT_SYMBOL(met_sspm_api_ready);
 #include "mcupm_driver.h"
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_mcupm_api/met_mcupm_api.h"
+#include "met_mcupm_api.h"
 
 #endif /* MET_MCUPM */
 
@@ -107,7 +107,7 @@ EXPORT_SYMBOL(met_mcupm_api_ready);
 #include "gpueb_reserved_mem.h"
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_gpueb_api/met_gpueb_api.h"
+#include "met_gpueb_api.h"
 
 #endif /* MET_GPUEB */
 
@@ -117,7 +117,7 @@ EXPORT_SYMBOL(met_gpueb_api_ready);
 #if defined(MET_MCUPM) || defined(MET_GPUEB) /* anyone of the ipi users */
 
 #define EXTERNAL_SYMBOL_FUNC_MODE EXTERNAL_SYMBOL_FUNC_MODE_SYMBOL_DEFINE
-#include "met_ipi_api/met_ipi_api.h"
+#include "met_ipi_api.h"
 
 #endif /* MET_MCUPM || MET_GPUEB (anyone of the ipi users) */
 
