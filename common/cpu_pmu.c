@@ -72,7 +72,15 @@ static int mtk_pmu_event_enable = 0;
  *      with init values determined by the relation table listed above.
  *      They're exported as file nodes to serve urgent needs.
  */
+/* 2025.01.21
+ * In kernel-6.12, we would get idx 31 while trying to request a slot for cycle_count event
+ */
+#if (KERNEL_VERSION(6, 12, 0) <= LINUX_VERSION_CODE)
+static int met_perf_event_cyc_cnt_evt_idx = ARMV8_PMU_CYCLE_IDX;
+#else
 static int met_perf_event_cyc_cnt_evt_idx = 0;
+#endif
+
 static int met_perf_event_evt_idx_offset = -1;
 
 
