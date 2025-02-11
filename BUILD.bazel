@@ -78,6 +78,7 @@ define_mgk_ddk_ko(
          "MET_PTPOD",
          "MET_EVENT_POWER",
          "MET_SMMU_PMU",
+         "SMI_MASTER_8BIT",
     ],
 
     copts = [
