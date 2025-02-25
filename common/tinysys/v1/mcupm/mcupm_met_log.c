@@ -233,8 +233,9 @@ static int _alloc_all_mcupm_para(void)
 		PR_BOOTMSG("can not allocate mcupm_log_req_q\n");
 		return -ENOMEM;
 	}
-
-	mcupm_log_virt_addr = kmalloc_array(mcupm_count, sizeof(void *), GFP_KERNEL);
+	
+	// Coverity issue : SIZEOF_MISMATCH
+	mcupm_log_virt_addr = kmalloc_array(mcupm_count, sizeof(phys_addr_t *), GFP_KERNEL);
 	if (!mcupm_log_virt_addr) {
 		PR_BOOTMSG("can not allocate mcupm_log_virt_addr\n");
 		return -ENOMEM;
@@ -280,6 +281,7 @@ static int _init_mcupm_para_and_queue(int mcupm_no, struct device *dev)
 {
 	struct device_node *np;
 	char _name_buf[50] = {0};
+    int ret = 0;
 #ifdef ONDIEMET_MOUNT_DEBUGFS
 	struct dentry *met_dir = NULL;
 #else
@@ -290,9 +292,17 @@ static int _init_mcupm_para_and_queue(int mcupm_no, struct device *dev)
 	_mcupm_log_req_q_init(&mcupm_log_req_q[mcupm_no]);
 
 	if (mcupm_no == 0) {
-		snprintf(_name_buf, sizeof(_name_buf), "mcupm_trace");
+		ret = snprintf(_name_buf, sizeof(_name_buf), "mcupm_trace");
+		if (ret < 0 || ret >= sizeof(_name_buf)) {
+			PR_BOOTMSG("Error in snprintf for mcupm_trace\n");
+			return -ENOMEM;
+		}
 	} else {
-		snprintf(_name_buf, sizeof(_name_buf), "mcupm_slv_%d_trace", mcupm_no - 1);
+		ret = snprintf(_name_buf, sizeof(_name_buf), "mcupm_slv_%d_trace", mcupm_no - 1);
+		if (ret < 0 || ret >= sizeof(_name_buf)) {
+			PR_BOOTMSG("Error in snprintf for mcupm_slv_%d_trace\n", mcupm_no - 1);
+			return -ENOMEM;
+		}
 	}
 
 #ifdef ONDIEMET_MOUNT_DEBUGFS
@@ -329,9 +339,20 @@ static int _init_mcupm_para_and_queue(int mcupm_no, struct device *dev)
 #elif defined(MET_MCUPM)
 	mcupm_buf_available[mcupm_no] = 0;
 	if (mcupm_no == 0) {
-		snprintf(_name_buf, sizeof(_name_buf), "met-res-ram-mcupm");
+		//Coverity issue : CERT POS54-C,CERT ERR33-C
+		int ret = snprintf(_name_buf, sizeof(_name_buf), "met-res-ram-mcupm");
+		if (ret < 0 || ret >= sizeof(_name_buf)) {
+			/* Handle error, e.g., log and exit or return error */
+			PR_BOOTMSG("Error in snprintf for met-res-ram-mcupm\n");
+			return -1;
+		}
 	} else {
-		snprintf(_name_buf, sizeof(_name_buf), "met-res-ram-mcupm-slv-%d", mcupm_no - 1);
+		int ret = snprintf(_name_buf, sizeof(_name_buf), "met-res-ram-mcupm-slv-%d", mcupm_no - 1);
+		if (ret < 0 || ret >= sizeof(_name_buf)) {
+			/* Handle error, e.g., log and exit or return error */
+			PR_BOOTMSG("Error in snprintf for met-res-ram-mcupm-slv-%d\n", mcupm_no - 1);
+			return -1;
+		}
 	}
 
 	np = of_find_node_by_name(NULL, _name_buf);

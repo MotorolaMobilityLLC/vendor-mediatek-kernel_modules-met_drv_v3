@@ -239,9 +239,17 @@ void start_mcupm_ipi_recv_thread(int mcupm_no)
 	}
 
 	if (mcupm_no == 0) {
-	    snprintf(_name_buf, sizeof(_name_buf), "mcupmmcupm_recv");
+		ret = snprintf(_name_buf, sizeof(_name_buf), "mcupmmcupm_recv");
+		if (ret < 0 || ret >= sizeof(_name_buf)) {
+			PR_BOOTMSG("Error in snprintf for mcupmmcupm_recv\n");
+			return;
+		}
 	} else {
-	    snprintf(_name_buf, sizeof(_name_buf), "mcupmmcupm_recv_slv_%d", mcupm_no - 1);
+	    ret = snprintf(_name_buf, sizeof(_name_buf), "mcupmmcupm_recv_slv_%d", mcupm_no - 1);
+		if (ret < 0 || ret >= sizeof(_name_buf)) {
+			PR_BOOTMSG("Error in snprintf for mcupmmcupm_recv_slv_%d\n", mcupm_no - 1);
+			return;
+		}
 	}
 	if (mcupm_ipi_thread_started[mcupm_no] != 1) {
 		mcupm_recv_thread_comp[mcupm_no] = 0;
