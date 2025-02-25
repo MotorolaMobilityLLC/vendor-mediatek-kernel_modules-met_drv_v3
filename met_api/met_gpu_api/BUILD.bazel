@@ -24,8 +24,11 @@ define_mgk_ddk_ko(
         "//vendor/mediatek/kernel_modules/met_drv_secure_v3:met_drv_secure_v3",
         "//kernel_device_modules-{}/drivers/gpu/mediatek/hal:mtk_gpu_hal".format(kernel_version),
     ],
+    header_deps = [
+        "//kernel_device_modules-{}/drivers/gpu/mediatek/mt-plat:gpu_utility_headers".format(kernel_version),
+    ],
     copts = [
-        "-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/mt-plat/",
+        "-I$(srctree)/drivers/gpu/mediatek/mt-plat/",
     ],
     local_defines = [
         "MET_GPU",
@@ -43,8 +46,11 @@ define_mgk_ddk_ko(
         "//vendor/mediatek/kernel_modules/met_drv_v3:met_drv_v3",
         "//kernel_device_modules-{}/drivers/gpu/mediatek/hal:mtk_gpu_hal".format(kernel_version),
     ],
+    header_deps = [
+        "//kernel_device_modules-{}/drivers/gpu/mediatek/mt-plat:gpu_utility_headers".format(kernel_version),
+    ],
     copts = [
-        "-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/mt-plat/",
+        "-I$(srctree)/drivers/gpu/mediatek/mt-plat/",
     ],
     local_defines = [
         "MET_GPU",

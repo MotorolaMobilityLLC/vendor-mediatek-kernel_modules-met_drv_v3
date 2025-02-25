@@ -90,7 +90,7 @@ define_mgk_ddk_ko(
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/",
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/include/mt-plat/",
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/met_drv/core/",
-        "-I$(DEVICE_MODULES_PATH)/drivers/gpu/mediatek/mt-plat/",
+        "-I$(srctree)/drivers/gpu/mediatek/mt-plat/",
         "-I$(DEVICE_MODULES_PATH)/include/linux/soc/mediatek",
         "-I$(DEVICE_MODULES_PATH)/drivers/misc/mediatek/mcupm/include/",
     ],
@@ -155,6 +155,7 @@ define_mgk_ddk_ko(
         "//kernel_device_modules-{}/drivers/iommu/arm/arm-smmu-v3:smmu_public_headers".format(kernel_version),
         "//kernel_device_modules-{}/drivers/misc/mediatek/mcupm:mcupm_public_headers".format(kernel_version),
         "//kernel_device_modules-{}/drivers/gpu/mediatek/gpueb:gpueb_public_headers".format(kernel_version),
+        "//kernel_device_modules-{}/drivers/gpu/mediatek/mt-plat:gpu_utility_headers".format(kernel_version),
     ],
     ko_deps = [
     "//kernel_device_modules-{}/drivers/misc/mediatek/tinysys_scmi:tinysys-scmi".format(kernel_version),
