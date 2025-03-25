@@ -60,7 +60,6 @@ met_trace_print_symbols_seq(char* pclass_name, unsigned long val,
 {
 	int i;
     size_t new_fsize=0;
-    char _buf[32];
 	const char *ret = pclass_name;
 
 	for (i = 0;  symbol_array[i].name; i++) {
@@ -68,13 +67,13 @@ met_trace_print_symbols_seq(char* pclass_name, unsigned long val,
 		if (val != symbol_array[i].mask)
 			continue;
 
-		new_fsize = SPRINTF(pclass_name, symbol_array[i].name, strlen(symbol_array[i].name));
+		new_fsize = 64;
+		memcpy(pclass_name, symbol_array[i].name, new_fsize);
 		break;
 	}
 
 	if (new_fsize == 0) {
-		SNPRINTF(_buf, 32, "0x%lx", val);
-		SPRINTF(pclass_name, _buf, strlen(_buf));
+		SNPRINTF(pclass_name, 64, "0x%lx", val);
 	}
 
 	return ret;
