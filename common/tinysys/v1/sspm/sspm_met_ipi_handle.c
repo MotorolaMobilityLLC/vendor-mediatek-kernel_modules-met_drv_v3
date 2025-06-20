@@ -187,13 +187,17 @@ int scmi_tinysys_to_sspm_command( u32 feature_id,
     return ret;
 }
 
-void start_sspm_ipi_recv_thread()
+void start_sspm_ipi_recv_thread(void)
 {
     init_completion(&SSPM_ACK_comp);
     init_completion(&SSPM_CMD_comp);
 
 	if (get_scmi_tinysys_info_symbol) {
 		tinfo = get_scmi_tinysys_info_symbol();
+		if (tinfo == NULL) {
+			PR_BOOTMSG("[MET] [%s,%d] scmi protocol handle is NULL!!\n", __FILE__, __LINE__);
+			return; // FAIL
+		}
 	} else {
 		PR_BOOTMSG("[MET] [%s,%d] get_scmi_tinysys_info is not linked!\n", __FILE__, __LINE__);
 		return;
@@ -227,7 +231,7 @@ void start_sspm_ipi_recv_thread()
 }
 
 
-void stop_sspm_ipi_recv_thread()
+void stop_sspm_ipi_recv_thread(void)
 {
 	if (_sspm_recv_task) {
 		sspm_recv_thread_comp = 1;
@@ -377,6 +381,25 @@ int met_scmi_to_sspm_command_async(
 }
 EXPORT_SYMBOL(met_scmi_to_sspm_command_async);
 
+
+unsigned int met_scmi_to_sspm_resrc_request(unsigned int on){
+
+	unsigned int ipi_buf[2] = {0, 0};
+	unsigned int rdata = 0;
+	unsigned int res = 0;
+
+	if (sspm_buffer_size == 0)
+		return 0;
+
+	if (met_config_list & (1<<RESOURCE_CTRL)) {
+		ipi_buf[0] = MET_MAIN_ID | MET_RESRC_REQ_AP2MD ;
+		ipi_buf[1] = on;
+		res = met_scmi_to_sspm_command((void *)ipi_buf, sizeof(ipi_buf)/sizeof(unsigned int), &rdata, 1);
+		return rdata;
+	}
+	return res;
+}
+EXPORT_SYMBOL(met_scmi_to_sspm_resrc_request);
 
 /*****************************************************************************
  * internal function ipmlement

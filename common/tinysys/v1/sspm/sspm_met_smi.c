@@ -361,7 +361,7 @@ static int smi_process_argument(const char *__restrict__ arg, int len)
 	uint32_t ipi_buf[3] = {0, 0, 0};
 	uint32_t ret = 0;
 	uint32_t rdata = 0;
-	uint16_t sspm_master = 0;
+	uint32_t sspm_master = 0;
 	uint32_t sspm_meta = 0;
 
 	if (len < 3)

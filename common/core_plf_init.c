@@ -156,7 +156,9 @@ int core_plf_init(void)
 #endif
 
 #ifdef MET_EMI
+#ifdef MET_SSPM
 	met_register(&met_sspm_emi);
+#endif
 #endif
 
 #ifdef MET_SMI
@@ -193,6 +195,13 @@ int core_plf_init(void)
 
 #ifdef MET_PTPOD
 	met_register(&met_ptpod);
+#endif
+
+#ifdef MET_SMMU_PMU
+	met_register(&met_mm_smmu_lmu);
+	met_register(&met_apu_smmu_lmu);
+	met_register(&met_soc_smmu_lmu);
+	met_register(&met_gpu_smmu_lmu);
 #endif
 
 	return 0;
@@ -263,5 +272,12 @@ void core_plf_exit(void)
 
 #ifdef MET_PTPOD
 	met_deregister(&met_ptpod);
+#endif
+
+#ifdef MET_SMMU_PMU
+	met_deregister(&met_mm_smmu_lmu);
+	met_deregister(&met_apu_smmu_lmu);
+	met_deregister(&met_soc_smmu_lmu);
+	met_deregister(&met_gpu_smmu_lmu);
 #endif
 }

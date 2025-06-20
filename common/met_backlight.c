@@ -5,6 +5,8 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/delay.h>
+
 #include <leds-mtk.h>
 
 #define MET_USER_EVENT_SUPPORT
@@ -14,6 +16,68 @@
 #include "mtk_typedefs.h"
 
 #include <mtk_printk_ctrl.h>
+#include <linux/of.h>
+
+
+unsigned int gpio_reg_addr_base = 0;
+
+//GPIO base address
+#define MATE_GPIO_DIR_BASE              (gpio_reg_addr_base)
+#define MATE_GPIO_OUT_BASE              (gpio_reg_addr_base + 0x100)
+#define MATE_GPIO_IN_BASE               (gpio_reg_addr_base + 0x200)
+#define MATE_GPIO_MOD_BASE              (gpio_reg_addr_base + 0x300)
+
+
+//==============================================================================
+// For GPIO macro setting
+//==============================================================================
+#define MATE_GPIO_MOD_GROUP(num)        (MATE_GPIO_MOD_BASE + ((num /  8) * 16))
+#define MATE_GPIO_DIR_GROUP(num)        (MATE_GPIO_DIR_BASE + ((num / 32) * 16))
+#define MATE_GPIO_OUT_GROUP(num)        (MATE_GPIO_OUT_BASE + ((num / 32) * 16))
+#define MATE_GPIO_IN_GROUP(num)         (MATE_GPIO_IN_BASE  + ((num / 32) * 16))
+
+#define MATE_GPIO_MOD_SHIFT(num)        ((num - ((num /  8) *  8)) * 4)
+#define MATE_GPIO_DIR_SHIFT(num)        ((num - ((num / 32) * 32)) * 1)
+#define MATE_GPIO_OUT_SHIFT(num)        ((num - ((num / 32) * 32)) * 1)
+#define MATE_GPIO_IN_SHIFT(num)         ((num - ((num / 32) * 32)) * 1)
+
+
+unsigned int MET_GET_REG(unsigned int addr)
+{
+	unsigned int value = 0;
+	void __iomem *remap_addr = 0;
+
+	remap_addr = ioremap(addr, 0x4);
+	if (remap_addr != 0)
+	{
+		/* printk("\x1b[1;34m ==> GET remap 0x%x ok \033[0m\n", addr); */
+		value = readl(remap_addr);
+	}
+	 /*printk("\x1b[1;34m ==> MET Get 0x%04x <-- reg \033[0m\n", value);*/
+
+	iounmap(remap_addr);
+	return value;
+}
+
+int MET_SET_REG(unsigned int value, unsigned int addr)
+{
+	void __iomem *remap_addr = 0;
+
+	remap_addr = ioremap(addr, 0x4);
+	if (remap_addr != 0)
+	{
+		/*printk("\x1b[1;34m ==> SET remap 0x%x ok \033[0m\n", addr);*/
+		writel(value, remap_addr);
+	}
+	iounmap(remap_addr);
+	return 0;
+}
+
+#define MATE_GPIO_MOD_SET(num, mod)  MET_SET_REG((MET_GET_REG(MATE_GPIO_MOD_GROUP(num)) & ~(0xF << MATE_GPIO_MOD_SHIFT(num))) | ((mod & 0xf)  << MATE_GPIO_MOD_SHIFT(num)), MATE_GPIO_MOD_GROUP(num))
+#define MATE_GPIO_DIR_SET(num, dir)  MET_SET_REG((MET_GET_REG(MATE_GPIO_DIR_GROUP(num)) & ~(0x1 << MATE_GPIO_DIR_SHIFT(num))) | ((dir & 0x1)  << MATE_GPIO_DIR_SHIFT(num)), MATE_GPIO_DIR_GROUP(num))
+#define MATE_GPIO_OUT_SET(num, out)  MET_SET_REG((MET_GET_REG(MATE_GPIO_OUT_GROUP(num)) & ~(0x1 << MATE_GPIO_OUT_SHIFT(num))) | ((out & 0x1)  << MATE_GPIO_OUT_SHIFT(num)), MATE_GPIO_OUT_GROUP(num))
+
+
 
 static int met_backlight_enable;
 static DEFINE_SPINLOCK(met_backlight_lock);
@@ -119,21 +183,21 @@ static ssize_t bl_tag_enable_show(struct kobject *kobj, struct kobj_attribute *a
 static ssize_t bl_tag_enable_store(struct kobject *kobj,
 				   struct kobj_attribute *attr, const char *buf, size_t n)
 {
-	int value;
+	int pin_no;
 	int ret;
 
 	if ((n == 0) || (buf == NULL))
 		return -EINVAL;
 
-	if (kstrtoint(buf, 0, &value) != 0)
+	if (kstrtoint(buf, 0, &pin_no) != 0)
 		return -EINVAL;
 
-	if (value < 0)
+	if (pin_no < 0)
 		return -EINVAL;
 
 	/*use UART to trigger the DAQ start*/
 #if IS_ENABLED(CONFIG_MTK_PRINTK)
-	if (value == 0)
+	if (pin_no == 0)
 	{
 		if(update_uartlog_status_symbol == NULL) {
 			PR_BOOTMSG("[backlight] update_uartlog_status_symbol is NULL\n");
@@ -151,25 +215,31 @@ static ssize_t bl_tag_enable_store(struct kobject *kobj,
 		update_uartlog_status_symbol(true, 0);
 		PR_BOOTMSG("[backlight] UART tigger DAQ\n");
 	}
+	else
+	{
+		ret = met_tag_oneshot_real(33880, "_MM_BL_", 255);
+
+        MATE_GPIO_MOD_SET(pin_no, 0);
+        MATE_GPIO_DIR_SET(pin_no, 1);
+
+        MATE_GPIO_OUT_SET(pin_no, 0);
+        MATE_GPIO_OUT_SET(pin_no, 1);
+        MATE_GPIO_OUT_SET(pin_no, 0);
+        MATE_GPIO_OUT_SET(pin_no, 1);
+        MATE_GPIO_OUT_SET(pin_no, 0);
+        MATE_GPIO_OUT_SET(pin_no, 1);
+        MATE_GPIO_OUT_SET(pin_no, 0);
+
+        ret = met_tag_oneshot_real(33880, "_MM_BL_", 0);
+
+        /* Restore original GPIO setting */
+        MATE_GPIO_MOD_SET(pin_no, 1);
+        MATE_GPIO_DIR_SET(pin_no, 0);
+    }
 #else
 	PR_BOOTMSG("[backlight] UART tigger DAQ, but CONFIG_MTK_PRINTK is not set\n");
 #endif
-/* old method to trigger DAQ: use the backlight pwm to control the special pin to casue voltage 5V ->1.8V */
-/* but the EVB HW sometimes not support , so we use UART to instead it */
-/*
-#if IS_ENABLED(CONFIG_LEDS_MTK)
-#if IS_ENABLED(CONFIG_LEDS_MTK_DISP) || IS_ENABLED(CONFIG_LEDS_MTK_PWM) || IS_ENABLED(CONFIG_LEDS_MTK_I2C)
-	if (value == 1) {
-		if (mtk_leds_register_notifier_symbol)
-			mtk_leds_register_notifier_symbol(&leds_change_notifier);
-	} else if (value == 0) {
-		if (mtk_leds_unregister_notifier_symbol)
-			mtk_leds_unregister_notifier_symbol(&leds_change_notifier);
-	}
-#endif
-#endif
-*/
-	met_backlight_enable = value;
+	met_backlight_enable = pin_no;
 
 	return n;
 }
@@ -208,6 +278,7 @@ static ssize_t bl_trigger_size_store(struct kobject *kobj,
 static int met_backlight_create(struct kobject *parent)
 {
 	int ret = 0;
+	struct device_node *np;
 	kobj_met_backlight = parent;
 
 	ret = sysfs_create_file(kobj_met_backlight, &bl_tag_enable_attr.attr);
@@ -223,6 +294,13 @@ static int met_backlight_create(struct kobject *parent)
 		return ret;
 	}
 	reset_trigger_DAQ(16);
+
+    np = of_find_node_by_name(NULL, "gpio");
+    if (np)
+    {
+        of_property_read_u32_index(np, "reg", 1, &gpio_reg_addr_base);
+        printk("\x1b[1;31m ==> Got GPIO add base: 0x%x \033[0m\n", gpio_reg_addr_base);
+    }
 
 	return ret;
 }

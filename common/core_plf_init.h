@@ -100,6 +100,13 @@ extern long met_backlight_api_ready;
 extern struct metdevice met_ptpod;
 #endif
 
+#ifdef MET_SMMU_PMU
+extern struct metdevice met_mm_smmu_lmu;
+extern struct metdevice met_soc_smmu_lmu;
+extern struct metdevice met_apu_smmu_lmu;
+extern struct metdevice met_gpu_smmu_lmu;
+#endif
+
 #ifdef MET_SSPM
 
 #include <linux/scmi_protocol.h>

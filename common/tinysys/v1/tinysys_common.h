@@ -44,6 +44,8 @@
 #define MET_GPT                 (8 << FUNC_BIT_SHIFT) /* GPT counter reading */
 #define MET_REQ_AP2MD           (9 << FUNC_BIT_SHIFT) /* user defined command */
 #define MET_RESP_AP2MD          (10 << FUNC_BIT_SHIFT) /* may no need */
+#define MET_RESRC_REQ_AP2MD     (20 << FUNC_BIT_SHIFT) /* resource request */
+#define MET_REG_WRITE_AP2MD     (21 << FUNC_BIT_SHIFT) /* sspm reg write */
 /* mode: bit 15 - 0: */
 /*  Bit 0: MD32 SRAM mode; Bit 1: System DRAM mode */
 /*  value: 0: output to next level of storage; 1: loop in its own storage */
@@ -110,6 +112,7 @@ enum {
 	MID_MCUPM_PTPOD = 24,
 	MID_MCUPM_CPU_DVFS = 25,
 	MID_MCUPM_SYSTEM_PI = 26,
+	MID_MCUPM_HBVC= 27, //0x1B
 	MID_CPU_PMUE = 0x1D,
 	MID_SYS_PI = 0x1E,
 	MID_COMMON = 0x1F

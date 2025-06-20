@@ -16,6 +16,7 @@ struct tag_chipid {
 	u32 sw_ver;
 };
 extern unsigned int met_get_chipid_from_atag(void);
+extern void met_get_config_list(void);
 
 /**
  * Data structures to store tracepoints informations
@@ -65,6 +66,13 @@ extern unsigned int met_cpu_pmu_method;
  * controls whether re-configuring pmu events after leaving cpu off state
  */
 extern unsigned int met_cpu_pm_pmu_reconfig;
+
+/* met config from dts */
+extern int met_config_list;
+/* bit definition in met_config_list */
+enum {
+	RESOURCE_CTRL = 0,
+};
 
 extern int metdevice_check_dependency(struct metdevice *c, int init_once);
 
